@@ -22,15 +22,14 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"go.uber.org/zap"
+	"golang.org/x/exp/slog"
 )
+
+const ErrorKey = "error"
 
 const QueryError = "?error="
 
 const WrongLangKey = "WrongLang"
-
-const ReportingPlaceName = "reporting_place"
 
 // error displayed to user
 const ErrorNotAuthorizedKey = "ErrorNotAuthorized"
@@ -41,8 +40,8 @@ var ErrNotAuthorized = errors.New(ErrorNotAuthorizedKey)
 var ErrTechnical = errors.New(ErrorTechnicalKey)
 var ErrUpdate = errors.New(ErrorUpdateKey)
 
-func LogOriginalError(logger otelzap.LoggerWithCtx, err error) error {
-	logger.WithOptions(zap.AddCallerSkip(1)).Warn("Original error", zap.Error(err))
+func LogOriginalError(logger *slog.Logger, err error) error {
+	logger.Warn("Original error", ErrorKey, err)
 	return ErrTechnical
 }
 

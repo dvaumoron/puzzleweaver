@@ -26,24 +26,18 @@ import (
 	"strconv"
 
 	"github.com/ServiceWeaver/weaver"
-
 	"github.com/dvaumoron/puzzleweaver/web"
-	adminservice "github.com/dvaumoron/puzzleweaver/web/admin/service"
 	"github.com/dvaumoron/puzzleweaver/web/blog"
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/forum"
 	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
-	loginservice "github.com/dvaumoron/puzzleweaver/web/login/service"
-	markdownservice "github.com/dvaumoron/puzzleweaver/web/markdown/service"
-	strengthservice "github.com/dvaumoron/puzzleweaver/web/passwordstrength/service"
 	"github.com/dvaumoron/puzzleweaver/web/remotewidget"
-	sessionservice "github.com/dvaumoron/puzzleweaver/web/session/service"
-	templateservice "github.com/dvaumoron/puzzleweaver/web/templates/service"
 	"github.com/dvaumoron/puzzleweaver/web/wiki"
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"go.uber.org/zap"
+	"golang.org/x/exp/slog"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,50 +58,42 @@ func main() {
 // weaver.Run creates it and passes it to serve.
 type frameApp struct {
 	weaver.Implements[weaver.Main]
-	sessionService          weaver.Ref[sessionservice.SessionService]
-	templateService         weaver.Ref[templateservice.TemplateService]
-	settingsService         weaver.Ref[sessionservice.SessionService]
-	passwordStrengthService weaver.Ref[strengthservice.PasswordStrengthService]
-	saltService             weaver.Ref[loginservice.SaltService]
-	loginService            weaver.Ref[loginservice.FullLoginService]
-	adminService            weaver.Ref[adminservice.AdminService]
+	weaver.WithConfig[config.GlobalConfig]
+	sessionService          weaver.Ref[service.SessionService]
+	templateService         weaver.Ref[service.TemplateService]
+	settingsService         weaver.Ref[service.SettingsService]
+	passwordStrengthService weaver.Ref[service.PasswordStrengthService]
+	saltService             weaver.Ref[service.SaltService]
+	loginService            weaver.Ref[service.FullLoginService]
+	adminService            weaver.Ref[service.AdminService]
 	forumService            weaver.Ref[forumservice.FullForumService]
-	markdownService         weaver.Ref[markdownservice.MarkdownService]
+	markdownService         weaver.Ref[service.MarkdownService]
 	blogService             weaver.Ref[blogservice.BlogService]
 	wikiService             weaver.Ref[wikiservice.WikiService]
 }
 
 // frameServe is called by weaver.Run and contains the body of the application.
-func frameServe(context.Context, *frameApp) error {
-	site, globalConfig, initSpan := web.BuildDefaultSite(config.WebKey, version)
-	ctxLogger := globalConfig.CtxLogger
-	rightClient := globalConfig.RightClient
+func frameServe(ctx context.Context, app *frameApp) error {
+	globalConfig := app.Config()
+	site := web.BuildDefaultSite(globalConfig)
+	ctxLogger := app.Logger(ctx)
 
 	frameConfigBody, err := os.ReadFile(os.Getenv("FRAME_CONFIG_PATH"))
 	if err != nil {
-		ctxLogger.Fatal("Failed to read frame configuration file", zap.Error(err))
+		ctxLogger.Error("Failed to read frame configuration file", common.ErrorKey, err)
 	}
 
 	var frameConfig map[string]any
 	if err = yaml.Unmarshal(frameConfigBody, &frameConfig); err != nil {
-		ctxLogger.Fatal("Failed to parse frame configuration", zap.Error(err))
+		ctxLogger.Error("Failed to parse frame configuration", common.ErrorKey, err)
 	}
 
-	// create group for permissions
-	for _, group := range asSlice("permissionGroups", frameConfig["permissionGroups"], ctxLogger) {
-		castedGroup := asMap("permissionGroup", group, ctxLogger)
-		rightClient.RegisterGroup(
-			asUint64("permissionGroup.id", castedGroup["id"], ctxLogger),
-			asString("permissionGroup.name", castedGroup["name"], ctxLogger),
-		)
-	}
-
-	site.AddPage(web.MakeHiddenStaticPage(globalConfig.Tracer, notFound, adminservice.PublicGroupId, notFound))
+	site.AddPage(web.MakeHiddenStaticPage(app, notFound, service.PublicGroupId, notFound))
 
 	for _, pageGroup := range asSlice("pageGroups", frameConfig["pageGroups"], ctxLogger) {
 		castedPageGroup := asMap("pageGroup", pageGroup, ctxLogger)
 		site.AddStaticPages(
-			globalConfig.CtxLogger,
+			app,
 			asUint64("pageGroup.id", castedPageGroup["id"], ctxLogger),
 			asStringSlice("pageGroup.pages", castedPageGroup["pages"], ctxLogger),
 		)
@@ -122,12 +108,12 @@ func frameServe(context.Context, *frameApp) error {
 		if emplacement != "" {
 			parentPage, ok = site.GetPageWithPath(emplacement)
 			if !ok {
-				ctxLogger.Fatal("Failed to retrive parentPage", zap.String("emplacement", emplacement))
+				ctxLogger.Error("Failed to retrive parentPage", "emplacement", emplacement)
 			}
 		}
 
 		widgetPage := makeWidgetPage(
-			asString("widgetPage.name", castedWidgetPage["name"], ctxLogger), globalConfig,
+			asString("widgetPage.name", castedWidgetPage["name"], ctxLogger), app, ctx, globalConfig,
 			widgets[asString("widgetPage.widgetRef", castedWidgetPage["widgetRef"], ctxLogger)],
 		)
 
@@ -138,8 +124,6 @@ func frameServe(context.Context, *frameApp) error {
 		}
 	}
 
-	initSpan.End()
-
 	siteConfig := globalConfig.ExtractSiteConfig()
 	// emptying data no longer useful for GC cleaning
 	globalConfig = nil
@@ -147,8 +131,8 @@ func frameServe(context.Context, *frameApp) error {
 	return site.Run(siteConfig)
 }
 
-func makeWidgetPage(pageName string, globalConfig *config.GlobalConfig, widgetConfig any) web.Page {
-	ctxLogger := globalConfig.CtxLogger
+func makeWidgetPage(pageName string, loggerGetter common.LoggerGetter, ctx context.Context, globalConfig *config.GlobalConfig, widgetConfig any) web.Page {
+	ctxLogger := loggerGetter.Logger(ctx)
 	castedConfig := asMap("widget", widgetConfig, ctxLogger)
 
 	switch kind := asString("widget.kind", castedConfig["kind"], ctxLogger); kind {
@@ -173,15 +157,15 @@ func makeWidgetPage(pageName string, globalConfig *config.GlobalConfig, widgetCo
 		objectId := asUint64("widget.objectId", castedConfig["objectId"], ctxLogger)
 		groupId := asUint64("widget.groupId", castedConfig["groupId"], ctxLogger)
 		return remotewidget.MakeRemotePage(
-			pageName, ctxLogger, widgetName, globalConfig.CreateWidgetConfig(serviceAddr, objectId, groupId),
+			pageName, loggerGetter, ctx, widgetName, globalConfig.CreateWidgetConfig(serviceAddr, objectId, groupId),
 		)
 	default:
-		globalConfig.CtxLogger.Fatal("Widget kind unknown ", zap.String("widgetKind", kind))
+		ctxLogger.Error("Widget kind unknown ", "widgetKind", kind)
 	}
 	return web.Page{} // unreachable
 }
 
-func asUint64(name string, value any, ctxLogger otelzap.LoggerWithCtx) uint64 {
+func asUint64(name string, value any, ctxLogger *slog.Logger) uint64 {
 	if value == nil {
 		return 0
 	}
@@ -213,49 +197,49 @@ func asUint64(name string, value any, ctxLogger otelzap.LoggerWithCtx) uint64 {
 	case string:
 		i, err := strconv.ParseUint(casted, 10, 64)
 		if err != nil {
-			ctxLogger.Fatal("Failed to parse value", zap.String(valueName, name), zap.Error(err))
+			ctxLogger.Error("Failed to parse value", valueName, name, common.ErrorKey, err)
 		}
 		return i
 	default:
-		ctxLogger.Fatal(castMsg, zap.String(valueName, name))
+		ctxLogger.Error(castMsg, valueName, name)
 	}
 	return 0 // unreachable
 }
 
-func asMap(name string, value any, ctxLogger otelzap.LoggerWithCtx) map[string]any {
+func asMap(name string, value any, ctxLogger *slog.Logger) map[string]any {
 	if value == nil {
 		return nil
 	}
 	m, ok := value.(map[string]any)
 	if !ok {
-		ctxLogger.Fatal(castMsg, zap.String("valueName", name))
+		ctxLogger.Error(castMsg, "valueName", name)
 	}
 	return m
 }
 
-func asSlice(name string, value any, ctxLogger otelzap.LoggerWithCtx) []any {
+func asSlice(name string, value any, ctxLogger *slog.Logger) []any {
 	if value == nil {
 		return nil
 	}
 	s, ok := value.([]any)
 	if !ok {
-		ctxLogger.Fatal(castMsg, zap.String(valueName, name))
+		ctxLogger.Error(castMsg, valueName, name)
 	}
 	return s
 }
 
-func asString(name string, value any, ctxLogger otelzap.LoggerWithCtx) string {
+func asString(name string, value any, ctxLogger *slog.Logger) string {
 	if value == nil {
 		return ""
 	}
 	s, ok := value.(string)
 	if !ok {
-		ctxLogger.Fatal(castMsg, zap.String(valueName, name))
+		ctxLogger.Error(castMsg, valueName, name)
 	}
 	return s
 }
 
-func asStringSlice(name string, value any, ctxLogger otelzap.LoggerWithCtx) []string {
+func asStringSlice(name string, value any, ctxLogger *slog.Logger) []string {
 	s := asSlice(name, value, ctxLogger)
 	s2 := make([]string, 0, len(s))
 	for _, innerValue := range s {

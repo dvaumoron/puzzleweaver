@@ -26,12 +26,14 @@ import (
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/web"
-	"github.com/dvaumoron/puzzleweaver/web/blog/service"
+	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
+	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
-	"go.uber.org/zap"
+	"golang.org/x/exp/slog"
 )
 
 const emptyTitle = "EmptyPostTitle"
@@ -70,11 +72,7 @@ func (w blogWidget) LoadInto(router gin.IRouter) {
 	router.GET("/rss", w.rssHandler)
 }
 
-func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
-	tracer := blogConfig.Tracer
-	blogService := blogConfig.Service
-	commentService := blogConfig.CommentService
-	markdownService := blogConfig.MarkdownService
+func MakeBlogPage(blogName string, logger *slog.Logger, blogService blogservice.BlogService, commentService forumservice.CommentService, markdownService service.MarkdownService, blogConfig config.BlogConfig) web.Page {
 	host := blogConfig.Domain
 	if port := common.CheckPort(blogConfig.Port); port != ":80" {
 		host += port
@@ -91,7 +89,7 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 	previewTmpl := "blog/preview"
 	switch args := blogConfig.Args; len(args) {
 	default:
-		blogConfig.Logger.Info("MakeBlogPage should be called with 0 to 4 optional arguments.")
+		logger.Info("MakeBlogPage should be called with 0 to 4 optional arguments.")
 		fallthrough
 	case 4:
 		if args[3] != "" {
@@ -117,13 +115,13 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 
 	p := web.MakePage(blogName)
 	p.Widget = blogWidget{
-		listHandler: web.CreateTemplate(tracer, "blogWidget/listHandler", func(data gin.H, c *gin.Context) (string, string) {
-			logger := web.GetLogger(c)
+		listHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
+			ctx := c.Request.Context()
 			userId, _ := data[common.IdName].(uint64)
 
 			pageNumber, start, end, filter := common.GetPagination(defaultPageSize, c)
 
-			total, posts, err := blogService.GetPosts(logger, userId, start, end, filter)
+			total, posts, err := blogService.GetPosts(ctx, userId, start, end, filter)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
@@ -132,12 +130,13 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 
 			common.InitPagination(data, filter, pageNumber, end, total)
 			data["Posts"] = posts
-			data[common.AllowedToCreateName] = blogService.CreateRight(logger, userId)
-			data[common.AllowedToDeleteName] = blogService.DeleteRight(logger, userId)
+			data[common.AllowedToCreateName] = blogService.CreateRight(ctx, userId) == nil
+			data[common.AllowedToDeleteName] = blogService.DeleteRight(ctx, userId) == nil
 			web.InitNoELementMsg(data, len(posts), c)
 			return listTmpl, ""
 		}),
-		viewHandler: web.CreateTemplate(tracer, "blogWidget/viewHandler", func(data gin.H, c *gin.Context) (string, string) {
+		viewHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
+			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
 			userId, _ := data[common.IdName].(uint64)
 
@@ -145,16 +144,16 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 
 			postId, err := strconv.ParseUint(c.Param(postIdName), 10, 64)
 			if err != nil {
-				logger.Warn(parsingPostIdErrorMsg, zap.Error(err))
+				logger.Warn(parsingPostIdErrorMsg, common.ErrorKey, err)
 				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
 			}
 
-			post, err := blogService.GetPost(logger, userId, postId)
+			post, err := blogService.GetPost(ctx, userId, postId)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
 
-			total, comments, err := commentService.GetCommentThread(logger, userId, post.Title, start, end)
+			total, comments, err := commentService.GetCommentThread(ctx, userId, post.Title, start, end)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
@@ -163,8 +162,8 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 			data[common.BaseUrlName] = common.GetBaseUrl(2, c)
 			data["Post"] = post
 			data["Comments"] = comments
-			data[common.AllowedToCreateName] = commentService.CreateMessageRight(logger, userId)
-			data[common.AllowedToDeleteName] = commentService.DeleteRight(logger, userId)
+			data[common.AllowedToCreateName] = commentService.CreateMessageRight(ctx, userId) == nil
+			data[common.AllowedToDeleteName] = commentService.DeleteRight(ctx, userId) == nil
 			if len(comments) == 0 {
 				if err == nil {
 					data[commentMsgName] = "NoComment"
@@ -174,26 +173,27 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 			}
 			return viewTmpl, ""
 		}),
-		saveCommentHandler: common.CreateRedirect(tracer, "blogWidget/saveCommentHandler", func(c *gin.Context) string {
+		saveCommentHandler: common.CreateRedirect(func(c *gin.Context) string {
+			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
 			userId := web.GetSessionUserId(c)
 
 			postId, err := strconv.ParseUint(c.Param(postIdName), 10, 64)
 			if err != nil {
-				logger.Warn(parsingPostIdErrorMsg, zap.Error(err))
+				logger.Warn(parsingPostIdErrorMsg, common.ErrorKey, err)
 				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
 			}
 			comment := c.PostForm("comment")
 
 			err = errEmptyComment
 			if comment != "" {
-				var post service.BlogPost
-				post, err = blogService.GetPost(logger, userId, postId)
+				var post blogservice.BlogPost
+				post, err = blogService.GetPost(ctx, userId, postId)
 				if err != nil {
 					return common.DefaultErrorRedirect(err.Error())
 				}
 
-				err = commentService.CreateComment(logger, userId, post.Title, comment)
+				err = commentService.CreateComment(ctx, userId, post.Title, comment)
 			}
 
 			targetBuilder := postUrlBuilder(common.GetBaseUrl(3, c), postId)
@@ -202,38 +202,39 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 			}
 			return targetBuilder.String()
 		}),
-		deleteCommentHandler: common.CreateRedirect(tracer, "blogWidget/deleteCommentHandler", func(c *gin.Context) string {
+		deleteCommentHandler: common.CreateRedirect(func(c *gin.Context) string {
+			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
 			userId := web.GetSessionUserId(c)
 
 			postId, err := strconv.ParseUint(c.Param(postIdName), 10, 64)
 			if err != nil {
-				logger.Warn(parsingPostIdErrorMsg, zap.Error(err))
+				logger.Warn(parsingPostIdErrorMsg, common.ErrorKey, err)
 				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
 			}
 			commentId, err := strconv.ParseUint(c.Param("commentId"), 10, 64)
 			if err != nil {
-				logger.Warn("Failed to parse commentId", zap.Error(err))
+				logger.Warn("Failed to parse commentId", common.ErrorKey, err)
 				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
 			}
 
-			post, err := blogService.GetPost(logger, userId, postId)
+			post, err := blogService.GetPost(ctx, userId, postId)
 			if err != nil {
 				return common.DefaultErrorRedirect(err.Error())
 			}
 
-			err = commentService.DeleteComment(logger, userId, post.Title, commentId)
+			err = commentService.DeleteComment(ctx, userId, post.Title, commentId)
 			targetBuilder := postUrlBuilder(common.GetBaseUrl(4, c), postId)
 			if err != nil {
 				common.WriteError(targetBuilder, err.Error())
 			}
 			return targetBuilder.String()
 		}),
-		createHandler: web.CreateTemplate(tracer, "blogWidget/createHandler", func(data gin.H, c *gin.Context) (string, string) {
+		createHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			data[common.BaseUrlName] = common.GetBaseUrl(1, c)
 			return createTmpl, ""
 		}),
-		previewHandler: web.CreateTemplate(tracer, "blogWidget/previewHandler", func(data gin.H, c *gin.Context) (string, string) {
+		previewHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			title := c.PostForm("title")
 			markdown := c.PostForm("markdown")
 
@@ -244,7 +245,7 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 				return "", common.DefaultErrorRedirect(emptyContent)
 			}
 
-			html, err := markdownService.Apply(web.GetLogger(c), markdown)
+			html, err := markdownService.Apply(c.Request.Context(), markdown)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
@@ -255,8 +256,8 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 			data["PreviewHTML"] = html
 			return previewTmpl, ""
 		}),
-		saveHandler: common.CreateRedirect(tracer, "blogWidget/saveHandler", func(c *gin.Context) string {
-			logger := web.GetLogger(c)
+		saveHandler: common.CreateRedirect(func(c *gin.Context) string {
+			ctx := c.Request.Context()
 			title := c.PostForm("title")
 			userId := web.GetSessionUserId(c)
 			markdown := c.PostForm("markdown")
@@ -268,56 +269,58 @@ func MakeBlogPage(blogName string, blogConfig config.BlogConfig) web.Page {
 				return common.DefaultErrorRedirect(emptyContent)
 			}
 
-			html, err := markdownService.Apply(logger, markdown)
+			html, err := markdownService.Apply(ctx, markdown)
 			if err != nil {
 				return common.DefaultErrorRedirect(err.Error())
 			}
 
-			postId, err := blogService.CreatePost(logger, userId, title, string(html))
+			postId, err := blogService.CreatePost(ctx, userId, title, string(html))
 			if err != nil {
 				return common.DefaultErrorRedirect(err.Error())
 			}
 
-			err = commentService.CreateCommentThread(logger, userId, title)
+			err = commentService.CreateCommentThread(ctx, userId, title)
 			if err != nil {
 				return common.DefaultErrorRedirect(err.Error())
 			}
 			return postUrlBuilder(common.GetBaseUrl(1, c), postId).String()
 		}),
-		deleteHandler: common.CreateRedirect(tracer, "blogWidget/deleteHandler", func(c *gin.Context) string {
+		deleteHandler: common.CreateRedirect(func(c *gin.Context) string {
+			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
 			var targetBuilder strings.Builder
 			targetBuilder.WriteString(common.GetBaseUrl(2, c))
 
 			postId, err := strconv.ParseUint(c.Param(postIdName), 10, 64)
 			if err != nil {
-				logger.Warn(parsingPostIdErrorMsg, zap.Error(err))
+				logger.Warn(parsingPostIdErrorMsg, common.ErrorKey, err)
 				common.WriteError(&targetBuilder, common.ErrorTechnicalKey)
 				return targetBuilder.String()
 			}
 			userId := web.GetSessionUserId(c)
 
-			post, err := blogService.GetPost(logger, userId, postId)
+			post, err := blogService.GetPost(ctx, userId, postId)
 			if err != nil {
 				common.WriteError(&targetBuilder, err.Error())
 				return targetBuilder.String()
 			}
 
-			if err = blogService.DeletePost(logger, userId, postId); err != nil {
+			if err = blogService.DeletePost(ctx, userId, postId); err != nil {
 				common.WriteError(&targetBuilder, err.Error())
 				return targetBuilder.String()
 			}
 
-			if err = commentService.DeleteCommentThread(logger, userId, post.Title); err != nil {
+			if err = commentService.DeleteCommentThread(ctx, userId, post.Title); err != nil {
 				common.WriteError(&targetBuilder, err.Error())
 			}
 			return targetBuilder.String()
 		}),
 		rssHandler: func(c *gin.Context) {
+			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
 			userId := web.GetSessionUserId(c)
 
-			_, posts, err := blogService.GetPosts(logger, userId, 0, feedSize, "")
+			_, posts, err := blogService.GetPosts(ctx, userId, 0, feedSize, "")
 			if err != nil {
 				status := http.StatusInternalServerError
 				if err == common.ErrNotAuthorized {
@@ -349,13 +352,13 @@ func postUrlBuilder(base string, postId uint64) *strings.Builder {
 	return targetBuilder
 }
 
-func filterPostsExtract(posts []service.BlogPost, extractSize uint64) {
+func filterPostsExtract(posts []blogservice.BlogPost, extractSize uint64) {
 	for index := range posts {
 		posts[index].Content = common.FilterExtractHtml(string(posts[index].Content), extractSize)
 	}
 }
 
-func buildFeed(posts []service.BlogPost, blogTitle string, baseUrl string, dateFormat string, extractSize uint64, feedFormat string) ([]byte, error) {
+func buildFeed(posts []blogservice.BlogPost, blogTitle string, baseUrl string, dateFormat string, extractSize uint64, feedFormat string) ([]byte, error) {
 	feedData := feeds.Feed{
 		Title:   blogTitle,
 		Link:    &feeds.Link{Href: baseUrl},

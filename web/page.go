@@ -27,10 +27,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/dvaumoron/puzzleweaver/web/templates"
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 type Widget interface {
@@ -67,18 +64,19 @@ func (w *staticWidget) LoadInto(router gin.IRouter) {
 	}
 }
 
-func localizedTemplate(groupId uint64, templateName string) common.TemplateRedirecter {
+func localizedTemplate(loggerGetter common.LoggerGetter, groupId uint64, templateName string) common.TemplateRedirecter {
 	return func(data gin.H, c *gin.Context) (string, string) {
 		site := getSite(c)
-		logger := site.logger.Ctx(c.Request.Context())
+		ctx := c.Request.Context()
+		logger := loggerGetter.Logger(ctx)
 		userId, _ := data[common.IdName].(uint64)
-		err := site.authService.AuthQuery(logger, userId, groupId, adminservice.ActionAccess)
+		err := site.authService.AuthQuery(ctx, userId, groupId, adminservice.ActionAccess)
 		if err != nil {
 			return "", common.DefaultErrorRedirect(err.Error())
 		}
 		localesManager := GetLocalesManager(c)
 		if lang := localesManager.GetLang(c); lang != localesManager.GetDefaultLang() {
-			logger.Info("Using alternative static page", zap.String(locale.LangName, lang))
+			logger.Info("Using alternative static page", locale.LangName, lang)
 			var builder strings.Builder
 			builder.WriteString(lang)
 			builder.WriteByte('/')
@@ -89,19 +87,19 @@ func localizedTemplate(groupId uint64, templateName string) common.TemplateRedir
 	}
 }
 
-func newStaticWidget(tracer trace.Tracer, groupId uint64, templateName string) *staticWidget {
-	return &staticWidget{displayHandler: CreateTemplate(tracer, "staticWidget/displayHandler", localizedTemplate(groupId, templateName))}
+func newStaticWidget(loggerGetter common.LoggerGetter, groupId uint64, templateName string) *staticWidget {
+	return &staticWidget{displayHandler: CreateTemplate(localizedTemplate(loggerGetter, groupId, templateName))}
 }
 
-func MakeStaticPage(tracer trace.Tracer, name string, groupId uint64, templateName string) Page {
+func MakeStaticPage(loggerGetter common.LoggerGetter, name string, groupId uint64, templateName string) Page {
 	p := MakePage(name)
-	p.Widget = newStaticWidget(tracer, groupId, templateName)
+	p.Widget = newStaticWidget(loggerGetter, groupId, templateName)
 	return p
 }
 
-func MakeHiddenStaticPage(tracer trace.Tracer, name string, groupId uint64, templateName string) Page {
+func MakeHiddenStaticPage(loggerGetter common.LoggerGetter, name string, groupId uint64, templateName string) Page {
 	p := MakeHiddenPage(name)
-	p.Widget = newStaticWidget(tracer, groupId, templateName)
+	p.Widget = newStaticWidget(loggerGetter, groupId, templateName)
 	return p
 }
 
@@ -112,14 +110,14 @@ func (p Page) AddSubPage(page Page) {
 	}
 }
 
-func (p Page) AddStaticPages(logger otelzap.LoggerWithCtx, tracer trace.Tracer, groupId uint64, pagePaths []string) {
+func (p Page) AddStaticPages(loggerGetter common.LoggerGetter, groupId uint64, pagePaths []string) {
 	for _, pagePath := range pagePaths {
 		if last := len(pagePath) - 1; pagePath[last] == '/' {
 			subPage, name := p.extractSubPageAndNameFromPath(pagePath[:last])
-			subPage.AddSubPage(MakeStaticPage(tracer, name, groupId, pagePath+"index"))
+			subPage.AddSubPage(MakeStaticPage(loggerGetter, name, groupId, pagePath+"index"))
 		} else {
 			subPage, name := p.extractSubPageAndNameFromPath(pagePath)
-			subPage.AddSubPage(MakeStaticPage(tracer, name, groupId, pagePath))
+			subPage.AddSubPage(MakeStaticPage(loggerGetter, name, groupId, pagePath))
 		}
 	}
 }
@@ -161,11 +159,9 @@ func (p Page) extractSubPageAndNameFromPath(path string) (Page, string) {
 	return resPage, splitted[last]
 }
 
-func CreateTemplate(tracer trace.Tracer, spanName string, redirecter common.TemplateRedirecter) gin.HandlerFunc {
+func CreateTemplate(redirecter common.TemplateRedirecter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		_, span := tracer.Start(ctx, spanName)
-		defer span.End()
 		data := initData(c)
 		tmpl, redirect := redirecter(data, c)
 		if redirect == "" {

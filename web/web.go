@@ -23,15 +23,13 @@ import (
 	"net/http"
 	"time"
 
-	adminservice "github.com/dvaumoron/puzzleweaver/web/admin/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/dvaumoron/puzzleweaver/web/templates"
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -40,26 +38,24 @@ const siteName = "Site"
 const unknownUserKey = "ErrorUnknownUser"
 
 type Site struct {
-	logger         *otelzap.Logger
-	tracer         trace.Tracer
+	loggerGetter   common.LoggerGetter
 	localesManager locale.Manager
-	authService    adminservice.AuthService
+	authService    service.AuthService
 	timeOut        time.Duration
 	root           Page
 	adders         []common.DataAdder
 }
 
-func NewSite(configExtracter config.BaseConfigExtracter, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
-	tracer := configExtracter.GetTracer()
+func NewSite(loggerGetter common.LoggerGetter, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
 	adminConfig := configExtracter.ExtractAdminConfig()
-	root := MakeStaticPage(tracer, "root", adminservice.PublicGroupId, "index")
+	root := MakeStaticPage(loggerGetter, "root", service.PublicGroupId, "index")
 	root.AddSubPage(newLoginPage(configExtracter.ExtractLoginConfig(), settingsManager))
 	root.AddSubPage(newAdminPage(adminConfig))
 	root.AddSubPage(newSettingsPage(config.MakeServiceConfig(configExtracter, settingsManager)))
 	root.AddSubPage(newProfilePage(configExtracter.ExtractProfileConfig()))
 
 	return &Site{
-		logger: configExtracter.GetLogger(), tracer: tracer, localesManager: localesManager,
+		loggerGetter: loggerGetter, localesManager: localesManager,
 		authService: adminConfig.Service, timeOut: configExtracter.GetServiceTimeOut(), root: root,
 	}
 }
@@ -68,8 +64,8 @@ func (site *Site) AddPage(page Page) {
 	site.root.AddSubPage(page)
 }
 
-func (site *Site) AddStaticPages(logger otelzap.LoggerWithCtx, groupId uint64, pagePaths []string) {
-	site.root.AddStaticPages(logger, site.tracer, groupId, pagePaths)
+func (site *Site) AddStaticPages(loggerGetter common.LoggerGetter, groupId uint64, pagePaths []string) {
+	site.root.AddStaticPages(loggerGetter, groupId, pagePaths)
 }
 
 func (site *Site) GetPage(name string) (Page, bool) {
@@ -167,12 +163,11 @@ func changeLangRedirecter(c *gin.Context) string {
 	return c.Query(common.RedirectName)
 }
 
-func BuildDefaultSite(serviceName string, version string) (*Site, *config.GlobalConfig, trace.Span) {
-	globalConfig, initSpan := config.LoadDefault(serviceName, version)
+func BuildDefaultSite(globalConfig *config.GlobalConfig) *Site {
 	localesManager := locale.NewManager(globalConfig.ExtractLocalesConfig())
 	settingsManager := NewSettingsManager(globalConfig.ExtractSettingsConfig())
 
 	site := NewSite(globalConfig, localesManager, settingsManager)
 
-	return site, globalConfig, initSpan
+	return site
 }

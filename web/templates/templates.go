@@ -22,9 +22,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/dvaumoron/puzzleweaver/web/config"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/gin-gonic/gin/render"
 )
+
+const contentTypeName = "Content-Type"
+
+var htmlContentType = []string{"text/html; charset=utf-8"}
 
 type ContextAndData struct {
 	Ctx  context.Context
@@ -33,27 +37,20 @@ type ContextAndData struct {
 
 // match Render interface from gin.
 type remoteHTML struct {
-	config.TemplateConfig
-	ctx          context.Context
-	templateName string
-	data         any
+	templateService service.TemplateService
+	dataWithCtx     ContextAndData
+	templateName    string
 }
 
 func (r remoteHTML) Render(w http.ResponseWriter) error {
 	r.WriteContentType(w)
-	templateConfig := r.TemplateConfig
-	logger := templateConfig.Logger.Ctx(r.ctx)
-	content, err := templateConfig.Service.Render(logger, r.templateName, r.data)
+	content, err := r.templateService.Render(r.dataWithCtx.Ctx, r.templateName, r.dataWithCtx.Data)
 	if err != nil {
 		return err
 	}
 	_, err = w.Write(content)
 	return err
 }
-
-const contentTypeName = "Content-Type"
-
-var htmlContentType = []string{"text/html; charset=utf-8"}
 
 // Writes HTML ContentType.
 func (r remoteHTML) WriteContentType(w http.ResponseWriter) {
@@ -65,14 +62,14 @@ func (r remoteHTML) WriteContentType(w http.ResponseWriter) {
 
 // match HTMLRender interface from gin.
 type remoteHTMLRender struct {
-	config.TemplateConfig
+	templateService service.TemplateService
 }
 
 func (r remoteHTMLRender) Instance(name string, dataWithCtx any) render.Render {
-	ctxData := dataWithCtx.(ContextAndData)
-	return remoteHTML{TemplateConfig: r.TemplateConfig, ctx: ctxData.Ctx, templateName: name, data: ctxData.Data}
+	casted := dataWithCtx.(ContextAndData)
+	return remoteHTML{templateService: r.templateService, dataWithCtx: casted, templateName: name}
 }
 
-func NewServiceRender(templateConfig config.TemplateConfig) render.HTMLRender {
-	return remoteHTMLRender{TemplateConfig: templateConfig}
+func NewServiceRender(templateService service.TemplateService) render.HTMLRender {
+	return remoteHTMLRender{templateService: templateService}
 }

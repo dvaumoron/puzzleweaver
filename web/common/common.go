@@ -77,10 +77,8 @@ func CheckPort(port string) string {
 	return port
 }
 
-func CreateRedirect(tracer trace.Tracer, spanName string, redirecter Redirecter) gin.HandlerFunc {
+func CreateRedirect(redirecter Redirecter) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, span := tracer.Start(c.Request.Context(), spanName)
-		defer span.End()
 		c.Redirect(http.StatusFound, checkTarget(redirecter(c)))
 	}
 }
