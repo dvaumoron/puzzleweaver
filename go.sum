@@ -27,16 +27,10 @@ github.com/dvaumoron/puzzleblogservice v1.1.0 h1:EbV2WKZxmdPaXMsh78nDDZr/KVpJskM
 github.com/dvaumoron/puzzleblogservice v1.1.0/go.mod h1:G7aZYaJHItf4DM5kXehMXwOYTcUl75sH/k8fZ/QBj10=
 github.com/dvaumoron/puzzleforumservice v1.4.0 h1:39BTgVB7A6bev/Jo0V3O4RSusK/jlJ97fwmr1/iGsTE=
 github.com/dvaumoron/puzzleforumservice v1.4.0/go.mod h1:cCNSZOUMidXTNIrNjfTRYduK+A3oa4B6YEGEKbvwkPg=
-github.com/dvaumoron/puzzlegrpcclient v1.1.0 h1:FirORKqitknzDZT4FW+adojbOh1sGwCyMtOyLb1d1dA=
-github.com/dvaumoron/puzzlegrpcclient v1.1.0/go.mod h1:xRuvsrprB2H9highjS6vS/kEvPTcN9oB/RoB9JySEMc=
 github.com/dvaumoron/puzzleloginservice v1.7.0 h1:o5W2j/rbUeSctEe8+yDc49/3R5vzfwtOVH9Lse5BFpc=
 github.com/dvaumoron/puzzleloginservice v1.7.0/go.mod h1:K/m2nN30p+uAJamWT85Vh1Mtea7+ahSz+fnIughCok0=
 github.com/dvaumoron/puzzleprofileservice v1.2.0 h1:zg7KCjU7nqG8yJTQZ3cXb/Dl8J9LlJVUH0plJeF8FZs=
 github.com/dvaumoron/puzzleprofileservice v1.2.0/go.mod h1:E75JbpF/o5L52ifNN8QYaFK5zDviHJnPl2jiq4QBmJ8=
-github.com/dvaumoron/puzzlesessionservice v1.2.0 h1:SHAZnBgSyCtyLJI69lQIX+MbKoR3vv+/PO4m5hafymQ=
-github.com/dvaumoron/puzzlesessionservice v1.2.0/go.mod h1:VB2EkzytHS7t6A6pCRl/Pu80VnwHcGlRNcXx9Zkmicg=
-github.com/dvaumoron/puzzletemplateservice v1.0.0 h1:E4AqIPgSaunOAuA10pKxKe5M7M/wKwia9r7FUYnVfdE=
-github.com/dvaumoron/puzzletemplateservice v1.0.0/go.mod h1:UkhiUqU6AsZnvOP/bYl8IrCq38D4Raw+9ewNH7nO0N8=
 github.com/dvaumoron/puzzleweb v1.8.5 h1:IWKfLq8INivq+FZYlN2nv3cVeGjufqtcMu5LEeNvZFY=
 github.com/dvaumoron/puzzleweb v1.8.5/go.mod h1:QUGBLSHbmWAxTmGG6blIUSWHK5KB72vD4dbZVnh5VZ4=
 github.com/dvaumoron/puzzlewidgetservice v1.2.0 h1:emjrpOqV3o9vwU9+I3dg1jT4QegxM83B7/UOg47FiJE=

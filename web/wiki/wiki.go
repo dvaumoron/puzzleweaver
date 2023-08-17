@@ -24,9 +24,12 @@ import (
 
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
+	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/exp/slog"
 )
 
 const versionName = "version"
@@ -56,18 +59,14 @@ func (w wikiWidget) LoadInto(router gin.IRouter) {
 	router.GET("/:lang/delete/:title", w.deleteHandler)
 }
 
-func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
-	tracer := wikiConfig.Tracer
-	wikiService := wikiConfig.Service
-	markdownService := wikiConfig.MarkdownService
-
+func MakeWikiPage(wikiName string, logger *slog.Logger, wikiService wikiservice.WikiService, markdownService service.MarkdownService, wikiConfig config.WikiConfig) web.Page {
 	defaultPage := "Welcome"
 	viewTmpl := "wiki/view"
 	editTmpl := "wiki/edit"
 	listTmpl := "wiki/list"
 	switch args := wikiConfig.Args; len(args) {
 	default:
-		wikiConfig.Logger.Info("MakeWikiPage should be called with 0 to 4 optional arguments.")
+		logger.Info("MakeWikiPage should be called with 0 to 4 optional arguments.")
 		fallthrough
 	case 4:
 		if args[3] != "" {
@@ -93,15 +92,16 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 
 	p := web.MakePage(wikiName)
 	p.Widget = wikiWidget{
-		defaultHandler: common.CreateRedirect(tracer, "wikiWidget/defaultHandler", func(c *gin.Context) string {
-			lang := web.GetLocalesManager(c).GetLang(c)
+		defaultHandler: common.CreateRedirect(func(c *gin.Context) string {
+			lang := web.GetLocalesManager(c).GetLang(web.GetLogger(c), c)
 			return wikiUrlBuilder(common.GetCurrentUrl(c), lang, viewMode, defaultPage).String()
 		}),
-		viewHandler: web.CreateTemplate(tracer, "wikiWidget/viewHandler", func(data gin.H, c *gin.Context) (string, string) {
+		viewHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
+			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
 			askedLang := c.Param(locale.LangName)
 			title := c.Param(titleName)
-			lang := web.GetLocalesManager(c).CheckLang(askedLang)
+			lang := web.GetLocalesManager(c).CheckLang(logger, askedLang)
 
 			if lang != askedLang {
 				targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, viewMode, title)
@@ -111,7 +111,7 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 
 			userId, _ := data[common.IdName].(uint64)
 			version := c.Query(versionName)
-			content, err := wikiService.LoadContent(logger, userId, lang, title, version)
+			content, err := wikiService.LoadContent(ctx, userId, lang, title, version)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
@@ -124,7 +124,7 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 				return "", wikiUrlBuilder(base, lang, viewMode, title).String()
 			}
 
-			body, err := content.GetBody(logger, markdownService)
+			body, err := content.GetBody(ctx, markdownService)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
@@ -137,11 +137,11 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 			data[wikiContentName] = body
 			return viewTmpl, ""
 		}),
-		editHandler: web.CreateTemplate(tracer, "wikiWidget/editHandler", func(data gin.H, c *gin.Context) (string, string) {
+		editHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			logger := web.GetLogger(c)
 			askedLang := c.Param(locale.LangName)
 			title := c.Param(titleName)
-			lang := web.GetLocalesManager(c).CheckLang(askedLang)
+			lang := web.GetLocalesManager(c).CheckLang(logger, askedLang)
 
 			if lang != askedLang {
 				targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, viewMode, title)
@@ -150,7 +150,7 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 			}
 
 			userId, _ := data[common.IdName].(uint64)
-			content, err := wikiService.LoadContent(logger, userId, lang, title, "")
+			content, err := wikiService.LoadContent(c.Request.Context(), userId, lang, title, "")
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
@@ -165,10 +165,10 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 			}
 			return editTmpl, ""
 		}),
-		saveHandler: common.CreateRedirect(tracer, "wikiWidget/saveHandler", func(c *gin.Context) string {
+		saveHandler: common.CreateRedirect(func(c *gin.Context) string {
 			logger := web.GetLogger(c)
 			askedLang := c.Param(locale.LangName)
-			lang := web.GetLocalesManager(c).CheckLang(askedLang)
+			lang := web.GetLocalesManager(c).CheckLang(logger, askedLang)
 			title := c.Param(titleName)
 
 			targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, viewMode, title)
@@ -181,7 +181,7 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 			last := c.PostForm(versionName)
 			content := c.PostForm("content")
 
-			success, err := wikiService.StoreContent(logger, userId, lang, title, last, content)
+			success, err := wikiService.StoreContent(c.Request.Context(), userId, lang, title, last, content)
 			if err != nil {
 				common.WriteError(targetBuilder, err.Error())
 				return targetBuilder.String()
@@ -191,10 +191,11 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 			}
 			return targetBuilder.String()
 		}),
-		listHandler: web.CreateTemplate(tracer, "wikiWidget/listHandler", func(data gin.H, c *gin.Context) (string, string) {
+		listHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
+			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
 			askedLang := c.Param(locale.LangName)
-			lang := web.GetLocalesManager(c).CheckLang(askedLang)
+			lang := web.GetLocalesManager(c).CheckLang(logger, askedLang)
 			title := c.Param(titleName)
 
 			targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, listMode, title)
@@ -204,7 +205,7 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 			}
 
 			userId, _ := data[common.IdName].(uint64)
-			versions, err := wikiService.GetVersions(logger, userId, lang, title)
+			versions, err := wikiService.GetVersions(ctx, userId, lang, title)
 			if err != nil {
 				common.WriteError(targetBuilder, err.Error())
 				return "", targetBuilder.String()
@@ -213,14 +214,14 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 			data[wikiTitleName] = title
 			data[versionsName] = versions
 			data[common.BaseUrlName] = common.GetBaseUrl(2, c)
-			data[common.AllowedToDeleteName] = wikiService.DeleteRight(logger, userId)
+			data[common.AllowedToDeleteName] = wikiService.DeleteRight(ctx, userId)
 			web.InitNoELementMsg(data, len(versions), c)
 			return listTmpl, ""
 		}),
-		deleteHandler: common.CreateRedirect(tracer, "wikiWidget/deleteHandler", func(c *gin.Context) string {
+		deleteHandler: common.CreateRedirect(func(c *gin.Context) string {
 			logger := web.GetLogger(c)
 			askedLang := c.Param(locale.LangName)
-			lang := web.GetLocalesManager(c).CheckLang(askedLang)
+			lang := web.GetLocalesManager(c).CheckLang(logger, askedLang)
 			title := c.Param(titleName)
 
 			targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, listMode, title)
@@ -231,7 +232,7 @@ func MakeWikiPage(wikiName string, wikiConfig config.WikiConfig) web.Page {
 
 			userId := web.GetSessionUserId(c)
 			version := c.Query(versionName)
-			err := wikiService.DeleteContent(logger, userId, lang, title, version)
+			err := wikiService.DeleteContent(c.Request.Context(), userId, lang, title, version)
 			if err != nil {
 				common.WriteError(targetBuilder, err.Error())
 			}

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweb authors.
+ * Copyright 2023 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,68 +19,34 @@
 package sessionimpl
 
 import (
-	grpcclient "github.com/dvaumoron/puzzlegrpcclient"
-	pb "github.com/dvaumoron/puzzlesessionservice"
-	"github.com/dvaumoron/puzzleweb/common"
-	"github.com/dvaumoron/puzzleweb/session/service"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"google.golang.org/grpc"
+	"context"
+
+	"github.com/ServiceWeaver/weaver"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-type sessionClient struct {
-	grpcclient.Client
+// check matching with interface
+var _ service.SessionService = &sessionImpl{}
+
+type sessionImpl struct {
+	weaver.Implements[service.SessionService]
 }
 
-func New(serviceAddr string, dialOptions []grpc.DialOption) service.SessionService {
-	return sessionClient{Client: grpcclient.Make(serviceAddr, dialOptions...)}
+func (impl sessionImpl) Generate(ctx context.Context) (uint64, error) {
+	// TODO
+	return 0, nil
 }
 
-func (client sessionClient) Generate(logger otelzap.LoggerWithCtx) (uint64, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return 0, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewSessionClient(conn).Generate(
-		logger.Context(), &pb.SessionInfo{Info: map[string]string{}},
-	)
-	if err != nil {
-		return 0, common.LogOriginalError(logger, err)
-	}
-	return response.Id, nil
+func (impl sessionImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
+	// TODO
+	return nil, nil
 }
 
-func (client sessionClient) Get(logger otelzap.LoggerWithCtx, id uint64) (map[string]string, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewSessionClient(conn).GetSessionInfo(
-		logger.Context(), &pb.SessionId{Id: id},
-	)
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	return response.Info, nil
-}
-
-func (client sessionClient) Update(logger otelzap.LoggerWithCtx, id uint64, info map[string]string) error {
-	conn, err := client.Dial()
-	if err != nil {
-		common.LogOriginalError(logger, err)
-		return common.ErrTechnical
-	}
-	defer conn.Close()
-
-	response, err := pb.NewSessionClient(conn).UpdateSessionInfo(logger.Context(), &pb.SessionUpdate{Id: id, Info: info})
-	if err != nil {
-		common.LogOriginalError(logger, err)
-		return common.ErrTechnical
-	}
-	if !response.Success {
+func (impl sessionImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
+	success := true
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil

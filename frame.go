@@ -78,6 +78,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 	site := web.BuildDefaultSite(globalConfig)
 	ctxLogger := app.Logger(ctx)
 
+	// TODO read config from weaver toml
 	frameConfigBody, err := os.ReadFile(os.Getenv("FRAME_CONFIG_PATH"))
 	if err != nil {
 		ctxLogger.Error("Failed to read frame configuration file", common.ErrorKey, err)
@@ -113,7 +114,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		}
 
 		widgetPage := makeWidgetPage(
-			asString("widgetPage.name", castedWidgetPage["name"], ctxLogger), app, ctx, globalConfig,
+			app, asString("widgetPage.name", castedWidgetPage["name"], ctxLogger), app, ctx, globalConfig,
 			widgets[asString("widgetPage.widgetRef", castedWidgetPage["widgetRef"], ctxLogger)],
 		)
 
@@ -131,7 +132,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 	return site.Run(siteConfig)
 }
 
-func makeWidgetPage(pageName string, loggerGetter common.LoggerGetter, ctx context.Context, globalConfig *config.GlobalConfig, widgetConfig any) web.Page {
+func makeWidgetPage(app *frameApp, pageName string, loggerGetter common.LoggerGetter, ctx context.Context, globalConfig *config.GlobalConfig, widgetConfig any) web.Page {
 	ctxLogger := loggerGetter.Logger(ctx)
 	castedConfig := asMap("widget", widgetConfig, ctxLogger)
 
@@ -140,17 +141,23 @@ func makeWidgetPage(pageName string, loggerGetter common.LoggerGetter, ctx conte
 		forumId := asUint64("widget.forumId", castedConfig["forumId"], ctxLogger)
 		groupId := asUint64("widget.groupId", castedConfig["groupId"], ctxLogger)
 		args := asStringSlice("widget.templates", castedConfig["templates"], ctxLogger)
-		return forum.MakeForumPage(pageName, globalConfig.CreateForumConfig(forumId, groupId, args...))
+		return forum.MakeForumPage(pageName, ctxLogger, app.forumService.Get(), globalConfig.CreateForumConfig(forumId, groupId, args...))
 	case "blog":
 		blogId := asUint64("widget.blogId", castedConfig["blogId"], ctxLogger)
 		groupId := asUint64("widget.groupId", castedConfig["groupId"], ctxLogger)
 		args := asStringSlice("widget.templates", castedConfig["templates"], ctxLogger)
-		return blog.MakeBlogPage(pageName, globalConfig.CreateBlogConfig(blogId, groupId, args...))
+		return blog.MakeBlogPage(
+			pageName, ctxLogger, app.blogService.Get(), app.forumService.Get(), app.markdownService.Get(),
+			globalConfig.CreateBlogConfig(blogId, groupId, args...),
+		)
 	case "wiki":
 		wikiId := asUint64("widget.wikiId", castedConfig["wikiId"], ctxLogger)
 		groupId := asUint64("widget.groupId", castedConfig["groupId"], ctxLogger)
 		args := asStringSlice("widget.templates", castedConfig["templates"], ctxLogger)
-		return wiki.MakeWikiPage(pageName, globalConfig.CreateWikiConfig(wikiId, groupId, args...))
+		return wiki.MakeWikiPage(
+			pageName, ctxLogger, app.wikiService.Get(), app.markdownService.Get(),
+			globalConfig.CreateWikiConfig(wikiId, groupId, args...),
+		)
 	case "remote":
 		serviceAddr := asString("widget.serviceAddr", castedConfig["serviceAddr"], ctxLogger)
 		widgetName := asString("widget.widgetName", castedConfig["widgetName"], ctxLogger)

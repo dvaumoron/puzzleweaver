@@ -75,7 +75,7 @@ func localizedTemplate(loggerGetter common.LoggerGetter, groupId uint64, templat
 			return "", common.DefaultErrorRedirect(err.Error())
 		}
 		localesManager := GetLocalesManager(c)
-		if lang := localesManager.GetLang(c); lang != localesManager.GetDefaultLang() {
+		if lang := localesManager.GetLang(logger, c); lang != localesManager.GetDefaultLang() {
 			logger.Info("Using alternative static page", locale.LangName, lang)
 			var builder strings.Builder
 			builder.WriteString(lang)

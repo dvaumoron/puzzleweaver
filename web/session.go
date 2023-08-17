@@ -24,10 +24,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dvaumoron/puzzleweaver/web/config"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"go.uber.org/zap"
 )
 
 const cookieName = "pw_session_id"
@@ -35,30 +34,34 @@ const SessionName = "Session"
 
 var errDecodeTooShort = errors.New("the result from base64 decoding is too short")
 
-type sessionManager config.SessionConfig
-
-func makeSessionManager(sessionConfig config.SessionConfig) sessionManager {
-	return sessionManager(sessionConfig)
+type sessionManager struct {
+	sessionService service.SessionService
+	timeOut        int
+	domain         string
 }
 
-func (m sessionManager) getSessionId(logger otelzap.LoggerWithCtx, c *gin.Context) (uint64, error) {
+func makeSessionManager(sessionService service.SessionService, timeOut int, domain string) sessionManager {
+	return sessionManager{sessionService: sessionService, timeOut: timeOut, domain: domain}
+}
+
+func (m sessionManager) getSessionId(c *gin.Context) (uint64, error) {
 	cookie, err := c.Cookie(cookieName)
 	if err != nil {
-		logger.Info("Failed to retrieve session cookie", zap.Error(err))
-		return m.generateSessionCookie(logger, c)
+		GetLogger(c).Info("Failed to retrieve session cookie", common.ErrorKey, err)
+		return m.generateSessionCookie(c)
 	}
 	sessionId, err := decodeFromBase64(cookie)
 	if err != nil {
-		logger.Info("Failed to parse session cookie", zap.Error(err))
-		return m.generateSessionCookie(logger, c)
+		GetLogger(c).Info("Failed to parse session cookie", common.ErrorKey, err)
+		return m.generateSessionCookie(c)
 	}
 	// refreshing cookie
 	m.setSessionCookie(sessionId, c)
 	return sessionId, nil
 }
 
-func (m sessionManager) generateSessionCookie(logger otelzap.LoggerWithCtx, c *gin.Context) (uint64, error) {
-	sessionId, err := m.Service.Generate(logger)
+func (m sessionManager) generateSessionCookie(c *gin.Context) (uint64, error) {
+	sessionId, err := m.sessionService.Generate(c.Request.Context())
 	if err == nil {
 		m.setSessionCookie(sessionId, c)
 	}
@@ -66,7 +69,7 @@ func (m sessionManager) generateSessionCookie(logger otelzap.LoggerWithCtx, c *g
 }
 
 func (m sessionManager) setSessionCookie(sessionId uint64, c *gin.Context) {
-	c.SetCookie(cookieName, encodeToBase64(sessionId), m.TimeOut, "/", m.Domain, true, true)
+	c.SetCookie(cookieName, encodeToBase64(sessionId), m.timeOut, "/", m.domain, true, true)
 }
 
 func encodeToBase64(i uint64) string {
@@ -139,15 +142,15 @@ func (s *Session) AsMap() map[string]string {
 }
 
 func (m sessionManager) manage(c *gin.Context) {
-	logger := GetLogger(c)
-	sessionId, err := m.getSessionId(logger, c)
+	sessionId, err := m.getSessionId(c)
 	if err != nil {
-		logger.Error("Failed to generate sessionId")
+		GetLogger(c).Error("Failed to generate sessionId")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	session, err := m.Service.Get(logger, sessionId)
+	ctx := c.Request.Context()
+	session, err := m.sessionService.Get(ctx, sessionId)
 	if err != nil {
 		logSessionError("Failed to retrieve session", sessionId, c)
 		return
@@ -161,14 +164,14 @@ func (m sessionManager) manage(c *gin.Context) {
 	c.Next()
 
 	if s := GetSession(c); s.change {
-		if m.Service.Update(logger, sessionId, s.session) != nil {
+		if m.sessionService.Update(ctx, sessionId, s.session) != nil {
 			logSessionError("Failed to save session", sessionId, c)
 		}
 	}
 }
 
 func logSessionError(msg string, sessionId uint64, c *gin.Context) {
-	GetLogger(c).Error(msg, zap.Uint64("sessionId", sessionId))
+	GetLogger(c).Error(msg, "sessionId", sessionId)
 	c.AbortWithStatus(http.StatusInternalServerError)
 }
 
@@ -186,9 +189,9 @@ func GetSession(c *gin.Context) *Session {
 func GetSessionUserId(c *gin.Context) uint64 {
 	userId, err := strconv.ParseUint(GetSession(c).Load(userIdName), 10, 64)
 	if err == nil {
-		GetLogger(c).Debug("userId parsed from session", zap.Uint64(userIdName, userId))
+		GetLogger(c).Debug("userId parsed from session", userIdName, userId)
 	} else {
-		GetLogger(c).Info("Failed to parse userId from session", zap.Error(err))
+		GetLogger(c).Info("Failed to parse userId from session", common.ErrorKey, err)
 	}
 	return userId
 }

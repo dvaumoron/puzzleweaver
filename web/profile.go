@@ -27,9 +27,8 @@ import (
 	"strings"
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/config"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 var errEmptyLogin = errors.New(emptyLoginKey)
@@ -64,17 +63,12 @@ func (w profileWidget) LoadInto(router gin.IRouter) {
 	router.GET("/picture/:UserId", w.pictureHandler)
 }
 
-func newProfilePage(profileConfig config.ProfileConfig) Page {
-	tracer := profileConfig.Tracer
-	profileService := profileConfig.Service
-	adminService := profileConfig.AdminService
-	loginService := profileConfig.LoginService
-
+func newProfilePage(profileService service.AdvancedProfileService, adminService service.AdminService, loginService service.LoginService) Page {
 	p := MakeHiddenPage("profile")
 	p.Widget = profileWidget{
-		defaultHandler: common.CreateRedirect(tracer, "profileWidget/defaultHandler", defaultRedirecter),
-		viewHandler: CreateTemplate(tracer, "profileWidget/viewHandler", func(data gin.H, c *gin.Context) (string, string) {
-			logger := GetLogger(c)
+		defaultHandler: common.CreateRedirect(defaultRedirecter),
+		viewHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
+			ctx := c.Request.Context()
 			viewedUserId := GetRequestedUserId(c)
 			if viewedUserId == 0 {
 				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
@@ -83,17 +77,17 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 			currentUserId, _ := data[common.IdName].(uint64)
 			updateRight := viewedUserId == currentUserId
 			if !updateRight {
-				if err := profileService.ViewRight(logger, currentUserId); err != nil {
+				if err := profileService.ViewRight(ctx, currentUserId); err != nil {
 					return "", common.DefaultErrorRedirect(err.Error())
 				}
 			}
 
-			profiles, err := profileService.GetProfiles(logger, []uint64{viewedUserId})
+			profiles, err := profileService.GetProfiles(ctx, []uint64{viewedUserId})
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
 
-			roles, err := adminService.GetUserRoles(logger, currentUserId, viewedUserId)
+			roles, err := adminService.GetUserRoles(ctx, currentUserId, viewedUserId)
 			// ignore ErrNotAuthorized
 			if err == common.ErrTechnical {
 				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
@@ -107,13 +101,13 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 			data[common.ViewedUserName] = userProfile
 			return "profile/view", ""
 		}),
-		editHandler: CreateTemplate(tracer, "profileWidget/editHandler", func(data gin.H, c *gin.Context) (string, string) {
+		editHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			userId, _ := data[common.IdName].(uint64)
 			if userId == 0 {
 				return "", common.DefaultErrorRedirect(unknownUserKey)
 			}
 
-			profiles, err := profileService.GetProfiles(GetLogger(c), []uint64{userId})
+			profiles, err := profileService.GetProfiles(c.Request.Context(), []uint64{userId})
 			if err != nil {
 				return "", common.DefaultErrorRedirect(err.Error())
 			}
@@ -122,7 +116,8 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 			data[common.ViewedUserName] = userProfile
 			return "profile/edit", ""
 		}),
-		saveHandler: common.CreateRedirect(tracer, "profileWidget/saveHandler", func(c *gin.Context) string {
+		saveHandler: common.CreateRedirect(func(c *gin.Context) string {
+			ctx := c.Request.Context()
 			logger := GetLogger(c)
 			userId := GetSessionUserId(c)
 			if userId == 0 {
@@ -134,7 +129,7 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 
 			picture, err := c.FormFile("picture")
 			if err != nil {
-				logger.Error("Failed to retrieve picture file", zap.Error(err))
+				logger.Error("Failed to retrieve picture file", common.ErrorKey, err)
 				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
 			}
 
@@ -142,7 +137,7 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 				var pictureFile multipart.File
 				pictureFile, err = picture.Open()
 				if err != nil {
-					logger.Error("Failed to open retrieve picture file ", zap.Error(err))
+					logger.Error("Failed to open retrieve picture file ", common.ErrorKey, err)
 					return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
 				}
 				defer pictureFile.Close()
@@ -150,15 +145,15 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 				var pictureData []byte
 				pictureData, err = io.ReadAll(pictureFile)
 				if err != nil {
-					logger.Error("Failed to read picture file ", zap.Error(err))
+					logger.Error("Failed to read picture file ", common.ErrorKey, err)
 					return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
 				}
 
-				err = profileService.UpdatePicture(logger, userId, pictureData)
+				err = profileService.UpdatePicture(ctx, userId, pictureData)
 			}
 
 			if err == nil {
-				err = profileService.UpdateProfile(logger, userId, desc, info)
+				err = profileService.UpdateProfile(ctx, userId, desc, info)
 			}
 
 			targetBuilder := profileUrlBuilder(userId)
@@ -167,8 +162,7 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 			}
 			return targetBuilder.String()
 		}),
-		changeLoginHandler: common.CreateRedirect(tracer, "profileWidget/changeLoginHandler", func(c *gin.Context) string {
-			logger := GetLogger(c)
+		changeLoginHandler: common.CreateRedirect(func(c *gin.Context) string {
 			session := GetSession(c)
 			userId := GetSessionUserId(c)
 			if userId == 0 {
@@ -181,7 +175,7 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 
 			err := errEmptyLogin
 			if newLogin != "" {
-				err = loginService.ChangeLogin(logger, userId, oldLogin, newLogin, password)
+				err = loginService.ChangeLogin(c.Request.Context(), userId, oldLogin, newLogin, password)
 			}
 
 			targetBuilder := profileUrlBuilder(userId)
@@ -192,8 +186,7 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 			}
 			return targetBuilder.String()
 		}),
-		changePasswordHandler: common.CreateRedirect(tracer, "profileWidget/changePasswordHandler", func(c *gin.Context) string {
-			logger := GetLogger(c)
+		changePasswordHandler: common.CreateRedirect(func(c *gin.Context) string {
 			session := GetSession(c)
 			userId := GetSessionUserId(c)
 			if userId == 0 {
@@ -209,7 +202,7 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 			if newPassword != "" {
 				err = errWrongConfirm
 				if newPassword == confirmPassword {
-					err = loginService.ChangePassword(logger, userId, login, oldPassword, newPassword)
+					err = loginService.ChangePassword(c.Request.Context(), userId, login, oldPassword, newPassword)
 				}
 			}
 
@@ -220,14 +213,14 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 			return targetBuilder.String()
 		}),
 		pictureHandler: func(c *gin.Context) {
-			logger := GetLogger(c)
 			userId := GetRequestedUserId(c)
 			if userId == 0 {
 				c.AbortWithStatus(http.StatusNotFound)
 				return
 			}
 
-			data := profileService.GetPicture(logger, userId)
+			// TODO change signature and return defaultPicture on error
+			data, _ := profileService.GetPicture(c.Request.Context(), userId)
 			c.Data(http.StatusOK, http.DetectContentType(data), data)
 		},
 	}
@@ -238,7 +231,7 @@ func newProfilePage(profileConfig config.ProfileConfig) Page {
 func GetRequestedUserId(c *gin.Context) uint64 {
 	userId, err := strconv.ParseUint(c.Param(userIdName), 10, 64)
 	if err != nil {
-		GetLogger(c).Warn("Failed to parse userId from request", zap.Error(err))
+		GetLogger(c).Warn("Failed to parse userId from request", common.ErrorKey, err)
 	}
 	return userId
 }

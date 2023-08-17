@@ -16,22 +16,33 @@
  *
  */
 
-package markdownimpl
+package sesttingsimpl
 
 import (
 	"context"
 
 	"github.com/ServiceWeaver/weaver"
+	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
 // check matching with interface
-var _ service.MarkdownService = &markdownImpl{}
+var _ service.SettingsService = &settingsImpl{}
 
-type markdownImpl struct {
-	weaver.Implements[service.MarkdownService]
+type settingsImpl struct {
+	weaver.Implements[service.SettingsService]
 }
 
-func (impl markdownImpl) Apply(ctx context.Context, text string) (string, error) {
-	return "todo", nil
+func (impl settingsImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
+	// TODO
+	return nil, nil
+}
+
+func (impl settingsImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
+	success := true
+	// TODO
+	if !success {
+		return common.ErrUpdate
+	}
+	return nil
 }

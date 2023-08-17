@@ -40,6 +40,7 @@ type widgetImpl struct {
 }
 
 func (impl widgetImpl) GetDesc(ctx context.Context, name string) ([]widgetservice.Action, error) {
+	// TODO
 	return convertActions(nil), nil
 }
 

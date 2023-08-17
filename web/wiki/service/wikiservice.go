@@ -16,7 +16,7 @@
  *
  */
 
-package service
+package wikiservice
 
 import (
 	"context"
@@ -70,5 +70,5 @@ type WikiService interface {
 	StoreContent(ctx context.Context, userId uint64, lang string, title string, last string, markdown string) (bool, error)
 	GetVersions(ctx context.Context, userId uint64, lang string, title string) ([]Version, error)
 	DeleteContent(ctx context.Context, userId uint64, lang string, title string, versionStr string) error
-	DeleteRight(ctx context.Context, userId uint64) bool
+	DeleteRight(ctx context.Context, userId uint64) error
 }

@@ -23,7 +23,7 @@ import (
 	"strconv"
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/config"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/gin-gonic/gin"
 )
@@ -51,13 +51,10 @@ func (w loginWidget) LoadInto(router gin.IRouter) {
 	router.GET("/logout", w.logoutHandler)
 }
 
-func newLoginPage(loginConfig config.LoginConfig, settingsManager *SettingsManager) Page {
-	tracer := loginConfig.Tracer
-	loginService := loginConfig.Service
-
+func newLoginPage(loginService service.FullLoginService, settingsManager *SettingsManager) Page {
 	p := MakeHiddenPage("login")
 	p.Widget = loginWidget{
-		displayHandler: CreateTemplate(tracer, "loginWidget/displayHandler", func(data gin.H, c *gin.Context) (string, string) {
+		displayHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			data[common.RedirectName] = c.Query(common.RedirectName)
 
 			currentUrl := c.Request.URL
@@ -74,7 +71,8 @@ func newLoginPage(loginConfig config.LoginConfig, settingsManager *SettingsManag
 
 			return "login", ""
 		}),
-		submitHandler: common.CreateRedirect(tracer, "loginWidget/submitHandler", func(c *gin.Context) string {
+		submitHandler: common.CreateRedirect(func(c *gin.Context) string {
+			ctx := c.Request.Context()
 			logger := GetLogger(c)
 			login := c.PostForm(loginName)
 			password := c.PostForm(passwordName)
@@ -95,9 +93,9 @@ func newLoginPage(loginConfig config.LoginConfig, settingsManager *SettingsManag
 					return c.PostForm(prevUrlWithErrorName) + wrongConfirmPasswordKey
 				}
 
-				success, userId, err = loginService.Register(logger, login, password)
+				success, userId, err = loginService.Register(ctx, login, password)
 			} else {
-				success, userId, err = loginService.Verify(logger, login, password)
+				success, userId, err = loginService.Verify(ctx, login, password)
 			}
 
 			errorMsg := ""
@@ -119,11 +117,11 @@ func newLoginPage(loginConfig config.LoginConfig, settingsManager *SettingsManag
 			s.Store(loginName, login)
 			s.Store(userIdName, strconv.FormatUint(userId, 10))
 
-			GetLocalesManager(c).SetLangCookie(settingsManager.Get(logger, userId, c)[locale.LangName], c)
+			GetLocalesManager(c).SetLangCookie(logger, settingsManager.Get(userId, c)[locale.LangName], c)
 
 			return c.PostForm(common.RedirectName)
 		}),
-		logoutHandler: common.CreateRedirect(tracer, "loginWidget/logoutHandler", func(c *gin.Context) string {
+		logoutHandler: common.CreateRedirect(func(c *gin.Context) string {
 			s := GetSession(c)
 			s.Delete(loginName)
 			s.Delete(userIdName)

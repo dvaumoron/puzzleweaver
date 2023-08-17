@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweaver authors.
+ * Copyright 2023 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ func initData(c *gin.Context) gin.H {
 	currentUrl := common.GetCurrentUrl(c)
 	page, path := site.extractArianeInfoFromUrl(currentUrl)
 	data := gin.H{
-		locale.LangName: localesManager.GetLang(c),
+		locale.LangName: localesManager.GetLang(site.loggerGetter.Logger(ctx), c),
 		"PageTitle":     getPageTitleKey(page.name),
 		"CurrentUrl":    currentUrl,
 		"Ariane":        buildAriane(path),

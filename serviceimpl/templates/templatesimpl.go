@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweb authors.
+ * Copyright 2023 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,43 +19,28 @@
 package templatesimpl
 
 import (
+	"context"
 	"encoding/json"
 
-	grpcclient "github.com/dvaumoron/puzzlegrpcclient"
-	pb "github.com/dvaumoron/puzzletemplateservice"
-	"github.com/dvaumoron/puzzleweb/common"
-	"github.com/dvaumoron/puzzleweb/templates/service"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
+	"github.com/ServiceWeaver/weaver"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
+// check matching with interface
+var _ service.TemplateService = &templateClient{}
+
 type templateClient struct {
-	grpcclient.Client
+	weaver.Implements[service.TemplateService]
 }
 
-func New(serviceAddr string, dialOptions []grpc.DialOption) service.TemplateService {
-	return templateClient{Client: grpcclient.Make(serviceAddr, dialOptions...)}
-}
-
-func (client templateClient) Render(logger otelzap.LoggerWithCtx, templateName string, data any) ([]byte, error) {
+func (impl templateClient) Render(ctx context.Context, templateName string, data any) ([]byte, error) {
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		logger.Error("Failed to marshal data", zap.Error(err))
+		impl.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)
 		return nil, common.ErrTechnical
 	}
 
-	conn, err := client.Dial()
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewTemplateClient(conn).Render(
-		logger.Context(), &pb.RenderRequest{TemplateName: templateName, Data: dataBytes},
-	)
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	return response.Content, nil
+	// TODO
+	return dataBytes, nil
 }

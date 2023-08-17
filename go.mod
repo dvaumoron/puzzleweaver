@@ -6,11 +6,8 @@ require (
 	github.com/ServiceWeaver/weaver v0.19.0
 	github.com/dvaumoron/puzzleblogservice v1.1.0
 	github.com/dvaumoron/puzzleforumservice v1.4.0
-	github.com/dvaumoron/puzzlegrpcclient v1.1.0
 	github.com/dvaumoron/puzzleloginservice v1.7.0
 	github.com/dvaumoron/puzzleprofileservice v1.2.0
-	github.com/dvaumoron/puzzlesessionservice v1.2.0
-	github.com/dvaumoron/puzzletemplateservice v1.0.0
 	github.com/dvaumoron/puzzleweb v1.8.5
 	github.com/dvaumoron/puzzlewidgetservice v1.2.0
 	github.com/dvaumoron/puzzlewikiservice v1.3.0
@@ -23,7 +20,6 @@ require (
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 	golang.org/x/sync v0.3.0
 	golang.org/x/text v0.11.0
-	google.golang.org/grpc v1.56.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -82,6 +78,7 @@ require (
 	golang.org/x/tools v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230717213848-3f92550aa753 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230706204954-ccb25ca9f130 // indirect
+	google.golang.org/grpc v1.56.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
