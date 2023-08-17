@@ -57,24 +57,24 @@ func (impl *AdminImpl) getInitializedConf(ctx context.Context) (*initializedAdmi
 	return impl.initializedConf, nil
 }
 
-func (client *AdminImpl) getGroupId(ctx context.Context, groupName string) (uint64, error) {
-	initializedConf, err := client.getInitializedConf(ctx)
+func (impl *AdminImpl) getGroupId(ctx context.Context, groupName string) (uint64, error) {
+	initializedConf, err := impl.getInitializedConf(ctx)
 	if err != nil {
 		return 0, err
 	}
 	return initializedConf.nameToGroupId[groupName], nil
 }
 
-func (client *AdminImpl) getGroupName(ctx context.Context, groupId uint64) (string, error) {
-	initializedConf, err := client.getInitializedConf(ctx)
+func (impl *AdminImpl) getGroupName(ctx context.Context, groupId uint64) (string, error) {
+	initializedConf, err := impl.getInitializedConf(ctx)
 	if err != nil {
 		return "", err
 	}
 	return initializedConf.groupIdToName[groupId], nil
 }
 
-func (client *AdminImpl) GetAllGroups(ctx context.Context) ([]service.Group, error) {
-	initializedConf, err := client.getInitializedConf(ctx)
+func (impl *AdminImpl) GetAllGroups(ctx context.Context) ([]service.Group, error) {
+	initializedConf, err := impl.getInitializedConf(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (client *AdminImpl) GetAllGroups(ctx context.Context) ([]service.Group, err
 	return groups, nil
 }
 
-func (client *AdminImpl) AuthQuery(ctx context.Context, userId uint64, groupId uint64, action string) error {
+func (impl *AdminImpl) AuthQuery(ctx context.Context, userId uint64, groupId uint64, action string) error {
 	success := true
 	// TODO
 	if !success {
@@ -96,8 +96,8 @@ func (client *AdminImpl) AuthQuery(ctx context.Context, userId uint64, groupId u
 	return nil
 }
 
-func (client *AdminImpl) GetAllRoles(ctx context.Context, adminId uint64) ([]service.Role, error) {
-	initializedConf, err := client.getInitializedConf(ctx)
+func (impl *AdminImpl) GetAllRoles(ctx context.Context, adminId uint64) ([]service.Role, error) {
+	initializedConf, err := impl.getInitializedConf(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -107,10 +107,10 @@ func (client *AdminImpl) GetAllRoles(ctx context.Context, adminId uint64) ([]ser
 	for groupId := range groupIdToName {
 		groupIds = append(groupIds, groupId)
 	}
-	return client.getGroupRoles(ctx, adminId, groupIds)
+	return impl.getGroupRoles(ctx, adminId, groupIds)
 }
 
-func (client *AdminImpl) GetActions(ctx context.Context, adminId uint64, roleName string, groupName string) ([]string, error) {
+func (impl *AdminImpl) GetActions(ctx context.Context, adminId uint64, roleName string, groupName string) ([]string, error) {
 	success := true
 	// TODO
 	if !success {
@@ -120,7 +120,7 @@ func (client *AdminImpl) GetActions(ctx context.Context, adminId uint64, roleNam
 	return nil, nil
 }
 
-func (client *AdminImpl) UpdateUser(ctx context.Context, adminId uint64, userId uint64, roles []service.Role) error {
+func (impl *AdminImpl) UpdateUser(ctx context.Context, adminId uint64, userId uint64, roles []service.Role) error {
 	success := true
 	// TODO
 	if !success {
@@ -135,7 +135,7 @@ func (client *AdminImpl) UpdateUser(ctx context.Context, adminId uint64, userId 
 	return nil
 }
 
-func (client *AdminImpl) UpdateRole(ctx context.Context, adminId uint64, role service.Role) error {
+func (impl *AdminImpl) UpdateRole(ctx context.Context, adminId uint64, role service.Role) error {
 	success := true
 	// TODO
 	if !success {
@@ -150,10 +150,10 @@ func (client *AdminImpl) UpdateRole(ctx context.Context, adminId uint64, role se
 	return nil
 }
 
-func (client *AdminImpl) GetUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]service.Role, error) {
+func (impl *AdminImpl) GetUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]service.Role, error) {
 
 	if adminId == userId {
-		return client.getUserRoles(ctx, userId)
+		return impl.getUserRoles(ctx, userId)
 	}
 
 	success := true
@@ -161,10 +161,10 @@ func (client *AdminImpl) GetUserRoles(ctx context.Context, adminId uint64, userI
 	if !success {
 		return nil, common.ErrNotAuthorized
 	}
-	return client.getUserRoles(ctx, userId)
+	return impl.getUserRoles(ctx, userId)
 }
 
-func (client *AdminImpl) getGroupRoles(ctx context.Context, adminId uint64, groupIds []uint64) ([]service.Role, error) {
+func (impl *AdminImpl) getGroupRoles(ctx context.Context, adminId uint64, groupIds []uint64) ([]service.Role, error) {
 	success := true
 	// TODO
 	if !success {
@@ -174,7 +174,7 @@ func (client *AdminImpl) getGroupRoles(ctx context.Context, adminId uint64, grou
 	return nil, nil
 }
 
-func (client *AdminImpl) getUserRoles(ctx context.Context, userId uint64) ([]service.Role, error) {
+func (impl *AdminImpl) getUserRoles(ctx context.Context, userId uint64) ([]service.Role, error) {
 	// TODO
 	return nil, nil
 }
