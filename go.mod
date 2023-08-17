@@ -8,8 +8,6 @@ require (
 	github.com/dvaumoron/puzzleforumservice v1.4.0
 	github.com/dvaumoron/puzzlegrpcclient v1.1.0
 	github.com/dvaumoron/puzzleloginservice v1.7.0
-	github.com/dvaumoron/puzzlemarkdownservice v1.0.1
-	github.com/dvaumoron/puzzlepassstrengthservice v1.0.0
 	github.com/dvaumoron/puzzleprofileservice v1.2.0
 	github.com/dvaumoron/puzzlesessionservice v1.2.0
 	github.com/dvaumoron/puzzletemplateservice v1.0.0

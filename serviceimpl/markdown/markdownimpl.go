@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweb authors.
+ * Copyright 2022 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,32 +19,19 @@
 package markdownimpl
 
 import (
-	grpcclient "github.com/dvaumoron/puzzlegrpcclient"
-	pb "github.com/dvaumoron/puzzlemarkdownservice"
-	"github.com/dvaumoron/puzzleweb/common"
-	"github.com/dvaumoron/puzzleweb/markdown/service"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"google.golang.org/grpc"
+	"context"
+
+	"github.com/ServiceWeaver/weaver"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-type markdownClient struct {
-	grpcclient.Client
+// check matching with interface
+var _ service.MarkdownService = &markdownImpl{}
+
+type markdownImpl struct {
+	weaver.Implements[service.MarkdownService]
 }
 
-func New(serviceAddr string, dialOptions []grpc.DialOption) service.MarkdownService {
-	return markdownClient{Client: grpcclient.Make(serviceAddr, dialOptions...)}
-}
-
-func (client markdownClient) Apply(logger otelzap.LoggerWithCtx, text string) (string, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return "", common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	markdownHtml, err := pb.NewMarkdownClient(conn).Apply(logger.Context(), &pb.MarkdownText{Text: text})
-	if err != nil {
-		return "", common.LogOriginalError(logger, err)
-	}
-	return markdownHtml.Html, nil
+func (impl markdownImpl) Apply(ctx context.Context, text string) (string, error) {
+	return "todo", nil
 }

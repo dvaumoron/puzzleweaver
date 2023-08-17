@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"strings"
 
-	adminservice "github.com/dvaumoron/puzzleweaver/web/admin/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/dvaumoron/puzzleweaver/web/templates"
 	"github.com/gin-gonic/gin"
@@ -70,7 +70,7 @@ func localizedTemplate(loggerGetter common.LoggerGetter, groupId uint64, templat
 		ctx := c.Request.Context()
 		logger := loggerGetter.Logger(ctx)
 		userId, _ := data[common.IdName].(uint64)
-		err := site.authService.AuthQuery(ctx, userId, groupId, adminservice.ActionAccess)
+		err := site.authService.AuthQuery(ctx, userId, groupId, service.ActionAccess)
 		if err != nil {
 			return "", common.DefaultErrorRedirect(err.Error())
 		}

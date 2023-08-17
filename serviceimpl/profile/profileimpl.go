@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweb authors.
+ * Copyright 2023 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,107 +19,61 @@
 package profileimpl
 
 import (
-	grpcclient "github.com/dvaumoron/puzzlegrpcclient"
+	"context"
+
+	"github.com/ServiceWeaver/weaver"
 	pb "github.com/dvaumoron/puzzleprofileservice"
-	adminservice "github.com/dvaumoron/puzzleweb/admin/service"
-	"github.com/dvaumoron/puzzleweb/common"
-	loginservice "github.com/dvaumoron/puzzleweb/login/service"
-	"github.com/dvaumoron/puzzleweb/profile/service"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"google.golang.org/grpc"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-type profileClient struct {
-	grpcclient.Client
+// check matching with interface
+var _ service.AdvancedProfileService = &profileImpl{}
+
+type profileImpl struct {
+	weaver.Implements[service.AdvancedProfileService]
+	userService    weaver.Ref[service.UserService]
+	authService    weaver.Ref[service.AuthService]
 	groupId        uint64
-	userService    loginservice.UserService
-	authService    adminservice.AuthService
 	defaultPicture []byte
 }
 
-func New(serviceAddr string, dialOptions []grpc.DialOption, groupId uint64, userService loginservice.UserService, authService adminservice.AuthService, defaultPicture []byte) service.AdvancedProfileService {
-	return profileClient{
-		Client: grpcclient.Make(serviceAddr, dialOptions...), groupId: groupId,
-		userService: userService, authService: authService, defaultPicture: defaultPicture,
-	}
-}
-
-func (client profileClient) UpdateProfile(logger otelzap.LoggerWithCtx, userId uint64, desc string, info map[string]string) error {
-	conn, err := client.Dial()
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewProfileClient(conn).UpdateProfile(logger.Context(), &pb.UserProfile{
-		UserId: userId, Desc: desc, Info: info,
-	})
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	if !response.Success {
+func (impl profileImpl) UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error {
+	success := true
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil
 }
 
-func (client profileClient) UpdatePicture(logger otelzap.LoggerWithCtx, userId uint64, data []byte) error {
-	conn, err := client.Dial()
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewProfileClient(conn).UpdatePicture(logger.Context(), &pb.Picture{UserId: userId, Data: data})
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	if !response.Success {
+func (impl profileImpl) UpdatePicture(ctx context.Context, userId uint64, data []byte) error {
+	success := true
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil
 }
 
-func (client profileClient) GetPicture(logger otelzap.LoggerWithCtx, userId uint64) []byte {
-	conn, err := client.Dial()
-	if err != nil {
-		common.LogOriginalError(logger, err)
-		return client.defaultPicture
-	}
-	defer conn.Close()
-
-	response, err := pb.NewProfileClient(conn).GetPicture(logger.Context(), &pb.UserId{Id: userId})
-	if err != nil {
-		common.LogOriginalError(logger, err)
-		return client.defaultPicture
-	}
-	return response.Data
+func (impl profileImpl) GetPicture(ctx context.Context, userId uint64) ([]byte, error) {
+	// TODO
+	return impl.defaultPicture, nil
 }
 
-func (client profileClient) GetProfiles(logger otelzap.LoggerWithCtx, userIds []uint64) (map[uint64]service.UserProfile, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
+func (impl profileImpl) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]service.UserProfile, error) {
 
 	// duplicate removal
 	userIds = common.MakeSet(userIds).Slice()
 
-	response, err := pb.NewProfileClient(conn).ListProfiles(logger.Context(), &pb.UserIds{
-		Ids: userIds,
-	})
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-
-	users, err := client.userService.GetUsers(logger, userIds)
+	users, err := impl.userService.Get().GetUsers(ctx, userIds)
 	if err != nil {
 		return nil, err
 	}
 
+	list := []*pb.UserProfile{}
 	tempProfiles := map[uint64]service.UserProfile{}
-	for _, profile := range response.List {
+	for _, profile := range list {
 		userId := profile.UserId
 		tempProfiles[userId] = service.UserProfile{User: users[userId], Desc: profile.Desc, Info: profile.Info}
 	}
@@ -138,23 +92,16 @@ func (client profileClient) GetProfiles(logger otelzap.LoggerWithCtx, userIds []
 }
 
 // no right check
-func (client profileClient) Delete(logger otelzap.LoggerWithCtx, userId uint64) error {
-	conn, err := client.Dial()
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
+func (impl profileImpl) Delete(ctx context.Context, userId uint64) error {
 
-	response, err := pb.NewProfileClient(conn).Delete(logger.Context(), &pb.UserId{Id: userId})
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	if !response.Success {
+	success := true
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil
 }
 
-func (client profileClient) ViewRight(logger otelzap.LoggerWithCtx, userId uint64) error {
-	return client.authService.AuthQuery(logger, userId, client.groupId, adminservice.ActionAccess)
+func (impl profileImpl) ViewRight(ctx context.Context, userId uint64) error {
+	return impl.authService.Get().AuthQuery(ctx, userId, impl.groupId, service.ActionAccess)
 }

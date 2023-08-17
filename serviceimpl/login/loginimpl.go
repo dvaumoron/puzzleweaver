@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweb authors.
+ * Copyright 2023 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,33 +19,27 @@
 package loginimpl
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"time"
 
-	grpcclient "github.com/dvaumoron/puzzlegrpcclient"
+	"github.com/ServiceWeaver/weaver"
 	pb "github.com/dvaumoron/puzzleloginservice"
-	"github.com/dvaumoron/puzzleweb/common"
-	"github.com/dvaumoron/puzzleweb/login/service"
-	strengthservice "github.com/dvaumoron/puzzleweb/passwordstrength/service"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"google.golang.org/grpc"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
+
+// check matching with interface
+var _ service.LoginService = &loginImpl{}
 
 var errWeakPassword = errors.New("WeakPassword")
 
-type loginClient struct {
-	grpcclient.Client
+type loginImpl struct {
+	weaver.Implements[service.FullLoginService]
+	saltService     weaver.Ref[service.SaltService]
+	strengthService weaver.Ref[service.PasswordStrengthService]
 	dateFormat      string
-	saltService     service.SaltService
-	strengthService strengthservice.PasswordStrengthService
-}
-
-func New(serviceAddr string, dialOptions []grpc.DialOption, dateFormat string, saltService service.SaltService, strengthService strengthservice.PasswordStrengthService) service.FullLoginService {
-	return loginClient{
-		Client: grpcclient.Make(serviceAddr, dialOptions...), dateFormat: dateFormat,
-		saltService: saltService, strengthService: strengthService,
-	}
 }
 
 type sortableContents []*pb.User
@@ -62,28 +56,20 @@ func (s sortableContents) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func (client loginClient) Verify(logger otelzap.LoggerWithCtx, login string, password string) (bool, uint64, error) {
-	ctx := logger.Context()
-	salted, err := client.saltService.Salt(ctx, login, password)
+func (impl loginImpl) Verify(ctx context.Context, login string, password string) (bool, uint64, error) {
+	_, err := impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {
-		return false, 0, common.LogOriginalError(logger, err)
+		return false, 0, common.LogOriginalError(impl.Logger(ctx), err)
 	}
 
-	conn, err := client.Dial()
-	if err != nil {
-		return false, 0, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewLoginClient(conn).Verify(ctx, &pb.LoginRequest{Login: login, Salted: salted})
-	if err != nil {
-		return false, 0, common.LogOriginalError(logger, err)
-	}
-	return response.Success, response.Id, nil
+	success := true
+	id := uint64(0)
+	// TODO
+	return success, id, nil
 }
 
-func (client loginClient) Register(logger otelzap.LoggerWithCtx, login string, password string) (bool, uint64, error) {
-	strong, err := client.strengthService.Validate(logger, password)
+func (impl loginImpl) Register(ctx context.Context, login string, password string) (bool, uint64, error) {
+	strong, err := impl.strengthService.Get().Validate(ctx, password)
 	if err != nil {
 		return false, 0, err
 	}
@@ -91,77 +77,49 @@ func (client loginClient) Register(logger otelzap.LoggerWithCtx, login string, p
 		return false, 0, errWeakPassword
 	}
 
-	ctx := logger.Context()
-	salted, err := client.saltService.Salt(ctx, login, password)
+	_, err = impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {
-		return false, 0, common.LogOriginalError(logger, err)
+		return false, 0, common.LogOriginalError(impl.Logger(ctx), err)
 	}
 
-	conn, err := client.Dial()
-	if err != nil {
-		return false, 0, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewLoginClient(conn).Register(ctx, &pb.LoginRequest{Login: login, Salted: salted})
-	if err != nil {
-		return false, 0, common.LogOriginalError(logger, err)
-	}
-	return response.Success, response.Id, nil
+	success := true
+	id := uint64(0)
+	// TODO
+	return success, id, nil
 }
 
 // You should remove duplicate id in list
-func (client loginClient) GetUsers(logger otelzap.LoggerWithCtx, userIds []uint64) (map[uint64]service.User, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewLoginClient(conn).GetUsers(logger.Context(), &pb.UserIds{Ids: userIds})
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-
+func (impl loginImpl) GetUsers(ctx context.Context, userIds []uint64) (map[uint64]service.User, error) {
+	list := []*pb.User{}
+	// TODO
 	logins := map[uint64]service.User{}
-	for _, value := range response.List {
-		logins[value.Id] = convertUser(value, client.dateFormat)
+	for _, value := range list {
+		logins[value.Id] = convertUser(value, impl.dateFormat)
 	}
 	return logins, nil
 }
 
-func (client loginClient) ChangeLogin(logger otelzap.LoggerWithCtx, userId uint64, oldLogin string, newLogin string, password string) error {
-	ctx := logger.Context()
-	oldSalted, err := client.saltService.Salt(ctx, oldLogin, password)
+func (impl loginImpl) ChangeLogin(ctx context.Context, userId uint64, oldLogin string, newLogin string, password string) error {
+	oldSalted, err := impl.saltService.Get().Salt(ctx, oldLogin, password)
 	if err != nil {
-		return common.LogOriginalError(logger, err)
+		return common.LogOriginalError(impl.Logger(ctx), err)
 	}
 
-	newSalted, err := client.saltService.Salt(ctx, newLogin, password)
+	newSalted, err := impl.saltService.Get().Salt(ctx, newLogin, password)
 	if err != nil {
-		return common.LogOriginalError(logger, err)
+		return common.LogOriginalError(impl.Logger(ctx), err)
 	}
 
-	conn, err := client.Dial()
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewLoginClient(conn).ChangeLogin(ctx, &pb.ChangeRequest{
-		UserId: userId, NewLogin: newLogin, OldSalted: oldSalted, NewSalted: newSalted,
-	})
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	if !response.Success {
+	success := oldSalted == newSalted
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil
 }
 
-func (client loginClient) ChangePassword(logger otelzap.LoggerWithCtx, userId uint64, login string, oldPassword string, newPassword string) error {
-	strong, err := client.strengthService.Validate(logger, newPassword)
+func (impl loginImpl) ChangePassword(ctx context.Context, userId uint64, login string, oldPassword string, newPassword string) error {
+	strong, err := impl.strengthService.Get().Validate(ctx, newPassword)
 	if err != nil {
 		return err
 	}
@@ -169,71 +127,41 @@ func (client loginClient) ChangePassword(logger otelzap.LoggerWithCtx, userId ui
 		return errWeakPassword
 	}
 
-	ctx := logger.Context()
-	oldSalted, err := client.saltService.Salt(ctx, login, oldPassword)
+	oldSalted, err := impl.saltService.Get().Salt(ctx, login, oldPassword)
 	if err != nil {
-		return common.LogOriginalError(logger, err)
+		return common.LogOriginalError(impl.Logger(ctx), err)
 	}
 
-	newSalted, err := client.saltService.Salt(ctx, login, newPassword)
+	newSalted, err := impl.saltService.Get().Salt(ctx, login, newPassword)
 	if err != nil {
-		return common.LogOriginalError(logger, err)
+		return common.LogOriginalError(impl.Logger(ctx), err)
 	}
 
-	conn, err := client.Dial()
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewLoginClient(conn).ChangePassword(ctx, &pb.ChangeRequest{
-		UserId: userId, OldSalted: oldSalted, NewSalted: newSalted,
-	})
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	if !response.Success {
+	success := oldSalted == newSalted
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil
 }
 
-func (client loginClient) ListUsers(logger otelzap.LoggerWithCtx, start uint64, end uint64, filter string) (uint64, []service.User, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return 0, nil, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewLoginClient(conn).ListUsers(logger.Context(), &pb.RangeRequest{
-		Start: start, End: end, Filter: filter,
-	})
-	if err != nil {
-		return 0, nil, common.LogOriginalError(logger, err)
-	}
-
-	list := response.List
+func (impl loginImpl) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []service.User, error) {
+	// TODO
+	total := uint64(0)
+	list := []*pb.User{}
 	sort.Sort(sortableContents(list))
 	users := make([]service.User, 0, len(list))
 	for _, user := range list {
-		users = append(users, convertUser(user, client.dateFormat))
+		users = append(users, convertUser(user, impl.dateFormat))
 	}
-	return response.Total, users, nil
+	return total, users, nil
 }
 
 // no right check
-func (client loginClient) Delete(logger otelzap.LoggerWithCtx, userId uint64) error {
-	conn, err := client.Dial()
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewLoginClient(conn).Delete(logger.Context(), &pb.UserId{Id: userId})
-	if err != nil {
-		return common.LogOriginalError(logger, err)
-	}
-	if !response.Success {
+func (impl loginImpl) Delete(ctx context.Context, userId uint64) error {
+	success := true
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweb authors.
+ * Copyright 2023 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,46 +19,25 @@
 package passwordstrengthimpl
 
 import (
-	grpcclient "github.com/dvaumoron/puzzlegrpcclient"
-	pb "github.com/dvaumoron/puzzlepassstrengthservice"
-	"github.com/dvaumoron/puzzleweb/common"
-	"github.com/dvaumoron/puzzleweb/passwordstrength/service"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"google.golang.org/grpc"
+	"context"
+
+	"github.com/ServiceWeaver/weaver"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-type strengthClient struct {
-	grpcclient.Client
+// check matching with interface
+var _ service.PasswordStrengthService = &strengthImpl{}
+
+type strengthImpl struct {
+	weaver.Implements[service.PasswordStrengthService]
 }
 
-func New(serviceAddr string, dialOptions []grpc.DialOption) service.PasswordStrengthService {
-	return strengthClient{Client: grpcclient.Make(serviceAddr, dialOptions...)}
+func (impl strengthImpl) Validate(ctx context.Context, password string) (bool, error) {
+	success := true
+	//TODO
+	return success, nil
 }
 
-func (client strengthClient) Validate(logger otelzap.LoggerWithCtx, password string) (bool, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return false, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewPassstrengthClient(conn).Check(logger.Context(), &pb.PasswordRequest{Password: password})
-	if err != nil {
-		return false, common.LogOriginalError(logger, err)
-	}
-	return response.Success, nil
-}
-
-func (client strengthClient) GetRules(logger otelzap.LoggerWithCtx, lang string) (string, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return "", common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewPassstrengthClient(conn).GetRules(logger.Context(), &pb.LangRequest{Lang: lang})
-	if err != nil {
-		return "", common.LogOriginalError(logger, err)
-	}
-	return response.Description, nil
+func (client strengthImpl) GetRules(ctx context.Context, lang string) (string, error) {
+	return "todo", nil
 }

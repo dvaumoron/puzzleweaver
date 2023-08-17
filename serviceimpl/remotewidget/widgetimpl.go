@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2022 puzzleweb authors.
+ * Copyright 2023 puzzleweaver authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,73 +19,48 @@
 package remotewidgetimpl
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
-	grpcclient "github.com/dvaumoron/puzzlegrpcclient"
-	"github.com/dvaumoron/puzzleweb/common"
-	"github.com/dvaumoron/puzzleweb/remotewidget/service"
+	"github.com/ServiceWeaver/weaver"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	pb "github.com/dvaumoron/puzzlewidgetservice"
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
 )
 
-type widgetClient struct {
-	grpcclient.Client
+// check matching with interface
+var _ widgetservice.WidgetService = &widgetImpl{}
+
+type widgetImpl struct {
+	weaver.Implements[widgetservice.WidgetService]
 	objectId uint64
 	groupId  uint64
 }
 
-func New(serviceAddr string, dialOptions []grpc.DialOption, objectId uint64, groupId uint64) service.WidgetService {
-	return widgetClient{Client: grpcclient.Make(serviceAddr, dialOptions...), objectId: objectId, groupId: groupId}
+func (impl widgetImpl) GetDesc(ctx context.Context, name string) ([]widgetservice.Action, error) {
+	return convertActions(nil), nil
 }
 
-func (client widgetClient) GetDesc(logger otelzap.LoggerWithCtx, name string) ([]service.Action, error) {
-	conn, err := client.Dial()
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewWidgetClient(conn).GetWidget(logger.Context(), &pb.WidgetRequest{Name: name})
-	if err != nil {
-		return nil, common.LogOriginalError(logger, err)
-	}
-	return convertActions(response.Actions), nil
-}
-
-func (client widgetClient) Process(logger otelzap.LoggerWithCtx, widgetName string, actionName string, data gin.H, files map[string][]byte) (string, string, []byte, error) {
-	data["objectId"] = client.objectId
-	data["groupId"] = client.groupId
+func (impl widgetImpl) Process(ctx context.Context, widgetName string, actionName string, data gin.H, files map[string][]byte) (string, string, []byte, error) {
+	data["objectId"] = impl.objectId
+	data["groupId"] = impl.groupId
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		logger.Error("Failed to marshal data", zap.Error(err))
+		impl.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)
 		return "", "", nil, common.ErrTechnical
 	}
 
 	files["puzzledata.json"] = dataBytes
-
-	conn, err := client.Dial()
-	if err != nil {
-		return "", "", nil, common.LogOriginalError(logger, err)
-	}
-	defer conn.Close()
-
-	response, err := pb.NewWidgetClient(conn).Process(logger.Context(), &pb.ProcessRequest{
-		WidgetName: widgetName, ActionName: actionName, Files: files,
-	})
-	if err != nil {
-		return "", "", nil, common.LogOriginalError(logger, err)
-	}
-	return response.Redirect, response.TemplateName, response.Data, nil
+	// TODO
+	return "Redirect", "TemplateName", nil, nil
 }
 
-func convertActions(actions []*pb.Action) []service.Action {
-	res := make([]service.Action, 0, len(actions))
+func convertActions(actions []*pb.Action) []widgetservice.Action {
+	res := make([]widgetservice.Action, 0, len(actions))
 	for _, action := range actions {
-		res = append(res, service.Action{
+		res = append(res, widgetservice.Action{
 			Kind: converKind(action.Kind), Name: action.Name, Path: action.Path, QueryNames: action.QueryNames},
 		)
 	}
@@ -111,7 +86,7 @@ func converKind(kind pb.MethodKind) string {
 	case pb.MethodKind_TRACE:
 		return http.MethodTrace
 	case pb.MethodKind_RAW:
-		return service.RawResult
+		return widgetservice.RawResult
 	}
 	return http.MethodGet
 }
