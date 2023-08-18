@@ -31,6 +31,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slog"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -46,7 +47,7 @@ type Site struct {
 	adders         []common.DataAdder
 }
 
-func NewSite(globalConfig config.GlobalServiceConfig, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
+func NewSite(globalConfig *config.GlobalServiceConfig, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
 	loggerGetter := globalConfig.LoggerGetter
 	root := MakeStaticPage(loggerGetter, "root", service.PublicGroupId, "index")
 	root.AddSubPage(newLoginPage(globalConfig.LoginService, settingsManager))
@@ -88,27 +89,27 @@ func (site *Site) manageTimeOut(c *gin.Context) {
 	c.Next()
 }
 
-func (site *Site) initEngine(siteConfig config.SiteConfig) *gin.Engine {
+func (site *Site) initEngine(globalConfig *config.GlobalServiceConfig) *gin.Engine {
 	engine := gin.New()
 	engine.Use(site.manageTimeOut, otelgin.Middleware(config.WebKey), gin.Recovery())
 
-	if memorySize := siteConfig.MaxMultipartMemory; memorySize != 0 {
+	if memorySize := globalConfig.MaxMultipartMemory; memorySize != 0 {
 		engine.MaxMultipartMemory = memorySize
 	}
 
-	engine.HTMLRender = templates.NewServiceRender(siteConfig.ExtractTemplateConfig())
+	engine.HTMLRender = templates.NewServiceRender(globalConfig.TemplateService)
 
-	engine.Static("/static", siteConfig.StaticPath)
-	engine.StaticFile(config.DefaultFavicon, siteConfig.FaviconPath)
+	engine.Static("/static", globalConfig.StaticPath)
+	engine.StaticFile(config.DefaultFavicon, globalConfig.FaviconPath)
 
 	engine.Use(func(c *gin.Context) {
 		c.Set(siteName, site)
-	}, makeSessionManager(siteConfig.ExtractSessionConfig()).manage)
+	}, makeSessionManager(globalConfig).manage)
 
 	if localesManager := site.localesManager; localesManager.GetMultipleLang() {
 		engine.GET("/changeLang", common.CreateRedirect(changeLangRedirecter))
 
-		langPicturePaths := siteConfig.LangPicturePaths
+		langPicturePaths := globalConfig.LangPicturePaths
 		for _, lang := range localesManager.GetAllLang() {
 			if langPicturePath, ok := langPicturePaths[lang]; ok {
 				// allow modified time check (instead of always sending same data)
@@ -118,17 +119,17 @@ func (site *Site) initEngine(siteConfig config.SiteConfig) *gin.Engine {
 	}
 
 	site.root.Widget.LoadInto(engine)
-	engine.NoRoute(common.CreateRedirectString(siteConfig.Page404Url))
+	engine.NoRoute(common.CreateRedirectString(globalConfig.Page404Url))
 	return engine
 }
 
-func (site *Site) Run(siteConfig config.SiteConfig) error {
-	return site.initEngine(siteConfig).Run(common.CheckPort(siteConfig.Port))
+func (site *Site) Run(globalConfig *config.GlobalServiceConfig) error {
+	return site.initEngine(globalConfig).Run(common.CheckPort(globalConfig.Port))
 }
 
 type SiteAndConfig struct {
 	Site   *Site
-	Config config.SiteConfig
+	Config *config.GlobalServiceConfig
 }
 
 func Run(ginLogger *zap.Logger, sites ...SiteAndConfig) error {
@@ -145,15 +146,12 @@ func Run(ginLogger *zap.Logger, sites ...SiteAndConfig) error {
 }
 
 func changeLangRedirecter(c *gin.Context) string {
-	getSite(c).localesManager.SetLangCookie(c.Query(locale.LangName), c)
+	getSite(c).localesManager.SetLangCookie(GetLogger(c), c.Query(locale.LangName), c)
 	return c.Query(common.RedirectName)
 }
 
-func BuildDefaultSite(globalConfig *config.GlobalConfig) *Site {
-	localesManager := locale.NewManager(globalConfig.ExtractLocalesConfig())
-	settingsManager := NewSettingsManager(globalConfig.ExtractSettingsConfig())
-
-	site := NewSite(globalConfig, localesManager, settingsManager)
-
-	return site
+func BuildDefaultSite(logger *slog.Logger, globalConfig *config.GlobalServiceConfig) *Site {
+	localesManager := locale.NewManager(logger, globalConfig)
+	settingsManager := NewSettingsManager(globalConfig.SettingsService)
+	return NewSite(globalConfig, localesManager, settingsManager)
 }

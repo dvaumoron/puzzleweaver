@@ -118,7 +118,7 @@ func (w adminWidget) LoadInto(router gin.IRouter) {
 	router.POST("/role/save", w.saveRoleHandler)
 }
 
-func newAdminPage(globalConfig config.GlobalServiceConfig) Page {
+func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 	adminService := globalConfig.AdminService
 	userService := globalConfig.LoginService
 	profileService := globalConfig.ProfileService

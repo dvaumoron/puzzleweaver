@@ -75,12 +75,8 @@ type frameApp struct {
 
 // frameServe is called by weaver.Run and contains the body of the application.
 func frameServe(ctx context.Context, app *frameApp) error {
-	globalConfig := app.Config()
-	site := web.BuildDefaultSite(globalConfig)
-	ctxLogger := app.Logger(ctx)
-
-	globalServiceConfig := &config.GlobalServiceConfig{
-		GlobalConfig: globalConfig, LoggerGetter: app,
+	globalConfig := &config.GlobalServiceConfig{
+		GlobalConfig: app.Config(), LoggerGetter: app,
 		SessionService:          app.sessionService.Get(),
 		TemplateService:         app.templateService.Get(),
 		SettingsService:         app.settingsService.Get(),
@@ -95,6 +91,9 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		WikiService:             app.wikiService.Get(),
 		WidgetService:           app.widgetService.Get(),
 	}
+
+	ctxLogger := app.Logger(ctx)
+	site := web.BuildDefaultSite(ctxLogger, globalConfig)
 
 	site.AddPage(web.MakeHiddenStaticPage(app, notFound, service.PublicGroupId, notFound))
 
@@ -113,7 +112,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 			}
 		}
 
-		widgetPage := makeWidgetPage(app, widgetPage.Name, globalServiceConfig, ctx, widgets[widgetPage.WidgetRef])
+		widgetPage := makeWidgetPage(app, widgetPage.Name, globalConfig, ctx, widgets[widgetPage.WidgetRef])
 
 		if ok {
 			parentPage.AddSubPage(widgetPage)

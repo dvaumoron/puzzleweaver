@@ -21,6 +21,7 @@ package locale
 import (
 	"unicode"
 
+	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slog"
 	"golang.org/x/text/language"
@@ -47,7 +48,11 @@ type localesManager struct {
 	matcher        language.Matcher
 }
 
-func NewManager(logger *slog.Logger, sessionTimeOut int, domain string, allLang []string) Manager {
+func NewManager(logger *slog.Logger, globalConfig *config.GlobalServiceConfig) Manager {
+	sessionTimeOut := globalConfig.SessionTimeOut
+	domain := globalConfig.Domain
+	allLang := globalConfig.AllLang
+
 	size := len(allLang)
 	if size == 0 {
 		logger.Error("No locales declared")

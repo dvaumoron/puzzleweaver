@@ -63,7 +63,7 @@ func (w profileWidget) LoadInto(router gin.IRouter) {
 	router.GET("/picture/:UserId", w.pictureHandler)
 }
 
-func newProfilePage(globalConfig config.GlobalServiceConfig) Page {
+func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 	profileService := globalConfig.ProfileService
 	adminService := globalConfig.AdminService
 	loginService := globalConfig.LoginService

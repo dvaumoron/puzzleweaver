@@ -26,6 +26,7 @@ import (
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,8 +41,10 @@ type sessionManager struct {
 	domain         string
 }
 
-func makeSessionManager(sessionService service.SessionService, timeOut int, domain string) sessionManager {
-	return sessionManager{sessionService: sessionService, timeOut: timeOut, domain: domain}
+func makeSessionManager(globalConfig *config.GlobalServiceConfig) sessionManager {
+	return sessionManager{
+		sessionService: globalConfig.SessionService, timeOut: globalConfig.SessionTimeOut, domain: globalConfig.Domain,
+	}
 }
 
 func (m sessionManager) getSessionId(c *gin.Context) (uint64, error) {
