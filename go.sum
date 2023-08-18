@@ -25,8 +25,6 @@ github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724 h1:1/c0u68+2LRI+XSpd
 github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724/go.mod h1:pTiKQhUCcxt2eQMAnv48oc5nAsmelPm573z44h6PSXc=
 github.com/dvaumoron/puzzleblogservice v1.1.0 h1:EbV2WKZxmdPaXMsh78nDDZr/KVpJskMoMMlgoD1W84U=
 github.com/dvaumoron/puzzleblogservice v1.1.0/go.mod h1:G7aZYaJHItf4DM5kXehMXwOYTcUl75sH/k8fZ/QBj10=
-github.com/dvaumoron/puzzleforumservice v1.4.0 h1:39BTgVB7A6bev/Jo0V3O4RSusK/jlJ97fwmr1/iGsTE=
-github.com/dvaumoron/puzzleforumservice v1.4.0/go.mod h1:cCNSZOUMidXTNIrNjfTRYduK+A3oa4B6YEGEKbvwkPg=
 github.com/dvaumoron/puzzleloginservice v1.7.0 h1:o5W2j/rbUeSctEe8+yDc49/3R5vzfwtOVH9Lse5BFpc=
 github.com/dvaumoron/puzzleloginservice v1.7.0/go.mod h1:K/m2nN30p+uAJamWT85Vh1Mtea7+ahSz+fnIughCok0=
 github.com/dvaumoron/puzzleprofileservice v1.2.0 h1:zg7KCjU7nqG8yJTQZ3cXb/Dl8J9LlJVUH0plJeF8FZs=

@@ -163,8 +163,8 @@ func MakeBlogPage(blogName string, logger *slog.Logger, blogConfig config.BlogCo
 			data[common.BaseUrlName] = common.GetBaseUrl(2, c)
 			data["Post"] = post
 			data["Comments"] = comments
-			data[common.AllowedToCreateName] = commentService.CreateMessageRight(ctx, userId) == nil
-			data[common.AllowedToDeleteName] = commentService.DeleteRight(ctx, userId) == nil
+			data[common.AllowedToCreateName] = commentService.CreateMessageRight(ctx, userId)
+			data[common.AllowedToDeleteName] = commentService.DeleteRight(ctx, userId)
 			if len(comments) == 0 {
 				if err == nil {
 					data[commentMsgName] = "NoComment"

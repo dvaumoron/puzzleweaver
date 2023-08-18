@@ -24,10 +24,8 @@ import (
 
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
-	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slog"
 )
@@ -59,7 +57,10 @@ func (w wikiWidget) LoadInto(router gin.IRouter) {
 	router.GET("/:lang/delete/:title", w.deleteHandler)
 }
 
-func MakeWikiPage(wikiName string, logger *slog.Logger, wikiService wikiservice.WikiService, markdownService service.MarkdownService, wikiConfig config.WikiConfig) web.Page {
+func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiConfig) web.Page {
+	wikiService := wikiConfig.WikiService
+	markdownService := wikiConfig.MarkdownService
+
 	defaultPage := "Welcome"
 	viewTmpl := "wiki/view"
 	editTmpl := "wiki/edit"

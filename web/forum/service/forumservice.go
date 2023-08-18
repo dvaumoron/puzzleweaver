@@ -38,9 +38,9 @@ type ForumService interface {
 	GetThreads(ctx context.Context, userId uint64, start uint64, end uint64, filter string) (uint64, []ForumContent, error)
 	DeleteThread(ctx context.Context, userId uint64, threadId uint64) error
 	DeleteMessage(ctx context.Context, userId uint64, threadId uint64, messageId uint64) error
-	CreateThreadRight(ctx context.Context, userId uint64) error
-	CreateMessageRight(ctx context.Context, userId uint64) error
-	DeleteRight(ctx context.Context, userId uint64) error
+	CreateThreadRight(ctx context.Context, userId uint64) bool
+	CreateMessageRight(ctx context.Context, userId uint64) bool
+	DeleteRight(ctx context.Context, userId uint64) bool
 }
 
 type CommentService interface {
@@ -49,8 +49,8 @@ type CommentService interface {
 	GetCommentThread(ctx context.Context, userId uint64, elemTitle string, start uint64, end uint64) (uint64, []ForumContent, error)
 	DeleteCommentThread(ctx context.Context, userId uint64, elemTitle string) error
 	DeleteComment(ctx context.Context, userId uint64, elemTitle string, commentId uint64) error
-	CreateMessageRight(ctx context.Context, userId uint64) error
-	DeleteRight(ctx context.Context, userId uint64) error
+	CreateMessageRight(ctx context.Context, userId uint64) bool
+	DeleteRight(ctx context.Context, userId uint64) bool
 }
 
 type FullForumService interface {

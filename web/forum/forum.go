@@ -26,7 +26,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/config"
-	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slog"
 )
@@ -59,7 +58,8 @@ func (w forumWidget) LoadInto(router gin.IRouter) {
 	router.GET("/message/delete/:threadId/:messageId", w.deleteMessageHandler)
 }
 
-func MakeForumPage(forumName string, logger *slog.Logger, forumService forumservice.FullForumService, forumConfig config.ForumConfig) web.Page {
+func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.ForumConfig) web.Page {
+	forumService := forumConfig.ForumService
 	defaultPageSize := forumConfig.PageSize
 
 	listTmpl := "forum/list"
@@ -102,8 +102,8 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumService forumserv
 
 			common.InitPagination(data, filter, pageNumber, end, total)
 			data["Threads"] = threads
-			data[common.AllowedToCreateName] = forumService.CreateThreadRight(ctx, userId) == nil
-			data[common.AllowedToDeleteName] = forumService.DeleteRight(ctx, userId) == nil
+			data[common.AllowedToCreateName] = forumService.CreateThreadRight(ctx, userId)
+			data[common.AllowedToDeleteName] = forumService.DeleteRight(ctx, userId)
 			web.InitNoELementMsg(data, len(threads), c)
 			return listTmpl, ""
 		}),
@@ -167,8 +167,8 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumService forumserv
 			data[common.BaseUrlName] = common.GetBaseUrl(2, c)
 			data["Thread"] = thread
 			data["ForumMessages"] = messages
-			data[common.AllowedToCreateName] = forumService.CreateMessageRight(ctx, userId) == nil
-			data[common.AllowedToDeleteName] = forumService.DeleteRight(ctx, userId) == nil
+			data[common.AllowedToCreateName] = forumService.CreateMessageRight(ctx, userId)
+			data[common.AllowedToDeleteName] = forumService.DeleteRight(ctx, userId)
 			web.InitNoELementMsg(data, len(messages), c)
 			return viewTmpl, ""
 		}),

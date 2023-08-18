@@ -21,11 +21,11 @@ package config
 import (
 	"time"
 
+	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
-	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
+	forumclient "github.com/dvaumoron/puzzleweaver/web/forum/client"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 )
@@ -60,7 +60,7 @@ type GlobalConfig struct {
 
 	PageGroups  []PageGroup
 	Widgets     map[string]WidgetConfig
-	WidgetPages []WidgetPage
+	WidgetPages []WidgetPageConfig
 }
 
 type PageGroup struct {
@@ -76,7 +76,7 @@ type WidgetConfig struct {
 	Templates  []string
 }
 
-type WidgetPage struct {
+type WidgetPageConfig struct {
 	Emplacement string
 	Name        string
 	WidgetRef   string
@@ -93,31 +93,41 @@ type GlobalServiceConfig struct {
 	LoginService            service.FullLoginService
 	AdminService            service.AdminService
 	ProfileService          service.AdvancedProfileService
-	ForumService            forumservice.FullForumService
+	ForumService            remoteservice.RemoteForumService
 	MarkdownService         service.MarkdownService
 	BlogService             blogservice.BlogService
 	WikiService             wikiservice.WikiService
-	WidgetService           remotewidgetservice.WidgetService
+	WidgetService           widgetservice.WidgetService
 }
 
 func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
-	return WikiConfig{Args: args}
+	// TODO wrapper with wikiId and groupId
+	return WikiConfig{
+		WikiService: c.WikiService, Args: args,
+	}
 }
 
 func (c *GlobalServiceConfig) CreateForumConfig(forumId uint64, groupId uint64, args ...string) ForumConfig {
-	return ForumConfig{PageSize: c.PageSize, Args: args}
+	return ForumConfig{
+		ForumService: forumclient.MakeForumServiceWrapper(c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, forumId, groupId, c.DateFormat),
+		PageSize:     c.PageSize, Args: args,
+	}
 }
 
 func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
+	// TODO wrapper with blogId and groupId
 	return BlogConfig{
-		// TODO wrapper with blogId and groupId
-		BlogService: c.BlogService, CommentService: c.ForumService, MarkdownService: c.MarkdownService,
-		Domain: c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
+		BlogService:     c.BlogService,
+		CommentService:  forumclient.MakeForumServiceWrapper(c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat),
+		MarkdownService: c.MarkdownService,
+		Domain:          c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
 		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,
 	}
 }
 
-func (c *GlobalServiceConfig) CreateWidgetConfig(objectId uint64, groupId uint64) widgetservice.WidgetService {
+func (c *GlobalServiceConfig) CreateWidgetConfig(objectId uint64, groupId uint64) WidgetServiceConfig {
 	// TODO wrapper with objectId and groupId
-	return c.WidgetService
+	return WidgetServiceConfig{
+		LoggerGetter: c.LoggerGetter, WidgetService: c.WidgetService,
+	}
 }

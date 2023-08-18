@@ -27,7 +27,8 @@ import (
 
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
+	"github.com/dvaumoron/puzzleweaver/web/config"
+	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	"github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
 )
@@ -53,10 +54,12 @@ func (w remoteWidget) LoadInto(router gin.IRouter) {
 	}
 }
 
-func MakeRemotePage(pageName string, loggerGetter common.LoggerGetter, ctx context.Context, widgetName string, widgetService remotewidgetservice.WidgetService) web.Page {
+func MakeRemotePage(pageName string, ctx context.Context, widgetName string, widgetConfig config.WidgetServiceConfig) (web.Page, bool) {
+	widgetService := widgetConfig.WidgetService
 	actions, err := widgetService.GetDesc(ctx, widgetName)
 	if err != nil {
-		loggerGetter.Logger(ctx).Error(initMsg, common.ErrorKey, err)
+		widgetConfig.LoggerGetter.Logger(ctx).Error(initMsg, common.ErrorKey, err)
+		return web.Page{}, false
 	}
 
 	handlers := make([]handlerDesc, 0, len(actions))
@@ -92,14 +95,15 @@ func MakeRemotePage(pageName string, loggerGetter common.LoggerGetter, ctx conte
 				c.Data(http.StatusOK, http.DetectContentType(resData), resData)
 			}
 		default:
-			loggerGetter.Logger(ctx).Error(initMsg, "unknownActionKind", httpMethod)
+			widgetConfig.LoggerGetter.Logger(ctx).Error(initMsg, "unknownActionKind", httpMethod)
+			return web.Page{}, false
 		}
 		handlers = append(handlers, handlerDesc{httpMethod: httpMethod, path: actionPath, handler: handler})
 	}
 
 	p := web.MakePage(pageName)
 	p.Widget = remoteWidget{handlers: handlers}
-	return p
+	return p, true
 }
 
 func extractKeysFromPath(path string) [][2]string {
@@ -172,7 +176,7 @@ func readFile(name string, files map[string][]byte, c *gin.Context) error {
 	return nil
 }
 
-func createHandler(widgetName string, actionName string, dataAdder common.DataAdder, widgetService remotewidgetservice.WidgetService) gin.HandlerFunc {
+func createHandler(widgetName string, actionName string, dataAdder common.DataAdder, widgetService widgetservice.WidgetService) gin.HandlerFunc {
 	return web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 		ctx := c.Request.Context()
 		ctxLogger := web.GetLogger(c)
