@@ -41,7 +41,7 @@ var ErrTechnical = errors.New(ErrorTechnicalKey)
 var ErrUpdate = errors.New(ErrorUpdateKey)
 
 func LogOriginalError(logger *slog.Logger, err error) error {
-	logger.Warn("Original error", ErrorKey, err)
+
 	return ErrTechnical
 }
 
@@ -52,4 +52,13 @@ func WriteError(urlBuilder *strings.Builder, errorMsg string) {
 
 func DefaultErrorRedirect(errorMsg string) string {
 	return "/?error=" + errorMsg
+}
+
+// TODO use it in WriteError and DefaultErrorRedirect
+func filterErrorMsg(logger *slog.Logger, errorMsg string) string {
+	if errorMsg == ErrorUpdateKey || errorMsg == ErrorNotAuthorizedKey {
+		return errorMsg
+	}
+	logger.Warn("Original error", ErrorKey, errorMsg)
+	return ErrorTechnicalKey
 }
