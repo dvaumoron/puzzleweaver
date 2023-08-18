@@ -21,7 +21,13 @@ package config
 import (
 	"time"
 
+	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
+	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
+	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 )
 
 const WebKey = "puzzleWeaver"
@@ -31,11 +37,6 @@ const defaultSessionTimeOut = 1200
 const defaultServiceTimeOut = 5 * time.Second
 
 const DefaultFavicon = "/favicon.ico"
-
-type BaseConfigExtracter interface {
-	GetServiceTimeOut() time.Duration
-	ExtractAdminConfig() AdminConfig
-}
 
 type GlobalConfig struct {
 	Domain string
@@ -56,42 +57,67 @@ type GlobalConfig struct {
 	Page404Url  string
 
 	LangPicturePaths map[string]string
+
+	PageGroups  []PageGroup
+	Widgets     map[string]WidgetConfig
+	WidgetPages []WidgetPage
 }
 
-func (c *GlobalConfig) GetServiceTimeOut() time.Duration {
-	return c.ServiceTimeOut
+type PageGroup struct {
+	Id    uint64
+	Pages []string
 }
 
-func (c *GlobalConfig) ExtractLocalesConfig() LocalesConfig {
-	return LocalesConfig{Domain: c.Domain, SessionTimeOut: c.SessionTimeOut, AllLang: c.AllLang}
+type WidgetConfig struct {
+	Kind       string
+	WidgetName string
+	ObjectId   uint64
+	GroupId    uint64
+	Templates  []string
 }
 
-func (c *GlobalConfig) ExtractSiteConfig() SiteConfig {
-	return SiteConfig{
-		Domain: c.Domain, Port: c.Port, SessionTimeOut: c.SessionTimeOut, MaxMultipartMemory: c.MaxMultipartMemory,
-		StaticPath: c.StaticPath, FaviconPath: c.FaviconPath, LangPicturePaths: c.LangPicturePaths, Page404Url: c.Page404Url,
-	}
+type WidgetPage struct {
+	Emplacement string
+	Name        string
+	WidgetRef   string
 }
 
-func (c *GlobalConfig) ExtractAdminConfig() AdminConfig {
-	return AdminConfig{PageSize: c.PageSize}
+type GlobalServiceConfig struct {
+	*GlobalConfig
+	LoggerGetter            common.LoggerGetter
+	SessionService          service.SessionService
+	TemplateService         service.TemplateService
+	SettingsService         service.SettingsService
+	PasswordStrengthService service.PasswordStrengthService
+	SaltService             service.SaltService
+	LoginService            service.FullLoginService
+	AdminService            service.AdminService
+	ProfileService          service.AdvancedProfileService
+	ForumService            forumservice.FullForumService
+	MarkdownService         service.MarkdownService
+	BlogService             blogservice.BlogService
+	WikiService             wikiservice.WikiService
+	WidgetService           remotewidgetservice.WidgetService
 }
 
-func (c *GlobalConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
+func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
 	return WikiConfig{Args: args}
 }
 
-func (c *GlobalConfig) CreateForumConfig(forumId uint64, groupId uint64, args ...string) ForumConfig {
+func (c *GlobalServiceConfig) CreateForumConfig(forumId uint64, groupId uint64, args ...string) ForumConfig {
 	return ForumConfig{PageSize: c.PageSize, Args: args}
 }
 
-func (c *GlobalConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
+func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
 	return BlogConfig{
+		// TODO wrapper with blogId and groupId
+		BlogService: c.BlogService, CommentService: c.ForumService, MarkdownService: c.MarkdownService,
 		Domain: c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
 		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,
 	}
 }
 
-func (c *GlobalConfig) CreateWidgetConfig(serviceAddr string, objectId uint64, groupId uint64) widgetservice.WidgetService {
-	return nil
+func (c *GlobalServiceConfig) CreateWidgetConfig(objectId uint64, groupId uint64) widgetservice.WidgetService {
+	// TODO wrapper with objectId and groupId
+	return c.WidgetService
 }

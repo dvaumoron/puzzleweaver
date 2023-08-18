@@ -18,45 +18,24 @@
 
 package config
 
-type LocalesConfig struct {
-	Domain         string
-	SessionTimeOut int
-	AllLang        []string
-}
-
-type SessionConfig struct {
-	Domain  string
-	TimeOut int
-}
-
-type SiteConfig struct {
-	Domain             string
-	Port               string
-	SessionTimeOut     int
-	MaxMultipartMemory int64
-	StaticPath         string
-	FaviconPath        string
-	Page404Url         string
-	LangPicturePaths   map[string]string
-}
-
-func (sc *SiteConfig) ExtractSessionConfig() SessionConfig {
-	return SessionConfig{Domain: sc.Domain, TimeOut: sc.SessionTimeOut}
-}
-
-type AdminConfig struct {
-	PageSize uint64
-}
+import (
+	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
+	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
+)
 
 type BlogConfig struct {
-	Domain      string
-	Port        string
-	DateFormat  string
-	PageSize    uint64
-	ExtractSize uint64
-	FeedFormat  string
-	FeedSize    uint64
-	Args        []string
+	BlogService     blogservice.BlogService
+	CommentService  forumservice.CommentService
+	MarkdownService service.MarkdownService
+	Domain          string
+	Port            string
+	DateFormat      string
+	PageSize        uint64
+	ExtractSize     uint64
+	FeedFormat      string
+	FeedSize        uint64
+	Args            []string
 }
 
 type ForumConfig struct {

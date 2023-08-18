@@ -46,17 +46,17 @@ type Site struct {
 	adders         []common.DataAdder
 }
 
-func NewSite(loggerGetter common.LoggerGetter, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
-	adminConfig := configExtracter.ExtractAdminConfig()
+func NewSite(globalConfig config.GlobalServiceConfig, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
+	loggerGetter := globalConfig.LoggerGetter
 	root := MakeStaticPage(loggerGetter, "root", service.PublicGroupId, "index")
-	root.AddSubPage(newLoginPage(configExtracter.ExtractLoginConfig(), settingsManager))
-	root.AddSubPage(newAdminPage(adminConfig))
-	root.AddSubPage(newSettingsPage(config.MakeServiceConfig(configExtracter, settingsManager)))
-	root.AddSubPage(newProfilePage(configExtracter.ExtractProfileConfig()))
+	root.AddSubPage(newLoginPage(globalConfig.LoginService, settingsManager))
+	root.AddSubPage(newAdminPage(globalConfig))
+	root.AddSubPage(newSettingsPage(settingsManager))
+	root.AddSubPage(newProfilePage(globalConfig))
 
 	return &Site{
 		loggerGetter: loggerGetter, localesManager: localesManager,
-		authService: adminConfig.Service, timeOut: configExtracter.GetServiceTimeOut(), root: root,
+		authService: globalConfig.AdminService, timeOut: globalConfig.ServiceTimeOut, root: root,
 	}
 }
 
@@ -89,8 +89,6 @@ func (site *Site) manageTimeOut(c *gin.Context) {
 }
 
 func (site *Site) initEngine(siteConfig config.SiteConfig) *gin.Engine {
-	tracer := siteConfig.Tracer
-
 	engine := gin.New()
 	engine.Use(site.manageTimeOut, otelgin.Middleware(config.WebKey), gin.Recovery())
 
@@ -108,7 +106,7 @@ func (site *Site) initEngine(siteConfig config.SiteConfig) *gin.Engine {
 	}, makeSessionManager(siteConfig.ExtractSessionConfig()).manage)
 
 	if localesManager := site.localesManager; localesManager.GetMultipleLang() {
-		engine.GET("/changeLang", common.CreateRedirect(tracer, "changeLangHandler", changeLangRedirecter))
+		engine.GET("/changeLang", common.CreateRedirect(changeLangRedirecter))
 
 		langPicturePaths := siteConfig.LangPicturePaths
 		for _, lang := range localesManager.GetAllLang() {
@@ -120,23 +118,11 @@ func (site *Site) initEngine(siteConfig config.SiteConfig) *gin.Engine {
 	}
 
 	site.root.Widget.LoadInto(engine)
-	engine.NoRoute(common.CreateRedirectString(tracer, "noRouteHandler", siteConfig.Page404Url))
+	engine.NoRoute(common.CreateRedirectString(siteConfig.Page404Url))
 	return engine
 }
 
-// Launch the site server, when finished shutdown the TracerProvider
 func (site *Site) Run(siteConfig config.SiteConfig) error {
-	tracerProvider := siteConfig.TracerProvider
-	tracer := siteConfig.Tracer
-	logger := siteConfig.Logger
-	defer func() {
-		ctx := context.Background()
-		if err := tracerProvider.Shutdown(ctx); err != nil {
-			ctx, stopSpan := tracer.Start(ctx, "shutdown")
-			logger.WarnContext(ctx, "Failed to shutdown trace provider", zap.Error(err))
-			stopSpan.End()
-		}
-	}()
 	return site.initEngine(siteConfig).Run(common.CheckPort(siteConfig.Port))
 }
 

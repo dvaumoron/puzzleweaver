@@ -28,9 +28,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web"
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
-	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 	"golang.org/x/exp/slog"
@@ -72,7 +70,10 @@ func (w blogWidget) LoadInto(router gin.IRouter) {
 	router.GET("/rss", w.rssHandler)
 }
 
-func MakeBlogPage(blogName string, logger *slog.Logger, blogService blogservice.BlogService, commentService forumservice.CommentService, markdownService service.MarkdownService, blogConfig config.BlogConfig) web.Page {
+func MakeBlogPage(blogName string, logger *slog.Logger, blogConfig config.BlogConfig) web.Page {
+	blogService := blogConfig.BlogService
+	commentService := blogConfig.CommentService
+	markdownService := blogConfig.MarkdownService
 	host := blogConfig.Domain
 	if port := common.CheckPort(blogConfig.Port); port != ":80" {
 		host += port

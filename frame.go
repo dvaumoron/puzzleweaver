@@ -22,7 +22,6 @@ import (
 	"context"
 	_ "embed"
 	"log"
-	"os"
 	"strconv"
 
 	"github.com/ServiceWeaver/weaver"
@@ -35,10 +34,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/forum"
 	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
 	"github.com/dvaumoron/puzzleweaver/web/remotewidget"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	"github.com/dvaumoron/puzzleweaver/web/wiki"
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 	"golang.org/x/exp/slog"
-	"gopkg.in/yaml.v3"
 )
 
 const notFound = "notFound"
@@ -55,7 +54,7 @@ func main() {
 }
 
 // frameApp is the main component of the application.
-// weaver.Run creates it and passes it to serve.
+// weaver.Run creates it and passes it to frameServe.
 type frameApp struct {
 	weaver.Implements[weaver.Main]
 	weaver.WithConfig[config.GlobalConfig]
@@ -66,10 +65,12 @@ type frameApp struct {
 	saltService             weaver.Ref[service.SaltService]
 	loginService            weaver.Ref[service.FullLoginService]
 	adminService            weaver.Ref[service.AdminService]
+	profileService          weaver.Ref[service.AdvancedProfileService]
 	forumService            weaver.Ref[forumservice.FullForumService]
 	markdownService         weaver.Ref[service.MarkdownService]
 	blogService             weaver.Ref[blogservice.BlogService]
 	wikiService             weaver.Ref[wikiservice.WikiService]
+	widgetService           weaver.Ref[remotewidgetservice.WidgetService]
 }
 
 // frameServe is called by weaver.Run and contains the body of the application.
@@ -78,45 +79,41 @@ func frameServe(ctx context.Context, app *frameApp) error {
 	site := web.BuildDefaultSite(globalConfig)
 	ctxLogger := app.Logger(ctx)
 
-	// TODO read config from weaver toml
-	frameConfigBody, err := os.ReadFile(os.Getenv("FRAME_CONFIG_PATH"))
-	if err != nil {
-		ctxLogger.Error("Failed to read frame configuration file", common.ErrorKey, err)
-	}
-
-	var frameConfig map[string]any
-	if err = yaml.Unmarshal(frameConfigBody, &frameConfig); err != nil {
-		ctxLogger.Error("Failed to parse frame configuration", common.ErrorKey, err)
+	globalServiceConfig := &config.GlobalServiceConfig{
+		GlobalConfig: globalConfig, LoggerGetter: app,
+		SessionService:          app.sessionService.Get(),
+		TemplateService:         app.templateService.Get(),
+		SettingsService:         app.settingsService.Get(),
+		PasswordStrengthService: app.passwordStrengthService.Get(),
+		SaltService:             app.saltService.Get(),
+		LoginService:            app.loginService.Get(),
+		AdminService:            app.adminService.Get(),
+		ProfileService:          app.profileService.Get(),
+		ForumService:            app.forumService.Get(),
+		MarkdownService:         app.markdownService.Get(),
+		BlogService:             app.blogService.Get(),
+		WikiService:             app.wikiService.Get(),
+		WidgetService:           app.widgetService.Get(),
 	}
 
 	site.AddPage(web.MakeHiddenStaticPage(app, notFound, service.PublicGroupId, notFound))
 
-	for _, pageGroup := range asSlice("pageGroups", frameConfig["pageGroups"], ctxLogger) {
-		castedPageGroup := asMap("pageGroup", pageGroup, ctxLogger)
-		site.AddStaticPages(
-			app,
-			asUint64("pageGroup.id", castedPageGroup["id"], ctxLogger),
-			asStringSlice("pageGroup.pages", castedPageGroup["pages"], ctxLogger),
-		)
+	for _, pageGroup := range globalConfig.PageGroups {
+		site.AddStaticPages(app, pageGroup.Id, pageGroup.Pages)
 	}
 
-	widgets := asMap("widgets", frameConfig["widgets"], ctxLogger)
-	for _, widgetPageConfig := range asSlice("widgetPages", frameConfig["widgetPages"], ctxLogger) {
-		castedWidgetPage := asMap("widgetPage", widgetPageConfig, ctxLogger)
-		emplacement := asString("widgetPage.emplacement", castedWidgetPage["emplacement"], ctxLogger)
+	widgets := globalConfig.Widgets
+	for _, widgetPage := range globalConfig.WidgetPages {
 		ok := false
 		var parentPage web.Page
-		if emplacement != "" {
+		if emplacement := widgetPage.Emplacement; emplacement != "" {
 			parentPage, ok = site.GetPageWithPath(emplacement)
 			if !ok {
 				ctxLogger.Error("Failed to retrive parentPage", "emplacement", emplacement)
 			}
 		}
 
-		widgetPage := makeWidgetPage(
-			app, asString("widgetPage.name", castedWidgetPage["name"], ctxLogger), app, ctx, globalConfig,
-			widgets[asString("widgetPage.widgetRef", castedWidgetPage["widgetRef"], ctxLogger)],
-		)
+		widgetPage := makeWidgetPage(app, widgetPage.Name, globalServiceConfig, ctx, widgets[widgetPage.WidgetRef])
 
 		if ok {
 			parentPage.AddSubPage(widgetPage)
@@ -125,15 +122,11 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		}
 	}
 
-	siteConfig := globalConfig.ExtractSiteConfig()
-	// emptying data no longer useful for GC cleaning
-	globalConfig = nil
-
-	return site.Run(siteConfig)
+	return site.Run(globalConfig)
 }
 
-func makeWidgetPage(app *frameApp, pageName string, loggerGetter common.LoggerGetter, ctx context.Context, globalConfig *config.GlobalConfig, widgetConfig any) web.Page {
-	ctxLogger := loggerGetter.Logger(ctx)
+func makeWidgetPage(app *frameApp, pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, widgetConfig any) web.Page {
+	ctxLogger := globalConfig.LoggerGetter.Logger(ctx)
 	castedConfig := asMap("widget", widgetConfig, ctxLogger)
 
 	switch kind := asString("widget.kind", castedConfig["kind"], ctxLogger); kind {
@@ -147,8 +140,7 @@ func makeWidgetPage(app *frameApp, pageName string, loggerGetter common.LoggerGe
 		groupId := asUint64("widget.groupId", castedConfig["groupId"], ctxLogger)
 		args := asStringSlice("widget.templates", castedConfig["templates"], ctxLogger)
 		return blog.MakeBlogPage(
-			pageName, ctxLogger, app.blogService.Get(), app.forumService.Get(), app.markdownService.Get(),
-			globalConfig.CreateBlogConfig(blogId, groupId, args...),
+			pageName, ctxLogger, globalConfig.CreateBlogConfig(blogId, groupId, args...),
 		)
 	case "wiki":
 		wikiId := asUint64("widget.wikiId", castedConfig["wikiId"], ctxLogger)
@@ -159,17 +151,16 @@ func makeWidgetPage(app *frameApp, pageName string, loggerGetter common.LoggerGe
 			globalConfig.CreateWikiConfig(wikiId, groupId, args...),
 		)
 	case "remote":
-		serviceAddr := asString("widget.serviceAddr", castedConfig["serviceAddr"], ctxLogger)
 		widgetName := asString("widget.widgetName", castedConfig["widgetName"], ctxLogger)
 		objectId := asUint64("widget.objectId", castedConfig["objectId"], ctxLogger)
 		groupId := asUint64("widget.groupId", castedConfig["groupId"], ctxLogger)
 		return remotewidget.MakeRemotePage(
-			pageName, loggerGetter, ctx, widgetName, globalConfig.CreateWidgetConfig(serviceAddr, objectId, groupId),
+			pageName, globalConfig.LoggerGetter, ctx, widgetName, globalConfig.CreateWidgetConfig(objectId, groupId),
 		)
 	default:
 		ctxLogger.Error("Widget kind unknown ", "widgetKind", kind)
 	}
-	return web.Page{} // unreachable
+	return web.Page{} // TODO redirecter to not found page
 }
 
 func asUint64(name string, value any, ctxLogger *slog.Logger) uint64 {

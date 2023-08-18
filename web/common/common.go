@@ -24,7 +24,6 @@ import (
 	"unicode"
 
 	"github.com/gin-gonic/gin"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slices"
 )
 
@@ -83,11 +82,9 @@ func CreateRedirect(redirecter Redirecter) gin.HandlerFunc {
 	}
 }
 
-func CreateRedirectString(tracer trace.Tracer, spanName string, target string) gin.HandlerFunc {
+func CreateRedirectString(target string) gin.HandlerFunc {
 	target = checkTarget(target)
 	return func(c *gin.Context) {
-		_, span := tracer.Start(c.Request.Context(), spanName)
-		defer span.End()
 		c.Redirect(http.StatusFound, target)
 	}
 }

@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -63,7 +63,11 @@ func (w profileWidget) LoadInto(router gin.IRouter) {
 	router.GET("/picture/:UserId", w.pictureHandler)
 }
 
-func newProfilePage(profileService service.AdvancedProfileService, adminService service.AdminService, loginService service.LoginService) Page {
+func newProfilePage(globalConfig config.GlobalServiceConfig) Page {
+	profileService := globalConfig.ProfileService
+	adminService := globalConfig.AdminService
+	loginService := globalConfig.LoginService
+
 	p := MakeHiddenPage("profile")
 	p.Widget = profileWidget{
 		defaultHandler: common.CreateRedirect(defaultRedirecter),

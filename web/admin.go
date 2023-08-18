@@ -118,8 +118,11 @@ func (w adminWidget) LoadInto(router gin.IRouter) {
 	router.POST("/role/save", w.saveRoleHandler)
 }
 
-func newAdminPage(adminService service.AdminService, userService service.AdvancedUserService, profileService service.AdvancedProfileService, adminConfig config.AdminConfig) Page {
-	defaultPageSize := adminConfig.PageSize
+func newAdminPage(globalConfig config.GlobalServiceConfig) Page {
+	adminService := globalConfig.AdminService
+	userService := globalConfig.LoginService
+	profileService := globalConfig.ProfileService
+	defaultPageSize := globalConfig.PageSize
 
 	p := MakeHiddenPage("admin")
 	p.Widget = adminWidget{
