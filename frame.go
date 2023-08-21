@@ -27,14 +27,12 @@ import (
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/blog"
-	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/forum"
 	"github.com/dvaumoron/puzzleweaver/web/remotewidget"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	"github.com/dvaumoron/puzzleweaver/web/wiki"
-	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 	"golang.org/x/exp/slog"
 )
 
@@ -66,8 +64,8 @@ type frameApp struct {
 	profileService          weaver.Ref[service.AdvancedProfileService]
 	forumService            weaver.Ref[remoteservice.RemoteForumService]
 	markdownService         weaver.Ref[service.MarkdownService]
-	blogService             weaver.Ref[blogservice.BlogService]
-	wikiService             weaver.Ref[wikiservice.WikiService]
+	blogService             weaver.Ref[remoteservice.RemoteBlogService]
+	wikiService             weaver.Ref[remoteservice.RemoteWikiService]
 	widgetService           weaver.Ref[widgetservice.WidgetService]
 }
 
@@ -91,8 +89,8 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		WidgetService:           app.widgetService.Get(),
 	}
 
-	ctxLogger := app.Logger(ctx)
-	site := web.BuildDefaultSite(ctxLogger, globalConfig)
+	logger := app.Logger(ctx)
+	site := web.BuildDefaultSite(logger, globalConfig)
 
 	site.AddPage(web.MakeHiddenStaticPage(app, notFound, service.PublicGroupId, notFound))
 
@@ -107,11 +105,11 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		if emplacement := widgetPageConfig.Emplacement; emplacement != "" {
 			parentPage, ok = site.GetPageWithPath(emplacement)
 			if !ok {
-				ctxLogger.Error("Failed to retrive parentPage", "emplacement", emplacement)
+				logger.Error("Failed to retrive parentPage", "emplacement", emplacement)
 			}
 		}
 
-		widgetPage, add := makeWidgetPage(app, widgetPageConfig.Name, globalConfig, ctx, ctxLogger, widgets[widgetPageConfig.WidgetRef])
+		widgetPage, add := makeWidgetPage(app, widgetPageConfig.Name, globalConfig, ctx, logger, widgets[widgetPageConfig.WidgetRef])
 		if add {
 			if ok {
 				parentPage.AddSubPage(widgetPage)
@@ -120,7 +118,6 @@ func frameServe(ctx context.Context, app *frameApp) error {
 			}
 		}
 	}
-
 	return site.Run(globalConfig)
 }
 

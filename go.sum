@@ -23,8 +23,6 @@ github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkp
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724 h1:1/c0u68+2LRI+XSpduQpV9BnKx1k1P6GTb3MVxCE3w4=
 github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724/go.mod h1:pTiKQhUCcxt2eQMAnv48oc5nAsmelPm573z44h6PSXc=
-github.com/dvaumoron/puzzleblogservice v1.1.0 h1:EbV2WKZxmdPaXMsh78nDDZr/KVpJskMoMMlgoD1W84U=
-github.com/dvaumoron/puzzleblogservice v1.1.0/go.mod h1:G7aZYaJHItf4DM5kXehMXwOYTcUl75sH/k8fZ/QBj10=
 github.com/dvaumoron/puzzleloginservice v1.7.0 h1:o5W2j/rbUeSctEe8+yDc49/3R5vzfwtOVH9Lse5BFpc=
 github.com/dvaumoron/puzzleloginservice v1.7.0/go.mod h1:K/m2nN30p+uAJamWT85Vh1Mtea7+ahSz+fnIughCok0=
 github.com/dvaumoron/puzzleprofileservice v1.2.0 h1:zg7KCjU7nqG8yJTQZ3cXb/Dl8J9LlJVUH0plJeF8FZs=

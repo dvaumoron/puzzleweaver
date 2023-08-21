@@ -20,6 +20,21 @@ package remoteservice
 
 import "context"
 
+type RawBlogPost struct {
+	Id        uint64
+	CreatorId uint64
+	CreatedAt int64
+	Title     string
+	Content   string
+}
+
+type RemoteBlogService interface {
+	CreatePost(ctx context.Context, blogId uint64, userId uint64, title string, content string) (uint64, error)
+	GetPost(ctx context.Context, blogId uint64, postId uint64) (RawBlogPost, error)
+	GetPosts(ctx context.Context, blogId uint64, start uint64, end uint64, filter string) (uint64, []RawBlogPost, error)
+	Delete(ctx context.Context, blogId uint64, postId uint64) error
+}
+
 type RawForumContent struct {
 	Id        uint64
 	CreatorId uint64

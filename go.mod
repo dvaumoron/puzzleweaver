@@ -4,7 +4,6 @@ go 1.21.0
 
 require (
 	github.com/ServiceWeaver/weaver v0.19.0
-	github.com/dvaumoron/puzzleblogservice v1.1.0
 	github.com/dvaumoron/puzzleloginservice v1.7.0
 	github.com/dvaumoron/puzzleprofileservice v1.2.0
 	github.com/dvaumoron/puzzleweb v1.8.5

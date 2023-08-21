@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
-	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
+	blogclient "github.com/dvaumoron/puzzleweaver/web/blog/client"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumclient "github.com/dvaumoron/puzzleweaver/web/forum/client"
@@ -95,18 +95,23 @@ type GlobalServiceConfig struct {
 	ProfileService          service.AdvancedProfileService
 	ForumService            remoteservice.RemoteForumService
 	MarkdownService         service.MarkdownService
-	BlogService             blogservice.BlogService
+	BlogService             remoteservice.RemoteBlogService
 	WikiService             remoteservice.RemoteWikiService
 	WidgetService           widgetservice.WidgetService
 }
 
-func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
-	// TODO wrapper with wikiId and groupId
-	return WikiConfig{
-		WikiService: wikiclient.MakeWikiServiceWrapper(
-			c.WikiService, c.AdminService, c.ProfileService, c.LoggerGetter, wikiId, groupId, c.DateFormat,
+func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
+	// TODO wrapper with blogId and groupId
+	return BlogConfig{
+		BlogService: blogclient.MakeBlogServiceWrapper(
+			c.BlogService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
 		),
-		Args: args,
+		CommentService: forumclient.MakeForumServiceWrapper(
+			c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
+		),
+		MarkdownService: c.MarkdownService,
+		Domain:          c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
+		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,
 	}
 }
 
@@ -119,22 +124,18 @@ func (c *GlobalServiceConfig) CreateForumConfig(forumId uint64, groupId uint64, 
 	}
 }
 
-func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
-	// TODO wrapper with blogId and groupId
-	return BlogConfig{
-		BlogService: c.BlogService,
-		CommentService: forumclient.MakeForumServiceWrapper(
-			c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
-		),
-		MarkdownService: c.MarkdownService,
-		Domain:          c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
-		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,
-	}
-}
-
 func (c *GlobalServiceConfig) CreateWidgetConfig(objectId uint64, groupId uint64) WidgetServiceConfig {
 	// TODO wrapper with objectId and groupId
 	return WidgetServiceConfig{
 		LoggerGetter: c.LoggerGetter, WidgetService: c.WidgetService,
+	}
+}
+
+func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
+	return WikiConfig{
+		WikiService: wikiclient.MakeWikiServiceWrapper(
+			c.WikiService, c.AdminService, c.ProfileService, c.LoggerGetter, wikiId, groupId, c.DateFormat,
+		),
+		Args: args,
 	}
 }

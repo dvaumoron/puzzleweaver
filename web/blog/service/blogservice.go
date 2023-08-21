@@ -37,6 +37,6 @@ type BlogService interface {
 	GetPost(ctx context.Context, userId uint64, postId uint64) (BlogPost, error)
 	GetPosts(ctx context.Context, userId uint64, start uint64, end uint64, filter string) (uint64, []BlogPost, error)
 	DeletePost(ctx context.Context, userId uint64, postId uint64) error
-	CreateRight(ctx context.Context, userId uint64) error
-	DeleteRight(ctx context.Context, userId uint64) error
+	CreateRight(ctx context.Context, userId uint64) bool
+	DeleteRight(ctx context.Context, userId uint64) bool
 }

@@ -131,8 +131,8 @@ func MakeBlogPage(blogName string, logger *slog.Logger, blogConfig config.BlogCo
 
 			common.InitPagination(data, filter, pageNumber, end, total)
 			data["Posts"] = posts
-			data[common.AllowedToCreateName] = blogService.CreateRight(ctx, userId) == nil
-			data[common.AllowedToDeleteName] = blogService.DeleteRight(ctx, userId) == nil
+			data[common.AllowedToCreateName] = blogService.CreateRight(ctx, userId)
+			data[common.AllowedToDeleteName] = blogService.DeleteRight(ctx, userId)
 			web.InitNoELementMsg(data, len(posts), c)
 			return listTmpl, ""
 		}),
