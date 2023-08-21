@@ -33,8 +33,6 @@ github.com/dvaumoron/puzzleweb v1.8.5 h1:IWKfLq8INivq+FZYlN2nv3cVeGjufqtcMu5LEeN
 github.com/dvaumoron/puzzleweb v1.8.5/go.mod h1:QUGBLSHbmWAxTmGG6blIUSWHK5KB72vD4dbZVnh5VZ4=
 github.com/dvaumoron/puzzlewidgetservice v1.2.0 h1:emjrpOqV3o9vwU9+I3dg1jT4QegxM83B7/UOg47FiJE=
 github.com/dvaumoron/puzzlewidgetservice v1.2.0/go.mod h1:4SoELSrFGpUQOU1tnLa0wn+uoom19ZfBIrPZBQyr5dY=
-github.com/dvaumoron/puzzlewikiservice v1.3.0 h1:M2PQ5jFTcwJ8kB1FgiaUB9+PJHOIwzwNbejkYwPYpxI=
-github.com/dvaumoron/puzzlewikiservice v1.3.0/go.mod h1:tPX1ONQbE/Bz19M8JLPmm/6/l5YXQVc2okbS2N9P0ns=
 github.com/felixge/httpsnoop v1.0.3 h1:s/nj+GCswXYzN5v2DpNMuMQYe+0DDwt5WVCU6CWBdXk=
 github.com/felixge/httpsnoop v1.0.3/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=

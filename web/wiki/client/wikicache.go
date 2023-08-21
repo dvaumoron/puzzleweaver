@@ -16,7 +16,7 @@
  *
  */
 
-package wikiimpl
+package wikiclient
 
 import (
 	"sync"

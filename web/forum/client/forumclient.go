@@ -34,7 +34,7 @@ type forumServiceWrapper struct {
 	forumService   remoteservice.RemoteForumService
 	authService    service.AuthService
 	profileService service.ProfileService
-	LoggerGetter   common.LoggerGetter
+	loggerGetter   common.LoggerGetter
 	forumId        uint64
 	groupId        uint64
 	dateFormat     string
@@ -43,7 +43,7 @@ type forumServiceWrapper struct {
 func MakeForumServiceWrapper(forumService remoteservice.RemoteForumService, authService service.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, forumId uint64, groupId uint64, dateFormat string) forumservice.FullForumService {
 	return forumServiceWrapper{
 		forumService: forumService, authService: authService, profileService: profileService,
-		LoggerGetter: loggerGetter, forumId: forumId, groupId: groupId, dateFormat: dateFormat,
+		loggerGetter: loggerGetter, forumId: forumId, groupId: groupId, dateFormat: dateFormat,
 	}
 }
 
@@ -94,7 +94,7 @@ func (client forumServiceWrapper) CreateComment(ctx context.Context, userId uint
 	}
 
 	if total == 0 {
-		logCommentThreadNotFound(client.LoggerGetter.Logger(ctx), client.forumId, elemTitle)
+		logCommentThreadNotFound(client.loggerGetter.Logger(ctx), client.forumId, elemTitle)
 
 		_, err = client.forumService.CreateThread(ctx, client.forumId, userId, elemTitle, comment)
 		return err
@@ -160,7 +160,7 @@ func (client forumServiceWrapper) GetCommentThread(ctx context.Context, userId u
 
 	total, threads, err := client.forumService.GetThreads(ctx, client.forumId, 0, 1, elemTitle)
 	if err != nil {
-		logCommentThreadNotFound(client.LoggerGetter.Logger(ctx), client.forumId, elemTitle)
+		logCommentThreadNotFound(client.loggerGetter.Logger(ctx), client.forumId, elemTitle)
 		return 0, nil, err
 	}
 	if len(threads) == 0 {
@@ -187,7 +187,7 @@ func (client forumServiceWrapper) DeleteCommentThread(ctx context.Context, userI
 
 	_, threads, err := client.forumService.GetThreads(ctx, client.forumId, 0, 1, elemTitle)
 	if err != nil {
-		logCommentThreadNotFound(client.LoggerGetter.Logger(ctx), client.forumId, elemTitle)
+		logCommentThreadNotFound(client.loggerGetter.Logger(ctx), client.forumId, elemTitle)
 		return err
 	}
 	if len(threads) == 0 {
@@ -208,7 +208,7 @@ func (client forumServiceWrapper) DeleteComment(ctx context.Context, userId uint
 
 	_, threads, err := client.forumService.GetThreads(ctx, client.forumId, 0, 1, elemTitle)
 	if err != nil {
-		logCommentThreadNotFound(client.LoggerGetter.Logger(ctx), client.forumId, elemTitle)
+		logCommentThreadNotFound(client.loggerGetter.Logger(ctx), client.forumId, elemTitle)
 		return err
 	}
 	if len(threads) == 0 {
