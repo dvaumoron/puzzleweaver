@@ -48,7 +48,7 @@ type profileWidget struct {
 func defaultRedirecter(c *gin.Context) string {
 	userId := GetSessionUserId(c)
 	if userId == 0 {
-		return common.DefaultErrorRedirect(unknownUserKey)
+		return common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 	}
 	return profileUrlBuilder(userId).String()
 }
@@ -75,26 +75,26 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			ctx := c.Request.Context()
 			viewedUserId := GetRequestedUserId(c)
 			if viewedUserId == 0 {
-				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 
 			currentUserId, _ := data[common.IdName].(uint64)
 			updateRight := viewedUserId == currentUserId
 			if !updateRight {
 				if err := profileService.ViewRight(ctx, currentUserId); err != nil {
-					return "", common.DefaultErrorRedirect(err.Error())
+					return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 				}
 			}
 
 			profiles, err := profileService.GetProfiles(ctx, []uint64{viewedUserId})
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			roles, err := adminService.GetUserRoles(ctx, currentUserId, viewedUserId)
 			// ignore ErrNotAuthorized
 			if err == common.ErrTechnical {
-				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 			if err == nil {
 				data["UserRight"] = DisplayGroups(roles)
@@ -108,12 +108,12 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 		editHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			userId, _ := data[common.IdName].(uint64)
 			if userId == 0 {
-				return "", common.DefaultErrorRedirect(unknownUserKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 			}
 
 			profiles, err := profileService.GetProfiles(c.Request.Context(), []uint64{userId})
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			userProfile := profiles[userId]
@@ -125,7 +125,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			logger := GetLogger(c)
 			userId := GetSessionUserId(c)
 			if userId == 0 {
-				return common.DefaultErrorRedirect(unknownUserKey)
+				return common.DefaultErrorRedirect(logger, unknownUserKey)
 			}
 
 			desc := c.PostForm("userDesc")
@@ -134,7 +134,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			picture, err := c.FormFile("picture")
 			if err != nil {
 				logger.Error("Failed to retrieve picture file", common.ErrorKey, err)
-				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 			}
 
 			if picture != nil {
@@ -142,7 +142,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 				pictureFile, err = picture.Open()
 				if err != nil {
 					logger.Error("Failed to open retrieve picture file ", common.ErrorKey, err)
-					return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+					return common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 				}
 				defer pictureFile.Close()
 
@@ -150,7 +150,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 				pictureData, err = io.ReadAll(pictureFile)
 				if err != nil {
 					logger.Error("Failed to read picture file ", common.ErrorKey, err)
-					return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+					return common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 				}
 
 				err = profileService.UpdatePicture(ctx, userId, pictureData)
@@ -162,7 +162,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 
 			targetBuilder := profileUrlBuilder(userId)
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, logger, err.Error())
 			}
 			return targetBuilder.String()
 		}),
@@ -170,7 +170,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			session := GetSession(c)
 			userId := GetSessionUserId(c)
 			if userId == 0 {
-				return common.DefaultErrorRedirect(unknownUserKey)
+				return common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 			}
 
 			oldLogin := session.Load(loginName)
@@ -186,7 +186,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			if err == nil {
 				session.Store(loginName, newLogin)
 			} else {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, GetLogger(c), err.Error())
 			}
 			return targetBuilder.String()
 		}),
@@ -194,7 +194,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			session := GetSession(c)
 			userId := GetSessionUserId(c)
 			if userId == 0 {
-				return common.DefaultErrorRedirect(unknownUserKey)
+				return common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 			}
 
 			login := session.Load(loginName)
@@ -212,7 +212,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 
 			targetBuilder := profileUrlBuilder(userId)
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, GetLogger(c), err.Error())
 			}
 			return targetBuilder.String()
 		}),

@@ -31,7 +31,7 @@ import (
 
 const settingsName = "Settings"
 
-var errWrongLang = errors.New(common.WrongLangKey)
+var errWrongLang = errors.New(common.ErrorWrongLangKey)
 
 type SettingsManager struct {
 	settingsService service.SettingsService
@@ -100,7 +100,7 @@ func newSettingsPage(settingsManager *SettingsManager) Page {
 		editHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			userId, _ := data[common.IdName].(uint64)
 			if userId == 0 {
-				return "", common.DefaultErrorRedirect(unknownUserKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 			}
 
 			data["Settings"] = settingsManager.Get(userId, c)
@@ -110,7 +110,7 @@ func newSettingsPage(settingsManager *SettingsManager) Page {
 			ctx := c.Request.Context()
 			userId := GetSessionUserId(c)
 			if userId == 0 {
-				return common.DefaultErrorRedirect(unknownUserKey)
+				return common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 			}
 
 			settings := c.PostFormMap("settings")
@@ -122,7 +122,7 @@ func newSettingsPage(settingsManager *SettingsManager) Page {
 			var targetBuilder strings.Builder
 			targetBuilder.WriteString("/settings")
 			if err != nil {
-				common.WriteError(&targetBuilder, err.Error())
+				common.WriteError(&targetBuilder, GetLogger(c), err.Error())
 			}
 			return targetBuilder.String()
 		}),

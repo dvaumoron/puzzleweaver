@@ -59,7 +59,7 @@ func (s sortableContents) Swap(i, j int) {
 func (impl loginImpl) Verify(ctx context.Context, login string, password string) (bool, uint64, error) {
 	_, err := impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {
-		return false, 0, common.LogOriginalError(impl.Logger(ctx), err)
+		return false, 0, err
 	}
 
 	success := true
@@ -79,7 +79,7 @@ func (impl loginImpl) Register(ctx context.Context, login string, password strin
 
 	_, err = impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {
-		return false, 0, common.LogOriginalError(impl.Logger(ctx), err)
+		return false, 0, err
 	}
 
 	success := true
@@ -102,12 +102,12 @@ func (impl loginImpl) GetUsers(ctx context.Context, userIds []uint64) (map[uint6
 func (impl loginImpl) ChangeLogin(ctx context.Context, userId uint64, oldLogin string, newLogin string, password string) error {
 	oldSalted, err := impl.saltService.Get().Salt(ctx, oldLogin, password)
 	if err != nil {
-		return common.LogOriginalError(impl.Logger(ctx), err)
+		return err
 	}
 
 	newSalted, err := impl.saltService.Get().Salt(ctx, newLogin, password)
 	if err != nil {
-		return common.LogOriginalError(impl.Logger(ctx), err)
+		return err
 	}
 
 	success := oldSalted == newSalted
@@ -129,12 +129,12 @@ func (impl loginImpl) ChangePassword(ctx context.Context, userId uint64, login s
 
 	oldSalted, err := impl.saltService.Get().Salt(ctx, login, oldPassword)
 	if err != nil {
-		return common.LogOriginalError(impl.Logger(ctx), err)
+		return err
 	}
 
 	newSalted, err := impl.saltService.Get().Salt(ctx, login, newPassword)
 	if err != nil {
-		return common.LogOriginalError(impl.Logger(ctx), err)
+		return err
 	}
 
 	success := oldSalted == newSalted

@@ -179,16 +179,16 @@ func readFile(name string, files map[string][]byte, c *gin.Context) error {
 func createHandler(widgetName string, actionName string, dataAdder common.DataAdder, widgetService widgetservice.WidgetService) gin.HandlerFunc {
 	return web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 		ctx := c.Request.Context()
-		ctxLogger := web.GetLogger(c)
+		logger := web.GetLogger(c)
 		dataAdder(data, c)
 		files, err := readFiles(c)
 		if err != nil {
-			ctxLogger.Error("Failed to retrieve post file", common.ErrorKey, err)
-			return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+			logger.Error("Failed to retrieve post file", common.ErrorKey, err)
+			return "", common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 		}
 		redirect, templateName, resData, err := widgetService.Process(ctx, widgetName, actionName, data, files)
 		if err != nil {
-			return "", common.DefaultErrorRedirect(err.Error())
+			return "", common.DefaultErrorRedirect(logger, err.Error())
 		}
 		if redirect != "" {
 			return "", redirect
@@ -197,8 +197,8 @@ func createHandler(widgetName string, actionName string, dataAdder common.DataAd
 		if updateDataAndSession(data, resData, c) {
 			return templateName, ""
 		}
-		ctxLogger.Error("Failed to unmarshal json from remote widget", common.ErrorKey, err)
-		return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+		logger.Error("Failed to unmarshal json from remote widget", common.ErrorKey, err)
+		return "", common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 	})
 }
 

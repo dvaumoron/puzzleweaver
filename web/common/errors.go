@@ -29,36 +29,36 @@ const ErrorKey = "error"
 
 const QueryError = "?error="
 
-const WrongLangKey = "WrongLang"
-
 // error displayed to user
+const ErrorBaseVersionKey = "BaseVersionOutdated"
 const ErrorNotAuthorizedKey = "ErrorNotAuthorized"
 const ErrorTechnicalKey = "ErrorTechnicalProblem"
 const ErrorUpdateKey = "ErrorUpdate"
+const ErrorWrongLangKey = "WrongLang"
+
+const originalErrorMsg = "Original error"
 
 var ErrNotAuthorized = errors.New(ErrorNotAuthorizedKey)
 var ErrTechnical = errors.New(ErrorTechnicalKey)
 var ErrUpdate = errors.New(ErrorUpdateKey)
 
-func LogOriginalError(logger *slog.Logger, err error) error {
-
-	return ErrTechnical
+func LogOriginalError(logger *slog.Logger, err error) {
+	logger.Warn(originalErrorMsg, ErrorKey, err.Error())
 }
 
-func WriteError(urlBuilder *strings.Builder, errorMsg string) {
+func WriteError(urlBuilder *strings.Builder, logger *slog.Logger, errorMsg string) {
 	urlBuilder.WriteString(QueryError)
-	urlBuilder.WriteString(errorMsg)
+	urlBuilder.WriteString(filterErrorMsg(logger, errorMsg))
 }
 
-func DefaultErrorRedirect(errorMsg string) string {
-	return "/?error=" + errorMsg
+func DefaultErrorRedirect(logger *slog.Logger, errorMsg string) string {
+	return "/?error=" + filterErrorMsg(logger, errorMsg)
 }
 
-// TODO use it in WriteError and DefaultErrorRedirect
 func filterErrorMsg(logger *slog.Logger, errorMsg string) string {
-	if errorMsg == ErrorUpdateKey || errorMsg == ErrorNotAuthorizedKey {
+	if errorMsg == ErrorBaseVersionKey || errorMsg == ErrorNotAuthorizedKey || errorMsg == ErrorTechnicalKey || errorMsg == ErrorUpdateKey || errorMsg == ErrorWrongLangKey {
 		return errorMsg
 	}
-	logger.Warn("Original error", ErrorKey, errorMsg)
+	logger.Warn(originalErrorMsg, ErrorKey, errorMsg)
 	return ErrorTechnicalKey
 }

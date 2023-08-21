@@ -129,21 +129,21 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 		displayHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			viewAdmin, _ := data[viewAdminName].(bool)
 			if !viewAdmin {
-				return "", common.DefaultErrorRedirect(common.ErrorNotAuthorizedKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorNotAuthorizedKey)
 			}
 			return "admin/index", ""
 		}),
 		listUserHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			viewAdmin, _ := data[viewAdminName].(bool)
 			if !viewAdmin {
-				return "", common.DefaultErrorRedirect(common.ErrorNotAuthorizedKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorNotAuthorizedKey)
 			}
 
 			pageNumber, start, end, filter := common.GetPagination(defaultPageSize, c)
 
 			total, users, err := userService.ListUsers(c.Request.Context(), start, end, filter)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			common.InitPagination(data, filter, pageNumber, end, total)
@@ -156,17 +156,17 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			adminId, _ := data[common.IdName].(uint64)
 			userId := GetRequestedUserId(c)
 			if userId == 0 {
-				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 
 			roles, err := adminService.GetUserRoles(ctx, adminId, userId)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			users, err := userService.GetUsers(ctx, []uint64{userId})
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			updateRight := adminService.AuthQuery(ctx, adminId, service.AdminGroupId, service.ActionUpdate) == nil
@@ -182,22 +182,22 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			adminId, _ := data[common.IdName].(uint64)
 			userId := GetRequestedUserId(c)
 			if userId == 0 {
-				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 
 			allRoles, err := adminService.GetAllRoles(ctx, adminId)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			userRoles, err := adminService.GetUserRoles(ctx, adminId, userId)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			userIdToLogin, err := userService.GetUsers(ctx, []uint64{userId})
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			data[common.ViewedUserName] = userIdToLogin[userId]
@@ -222,7 +222,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 
 			targetBuilder := userListUrlBuilder()
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, GetLogger(c), err.Error())
 			}
 			return targetBuilder.String()
 		}),
@@ -244,7 +244,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 
 			targetBuilder := userListUrlBuilder()
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, GetLogger(c), err.Error())
 			}
 			return targetBuilder.String()
 		}),
@@ -253,12 +253,12 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			adminId, _ := data[common.IdName].(uint64)
 			allRoles, err := adminService.GetAllRoles(ctx, adminId)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			allGroups, err := adminService.GetAllGroups(ctx)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 			data[groupsName] = displayAllGroups(allGroups, allRoles)
 			return "admin/role/list", ""
@@ -275,7 +275,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				adminId, _ := data[common.IdName].(uint64)
 				actions, err := adminService.GetActions(c.Request.Context(), adminId, roleName, group)
 				if err != nil {
-					return "", common.DefaultErrorRedirect(err.Error())
+					return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 				}
 
 				actionSet := common.MakeSet(actions)
@@ -301,7 +301,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			var targetBuilder strings.Builder
 			targetBuilder.WriteString("/admin/role/list")
 			if err != nil {
-				common.WriteError(&targetBuilder, err.Error())
+				common.WriteError(&targetBuilder, GetLogger(c), err.Error())
 			}
 			return targetBuilder.String()
 		}),

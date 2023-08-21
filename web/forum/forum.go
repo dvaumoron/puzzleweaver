@@ -97,7 +97,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 
 			total, threads, err := forumService.GetThreads(ctx, userId, start, end, filter)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(web.GetLogger(c), err.Error())
 			}
 
 			common.InitPagination(data, filter, pageNumber, end, total)
@@ -116,15 +116,15 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			message := c.PostForm("message")
 
 			if title == "" {
-				return common.DefaultErrorRedirect("EmptyThreadTitle")
+				return common.DefaultErrorRedirect(web.GetLogger(c), "EmptyThreadTitle")
 			}
 			if message == "" {
-				return common.DefaultErrorRedirect(emptyMessage)
+				return common.DefaultErrorRedirect(web.GetLogger(c), emptyMessage)
 			}
 
 			threadId, err := forumService.CreateThread(c.Request.Context(), web.GetSessionUserId(c), title, message)
 			if err != nil {
-				return common.DefaultErrorRedirect(err.Error())
+				return common.DefaultErrorRedirect(web.GetLogger(c), err.Error())
 			}
 			return threadUrlBuilder(common.GetBaseUrl(1, c), threadId).String()
 		}),
@@ -142,7 +142,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			var targetBuilder strings.Builder
 			targetBuilder.WriteString(common.GetBaseUrl(2, c))
 			if err != nil {
-				common.WriteError(&targetBuilder, err.Error())
+				common.WriteError(&targetBuilder, logger, err.Error())
 			}
 			return targetBuilder.String()
 		}),
@@ -152,7 +152,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			threadId, err := strconv.ParseUint(c.Param(threadIdName), 10, 64)
 			if err != nil {
 				logger.Warn(parsingThreadIdErrorMsg, common.ErrorKey, err)
-				return "", common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return "", common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 			}
 
 			pageNumber, start, end, filter := common.GetPagination(defaultPageSize, c)
@@ -160,7 +160,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			userId, _ := data[common.IdName].(uint64)
 			total, thread, messages, err := forumService.GetThread(ctx, userId, threadId, start, end, filter)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(logger, err.Error())
 			}
 
 			common.InitPagination(data, filter, pageNumber, end, total)
@@ -178,7 +178,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			threadId, err := strconv.ParseUint(c.Param(threadIdName), 10, 64)
 			if err != nil {
 				logger.Warn(parsingThreadIdErrorMsg, common.ErrorKey, err)
-				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 			}
 			message := c.PostForm("message")
 
@@ -189,7 +189,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 
 			targetBuilder := threadUrlBuilder(common.GetBaseUrl(3, c), threadId)
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, logger, err.Error())
 			}
 			return targetBuilder.String()
 		}),
@@ -199,19 +199,19 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			threadId, err := strconv.ParseUint(c.Param(threadIdName), 10, 64)
 			if err != nil {
 				logger.Warn(parsingThreadIdErrorMsg, common.ErrorKey, err)
-				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 			}
 			messageId, err := strconv.ParseUint(c.Param("messageId"), 10, 64)
 			if err != nil {
 				logger.Warn("Failed to parse messageId", common.ErrorKey, err)
-				return common.DefaultErrorRedirect(common.ErrorTechnicalKey)
+				return common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 			}
 
 			err = forumService.DeleteMessage(ctx, web.GetSessionUserId(c), threadId, messageId)
 
 			targetBuilder := threadUrlBuilder(common.GetBaseUrl(4, c), threadId)
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, logger, err.Error())
 			}
 			return targetBuilder.String()
 		}),

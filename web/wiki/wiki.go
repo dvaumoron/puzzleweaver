@@ -106,7 +106,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 
 			if lang != askedLang {
 				targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, viewMode, title)
-				common.WriteError(targetBuilder, common.WrongLangKey)
+				common.WriteError(targetBuilder, logger, common.ErrorWrongLangKey)
 				return "", targetBuilder.String()
 			}
 
@@ -114,7 +114,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 			version := c.Query(versionName)
 			content, err := wikiService.LoadContent(ctx, userId, lang, title, version)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(logger, err.Error())
 			}
 
 			if content == nil {
@@ -127,7 +127,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 
 			body, err := content.GetBody(ctx, markdownService)
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(logger, err.Error())
 			}
 
 			data[wikiTitleName] = title
@@ -146,14 +146,14 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 
 			if lang != askedLang {
 				targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, viewMode, title)
-				common.WriteError(targetBuilder, common.WrongLangKey)
+				common.WriteError(targetBuilder, logger, common.ErrorWrongLangKey)
 				return "", targetBuilder.String()
 			}
 
 			userId, _ := data[common.IdName].(uint64)
 			content, err := wikiService.LoadContent(c.Request.Context(), userId, lang, title, "")
 			if err != nil {
-				return "", common.DefaultErrorRedirect(err.Error())
+				return "", common.DefaultErrorRedirect(logger, err.Error())
 			}
 
 			data[wikiTitleName] = title
@@ -174,7 +174,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 
 			targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, viewMode, title)
 			if lang != askedLang {
-				common.WriteError(targetBuilder, common.WrongLangKey)
+				common.WriteError(targetBuilder, logger, common.ErrorWrongLangKey)
 				return targetBuilder.String()
 			}
 
@@ -184,11 +184,11 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 
 			success, err := wikiService.StoreContent(c.Request.Context(), userId, lang, title, last, content)
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, logger, err.Error())
 				return targetBuilder.String()
 			}
 			if !success {
-				common.WriteError(targetBuilder, "BaseVersionOutdated")
+				common.WriteError(targetBuilder, logger, common.ErrorBaseVersionKey)
 			}
 			return targetBuilder.String()
 		}),
@@ -201,14 +201,14 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 
 			targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, listMode, title)
 			if lang != askedLang {
-				common.WriteError(targetBuilder, common.WrongLangKey)
+				common.WriteError(targetBuilder, logger, common.ErrorWrongLangKey)
 				return "", targetBuilder.String()
 			}
 
 			userId, _ := data[common.IdName].(uint64)
 			versions, err := wikiService.GetVersions(ctx, userId, lang, title)
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, logger, err.Error())
 				return "", targetBuilder.String()
 			}
 
@@ -227,7 +227,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 
 			targetBuilder := wikiUrlBuilder(common.GetBaseUrl(3, c), lang, listMode, title)
 			if lang != askedLang {
-				common.WriteError(targetBuilder, common.WrongLangKey)
+				common.WriteError(targetBuilder, logger, common.ErrorWrongLangKey)
 				return targetBuilder.String()
 			}
 
@@ -235,7 +235,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 			version := c.Query(versionName)
 			err := wikiService.DeleteContent(c.Request.Context(), userId, lang, title, version)
 			if err != nil {
-				common.WriteError(targetBuilder, err.Error())
+				common.WriteError(targetBuilder, logger, err.Error())
 			}
 			return targetBuilder.String()
 		}),
