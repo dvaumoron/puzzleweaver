@@ -54,6 +54,6 @@ type WikiConfig struct {
 }
 
 type WidgetServiceConfig struct {
-	LoggerGetter  common.LoggerGetter
 	WidgetService widgetservice.WidgetService
+	LoggerGetter  common.LoggerGetter
 }

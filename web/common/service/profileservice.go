@@ -30,11 +30,7 @@ type UserProfile struct {
 
 type ProfileService interface {
 	GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]UserProfile, error)
-}
-
-type AdvancedProfileService interface {
-	ProfileService
-	GetPicture(ctx context.Context, userId uint64) ([]byte, error)
+	GetPicture(ctx context.Context, userId uint64) []byte
 	UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error
 	UpdatePicture(ctx context.Context, userId uint64, data []byte) error
 	Delete(ctx context.Context, userId uint64) error

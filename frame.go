@@ -61,7 +61,7 @@ type frameApp struct {
 	saltService             weaver.Ref[service.SaltService]
 	loginService            weaver.Ref[service.FullLoginService]
 	adminService            weaver.Ref[service.AdminService]
-	profileService          weaver.Ref[service.AdvancedProfileService]
+	profileService          weaver.Ref[remoteservice.RemoteProfileService]
 	forumService            weaver.Ref[remoteservice.RemoteForumService]
 	markdownService         weaver.Ref[service.MarkdownService]
 	blogService             weaver.Ref[remoteservice.RemoteBlogService]
@@ -71,23 +71,12 @@ type frameApp struct {
 
 // frameServe is called by weaver.Run and contains the body of the application.
 func frameServe(ctx context.Context, app *frameApp) error {
-	globalConfig := &config.GlobalServiceConfig{
-		LoggerGetter:            app,
-		GlobalConfig:            app.Config(),
-		SessionService:          app.sessionService.Get(),
-		TemplateService:         app.templateService.Get(),
-		SettingsService:         app.settingsService.Get(),
-		PasswordStrengthService: app.passwordStrengthService.Get(),
-		SaltService:             app.saltService.Get(),
-		LoginService:            app.loginService.Get(),
-		AdminService:            app.adminService.Get(),
-		ProfileService:          app.profileService.Get(),
-		ForumService:            app.forumService.Get(),
-		MarkdownService:         app.markdownService.Get(),
-		BlogService:             app.blogService.Get(),
-		WikiService:             app.wikiService.Get(),
-		WidgetService:           app.widgetService.Get(),
-	}
+	globalConfig := config.New(
+		app.Config(), app, app.sessionService.Get(), app.templateService.Get(), app.settingsService.Get(),
+		app.passwordStrengthService.Get(), app.saltService.Get(), app.loginService.Get(), app.adminService.Get(),
+		app.profileService.Get(), app.forumService.Get(), app.markdownService.Get(), app.blogService.Get(),
+		app.wikiService.Get(), app.widgetService.Get(),
+	)
 
 	logger := app.Logger(ctx)
 	site := web.BuildDefaultSite(logger, globalConfig)

@@ -26,6 +26,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumclient "github.com/dvaumoron/puzzleweaver/web/forum/client"
+	"github.com/dvaumoron/puzzleweaver/web/profileclient"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
 )
@@ -57,6 +58,8 @@ type GlobalConfig struct {
 	Page404Url  string
 
 	LangPicturePaths map[string]string
+
+	ProfileGroupId uint64
 
 	PageGroups  []PageGroup
 	Widgets     map[string]WidgetConfig
@@ -92,7 +95,7 @@ type GlobalServiceConfig struct {
 	SaltService             service.SaltService
 	LoginService            service.FullLoginService
 	AdminService            service.AdminService
-	ProfileService          service.AdvancedProfileService
+	ProfileService          service.ProfileService
 	ForumService            remoteservice.RemoteForumService
 	MarkdownService         service.MarkdownService
 	BlogService             remoteservice.RemoteBlogService
@@ -100,8 +103,29 @@ type GlobalServiceConfig struct {
 	WidgetService           widgetservice.WidgetService
 }
 
+func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService service.FullLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService widgetservice.WidgetService) *GlobalServiceConfig {
+	return &GlobalServiceConfig{
+		GlobalConfig:            globalConfig,
+		LoggerGetter:            loggerGetter,
+		SessionService:          sessionService,
+		TemplateService:         templateService,
+		SettingsService:         settingsService,
+		PasswordStrengthService: passwordStrengthService,
+		SaltService:             saltService,
+		LoginService:            loginService,
+		AdminService:            adminService,
+		ProfileService: profileclient.MakeProfileServiceWrapper(
+			profileService, loginService, adminService, globalConfig.ProfileGroupId,
+		),
+		ForumService:    forumService,
+		MarkdownService: markdownService,
+		BlogService:     blogService,
+		WikiService:     wikiService,
+		WidgetService:   widgetService,
+	}
+}
+
 func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
-	// TODO wrapper with blogId and groupId
 	return BlogConfig{
 		BlogService: blogclient.MakeBlogServiceWrapper(
 			c.BlogService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,

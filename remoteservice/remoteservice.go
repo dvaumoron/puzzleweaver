@@ -18,7 +18,9 @@
 
 package remoteservice
 
-import "context"
+import (
+	"context"
+)
 
 type RawBlogPost struct {
 	Id        uint64
@@ -49,6 +51,19 @@ type RemoteForumService interface {
 	GetThreads(ctx context.Context, objectId uint64, start uint64, end uint64, filter string) (uint64, []RawForumContent, error)
 	DeleteThread(ctx context.Context, containerId uint64, id uint64) error
 	DeleteMessage(ctx context.Context, containerId uint64, id uint64) error
+}
+
+type RawUserProfile struct {
+	Desc string
+	Info map[string]string
+}
+
+type RemoteProfileService interface {
+	GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]RawUserProfile, error)
+	GetPicture(ctx context.Context, userId uint64) ([]byte, error)
+	UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error
+	UpdatePicture(ctx context.Context, userId uint64, data []byte) error
+	Delete(ctx context.Context, userId uint64) error
 }
 
 type RawWikiContent struct {

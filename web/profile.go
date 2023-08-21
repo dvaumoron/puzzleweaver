@@ -223,12 +223,10 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 				return
 			}
 
-			// TODO change signature and return defaultPicture on error
-			data, _ := profileService.GetPicture(c.Request.Context(), userId)
+			data := profileService.GetPicture(c.Request.Context(), userId)
 			c.Data(http.StatusOK, http.DetectContentType(data), data)
 		},
 	}
-
 	return p
 }
 
