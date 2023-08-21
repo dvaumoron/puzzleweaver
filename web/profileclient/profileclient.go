@@ -40,29 +40,29 @@ func MakeProfileServiceWrapper(profileService remoteservice.RemoteProfileService
 	}
 }
 
-func (impl profileServiceWrapper) UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error {
-	return impl.UpdateProfile(ctx, userId, desc, info)
+func (client profileServiceWrapper) UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error {
+	return client.UpdateProfile(ctx, userId, desc, info)
 }
 
-func (impl profileServiceWrapper) UpdatePicture(ctx context.Context, userId uint64, data []byte) error {
-	return impl.UpdatePicture(ctx, userId, data)
+func (client profileServiceWrapper) UpdatePicture(ctx context.Context, userId uint64, data []byte) error {
+	return client.UpdatePicture(ctx, userId, data)
 }
 
-func (impl profileServiceWrapper) GetPicture(ctx context.Context, userId uint64) []byte {
+func (client profileServiceWrapper) GetPicture(ctx context.Context, userId uint64) []byte {
 	// TODO
-	return impl.defaultPicture
+	return client.defaultPicture
 }
 
-func (impl profileServiceWrapper) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]service.UserProfile, error) {
+func (client profileServiceWrapper) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]service.UserProfile, error) {
 	// duplicate removal
 	userIds = common.MakeSet(userIds).Slice()
 
-	users, err := impl.userService.GetUsers(ctx, userIds)
+	users, err := client.userService.GetUsers(ctx, userIds)
 	if err != nil {
 		return nil, err
 	}
 
-	idToRaw, err := impl.profileService.GetProfiles(ctx, userIds)
+	idToRaw, err := client.profileService.GetProfiles(ctx, userIds)
 	profiles := map[uint64]service.UserProfile{}
 	for id, raw := range idToRaw {
 		profiles[id] = service.UserProfile{User: users[id], Desc: raw.Desc, Info: raw.Info}
@@ -78,16 +78,10 @@ func (impl profileServiceWrapper) GetProfiles(ctx context.Context, userIds []uin
 }
 
 // no right check
-func (impl profileServiceWrapper) Delete(ctx context.Context, userId uint64) error {
-
-	success := true
-	// TODO
-	if !success {
-		return common.ErrUpdate
-	}
-	return nil
+func (client profileServiceWrapper) Delete(ctx context.Context, userId uint64) error {
+	return client.profileService.Delete(ctx, userId)
 }
 
-func (impl profileServiceWrapper) ViewRight(ctx context.Context, userId uint64) error {
-	return impl.authService.AuthQuery(ctx, userId, impl.groupId, service.ActionAccess)
+func (client profileServiceWrapper) ViewRight(ctx context.Context, userId uint64) error {
+	return client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
 }
