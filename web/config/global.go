@@ -27,7 +27,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumclient "github.com/dvaumoron/puzzleweaver/web/forum/client"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
-	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
+	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
 )
 
 const WebKey = "puzzleWeaver"
@@ -96,29 +96,36 @@ type GlobalServiceConfig struct {
 	ForumService            remoteservice.RemoteForumService
 	MarkdownService         service.MarkdownService
 	BlogService             blogservice.BlogService
-	WikiService             wikiservice.WikiService
+	WikiService             remoteservice.RemoteWikiService
 	WidgetService           widgetservice.WidgetService
 }
 
 func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
 	// TODO wrapper with wikiId and groupId
 	return WikiConfig{
-		WikiService: c.WikiService, Args: args,
+		WikiService: wikiclient.MakeWikiServiceWrapper(
+			c.WikiService, c.AdminService, c.ProfileService, c.LoggerGetter, wikiId, groupId, c.DateFormat,
+		),
+		Args: args,
 	}
 }
 
 func (c *GlobalServiceConfig) CreateForumConfig(forumId uint64, groupId uint64, args ...string) ForumConfig {
 	return ForumConfig{
-		ForumService: forumclient.MakeForumServiceWrapper(c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, forumId, groupId, c.DateFormat),
-		PageSize:     c.PageSize, Args: args,
+		ForumService: forumclient.MakeForumServiceWrapper(
+			c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, forumId, groupId, c.DateFormat,
+		),
+		PageSize: c.PageSize, Args: args,
 	}
 }
 
 func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
 	// TODO wrapper with blogId and groupId
 	return BlogConfig{
-		BlogService:     c.BlogService,
-		CommentService:  forumclient.MakeForumServiceWrapper(c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat),
+		BlogService: c.BlogService,
+		CommentService: forumclient.MakeForumServiceWrapper(
+			c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
+		),
 		MarkdownService: c.MarkdownService,
 		Domain:          c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
 		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,

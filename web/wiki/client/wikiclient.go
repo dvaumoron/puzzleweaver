@@ -22,6 +22,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	"github.com/dvaumoron/puzzleweaver/web/common"
@@ -37,16 +38,16 @@ type wikiServiceWrapper struct {
 	authService    service.AuthService
 	profileService service.ProfileService
 	loggerGetter   common.LoggerGetter
-	cache          *wikiCache
 	wikiId         uint64
 	groupId        uint64
 	dateFormat     string
+	cache          *wikiCache
 }
 
-func MakeWikiServiceWrapper(wikiService remoteservice.RemoteWikiService, authService service.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, cache *wikiCache, wikiId uint64, groupId uint64, dateFormat string) wikiservice.WikiService {
+func MakeWikiServiceWrapper(wikiService remoteservice.RemoteWikiService, authService service.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, wikiId uint64, groupId uint64, dateFormat string) wikiservice.WikiService {
 	return wikiServiceWrapper{
 		wikiService: wikiService, authService: authService, profileService: profileService, loggerGetter: loggerGetter,
-		cache: newCache(), wikiId: wikiId, groupId: groupId, dateFormat: dateFormat,
+		wikiId: wikiId, groupId: groupId, dateFormat: dateFormat, cache: newCache(),
 	}
 }
 
@@ -136,7 +137,10 @@ func (client wikiServiceWrapper) GetVersions(ctx context.Context, userId uint64,
 	newList := make([]wikiservice.Version, 0, size)
 	for _, value := range valueSet {
 		if value != nil {
-			newList = append(newList, wikiservice.Version{Number: value.Version, Creator: profiles[value.CreatorId]})
+			createdAt := time.Unix(value.CreatedAt, 0)
+			newList = append(newList, wikiservice.Version{
+				Number: value.Version, Creator: profiles[value.CreatorId], Date: createdAt.Format(client.dateFormat),
+			})
 		}
 	}
 	return newList, nil

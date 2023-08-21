@@ -63,6 +63,7 @@ func (content *WikiContent) GetBody(ctx context.Context, markdownService service
 type Version struct {
 	Number  uint64
 	Creator service.UserProfile
+	Date    string
 }
 
 type WikiService interface {
