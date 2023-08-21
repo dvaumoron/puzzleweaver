@@ -66,9 +66,9 @@ type Version struct {
 }
 
 type WikiService interface {
-	LoadContent(ctx context.Context, userId uint64, lang string, title string, versionStr string) (*WikiContent, error)
+	LoadContent(ctx context.Context, userId uint64, lang string, title string, version string) (*WikiContent, error)
 	StoreContent(ctx context.Context, userId uint64, lang string, title string, last string, markdown string) error
 	GetVersions(ctx context.Context, userId uint64, lang string, title string) ([]Version, error)
-	DeleteContent(ctx context.Context, userId uint64, lang string, title string, versionStr string) error
+	DeleteContent(ctx context.Context, userId uint64, lang string, title string, version string) error
 	DeleteRight(ctx context.Context, userId uint64) bool
 }
