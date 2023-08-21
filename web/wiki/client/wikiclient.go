@@ -43,6 +43,13 @@ type wikiServiceWrapper struct {
 	dateFormat     string
 }
 
+func MakeWikiServiceWrapper(wikiService remoteservice.RemoteWikiService, authService service.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, cache *wikiCache, wikiId uint64, groupId uint64, dateFormat string) wikiservice.WikiService {
+	return wikiServiceWrapper{
+		wikiService: wikiService, authService: authService, profileService: profileService, loggerGetter: loggerGetter,
+		cache: newCache(), wikiId: wikiId, groupId: groupId, dateFormat: dateFormat,
+	}
+}
+
 func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64, lang string, title string, versionStr string) (*wikiservice.WikiContent, error) {
 	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
 	if err != nil {

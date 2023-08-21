@@ -42,6 +42,10 @@ func (remoteWikiImpl) Store(ctx context.Context, wikiId uint64, userId uint64, w
 	success := true
 	// TODO
 	if !success {
+		return common.ErrBaseVersion
+	}
+	// TODO
+	if !success {
 		return common.ErrUpdate
 	}
 	return nil

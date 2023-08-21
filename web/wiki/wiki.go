@@ -182,13 +182,9 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 			last := c.PostForm(versionName)
 			content := c.PostForm("content")
 
-			success, err := wikiService.StoreContent(c.Request.Context(), userId, lang, title, last, content)
+			err := wikiService.StoreContent(c.Request.Context(), userId, lang, title, last, content)
 			if err != nil {
 				common.WriteError(targetBuilder, logger, err.Error())
-				return targetBuilder.String()
-			}
-			if !success {
-				common.WriteError(targetBuilder, logger, common.ErrorBaseVersionKey)
 			}
 			return targetBuilder.String()
 		}),

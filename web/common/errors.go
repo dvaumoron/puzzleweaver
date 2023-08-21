@@ -38,6 +38,7 @@ const ErrorWrongLangKey = "WrongLang"
 
 const originalErrorMsg = "Original error"
 
+var ErrBaseVersion = errors.New(ErrorBaseVersionKey)
 var ErrNotAuthorized = errors.New(ErrorNotAuthorizedKey)
 var ErrTechnical = errors.New(ErrorTechnicalKey)
 var ErrUpdate = errors.New(ErrorUpdateKey)
