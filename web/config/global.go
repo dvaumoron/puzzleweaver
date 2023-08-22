@@ -136,26 +136,24 @@ func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionSe
 }
 
 func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
+	blogService := blogclient.MakeBlogServiceWrapper(
+		c.BlogService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
+	)
+	commentService := forumclient.MakeForumServiceWrapper(
+		c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
+	)
 	return BlogConfig{
-		BlogService: blogclient.MakeBlogServiceWrapper(
-			c.BlogService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
-		),
-		CommentService: forumclient.MakeForumServiceWrapper(
-			c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
-		),
-		MarkdownService: c.MarkdownService,
-		Domain:          c.Domain, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
+		BlogService: blogService, CommentService: commentService, MarkdownService: c.MarkdownService,
+		Domain: c.Domain, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
 		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,
 	}
 }
 
 func (c *GlobalServiceConfig) CreateForumConfig(forumId uint64, groupId uint64, args ...string) ForumConfig {
-	return ForumConfig{
-		ForumService: forumclient.MakeForumServiceWrapper(
-			c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, forumId, groupId, c.DateFormat,
-		),
-		PageSize: c.PageSize, Args: args,
-	}
+	forumService := forumclient.MakeForumServiceWrapper(
+		c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, forumId, groupId, c.DateFormat,
+	)
+	return ForumConfig{ForumService: forumService, PageSize: c.PageSize, Args: args}
 }
 
 func (c *GlobalServiceConfig) CreateWidgetConfig(widgetName string, objectId uint64, groupId uint64) remotewidgetservice.WidgetService {
@@ -163,10 +161,8 @@ func (c *GlobalServiceConfig) CreateWidgetConfig(widgetName string, objectId uin
 }
 
 func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
-	return WikiConfig{
-		WikiService: wikiclient.MakeWikiServiceWrapper(
-			c.WikiService, c.AdminService, c.ProfileService, c.LoggerGetter, wikiId, groupId, c.DateFormat,
-		),
-		Args: args,
-	}
+	wikiService := wikiclient.MakeWikiServiceWrapper(
+		c.WikiService, c.AdminService, c.ProfileService, c.LoggerGetter, wikiId, groupId, c.DateFormat,
+	)
+	return WikiConfig{WikiService: wikiService, Args: args}
 }
