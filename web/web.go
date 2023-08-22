@@ -21,6 +21,7 @@ package web
 import (
 	"context"
 	"net"
+	"net/http"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
@@ -98,8 +99,9 @@ func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Lis
 	engine.HTMLRender = templates.NewServiceRender(globalConfig.TemplateService, globalConfig.LoggerGetter)
 
 	// TODO manage file system
-	engine.Static("/static", globalConfig.StaticPath)
-	engine.StaticFile(config.DefaultFavicon, globalConfig.FaviconPath)
+	var fs http.FileSystem
+	engine.StaticFS("/static", fs)
+	engine.StaticFileFS(config.DefaultFavicon, globalConfig.FaviconPath, fs)
 
 	engine.Use(func(c *gin.Context) {
 		c.Set(siteName, site)
@@ -112,7 +114,7 @@ func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Lis
 		for _, lang := range localesManager.GetAllLang() {
 			if langPicturePath, ok := langPicturePaths[lang]; ok {
 				// allow modified time check (instead of always sending same data)
-				engine.StaticFile("/langPicture/"+lang, langPicturePath)
+				engine.StaticFileFS("/langPicture/"+lang, langPicturePath, fs)
 			}
 		}
 	}
