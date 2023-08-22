@@ -58,7 +58,7 @@ type frameApp struct {
 	settingsService         weaver.Ref[service.SettingsService]
 	passwordStrengthService weaver.Ref[service.PasswordStrengthService]
 	saltService             weaver.Ref[service.SaltService]
-	loginService            weaver.Ref[service.LoginService]
+	loginService            weaver.Ref[remoteservice.RemoteLoginService]
 	adminService            weaver.Ref[service.AdminService]
 	profileService          weaver.Ref[remoteservice.RemoteProfileService]
 	forumService            weaver.Ref[remoteservice.RemoteForumService]

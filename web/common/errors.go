@@ -26,30 +26,35 @@ import (
 )
 
 const ErrorKey = "error"
-
-const QueryError = "?error="
+const QueryError = "?" + ErrorKey + "="
 
 // error displayed to user
 const (
-	ErrorBaseVersionKey   = "BaseVersionOutdated"
-	ErrorExistingLoginKey = "ExistingLogin"
-	ErrorNotAuthorizedKey = "ErrorNotAuthorized"
-	ErrorTechnicalKey     = "ErrorTechnicalProblem"
-	ErrorUpdateKey        = "ErrorUpdate"
-	ErrorWeakPasswordKey  = "WeakPassword"
-	ErrorWrongLangKey     = "WrongLang"
-	ErrorWrongLoginKey    = "WrongLogin"
+	ErrorBaseVersionKey          = "BaseVersionOutdated"
+	ErrorEmptyLoginKey           = "EmptyLogin"
+	ErrorEmptyPasswordKey        = "EmptyPassword"
+	ErrorExistingLoginKey        = "ExistingLogin"
+	ErrorNotAuthorizedKey        = "ErrorNotAuthorized"
+	ErrorTechnicalKey            = "ErrorTechnicalProblem"
+	ErrorUpdateKey               = "ErrorUpdate"
+	ErrorWeakPasswordKey         = "WeakPassword"
+	ErrorWrongConfirmPasswordKey = "WrongConfirmPassword"
+	ErrorWrongLangKey            = "WrongLang"
+	ErrorWrongLoginKey           = "WrongLogin"
 )
 
 const originalErrorMsg = "Original error"
 
 var (
 	ErrBaseVersion   = errors.New(ErrorBaseVersionKey)
+	ErrEmptyLogin    = errors.New(ErrorEmptyLoginKey)
+	ErrEmptyPassword = errors.New(ErrorEmptyPasswordKey)
 	ErrExistingLogin = errors.New(ErrorExistingLoginKey)
 	ErrNotAuthorized = errors.New(ErrorNotAuthorizedKey)
 	ErrTechnical     = errors.New(ErrorTechnicalKey)
 	ErrUpdate        = errors.New(ErrorUpdateKey)
 	ErrWeakPassword  = errors.New(ErrorWeakPasswordKey)
+	ErrWrongConfirm  = errors.New(ErrorWrongConfirmPasswordKey)
 	ErrWrongLogin    = errors.New(ErrorWrongLangKey)
 )
 
@@ -59,14 +64,14 @@ func LogOriginalError(logger *slog.Logger, err error) {
 
 func WriteError(urlBuilder *strings.Builder, logger *slog.Logger, errorMsg string) {
 	urlBuilder.WriteString(QueryError)
-	urlBuilder.WriteString(filterErrorMsg(logger, errorMsg))
+	urlBuilder.WriteString(FilterErrorMsg(logger, errorMsg))
 }
 
 func DefaultErrorRedirect(logger *slog.Logger, errorMsg string) string {
-	return "/?error=" + filterErrorMsg(logger, errorMsg)
+	return "/?error=" + FilterErrorMsg(logger, errorMsg)
 }
 
-func filterErrorMsg(logger *slog.Logger, errorMsg string) string {
+func FilterErrorMsg(logger *slog.Logger, errorMsg string) string {
 	if errorMsg == ErrorBaseVersionKey || errorMsg == ErrorExistingLoginKey || errorMsg == ErrorNotAuthorizedKey || errorMsg == ErrorTechnicalKey || errorMsg == ErrorUpdateKey || errorMsg == ErrorWeakPasswordKey || errorMsg == ErrorWrongLangKey || errorMsg == ErrorWrongLoginKey {
 		return errorMsg
 	}

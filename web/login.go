@@ -19,7 +19,6 @@
 package web
 
 import (
-	"net/url"
 	"strconv"
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
@@ -27,10 +26,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/gin-gonic/gin"
 )
-
-const emptyLoginKey = "EmptyLogin"
-const emptyPasswordKey = "EmptyPassword"
-const wrongConfirmPasswordKey = "WrongConfirmPassword"
 
 const userIdName = "UserId"
 const loginName = "Login" // current connected user login
@@ -79,17 +74,17 @@ func newLoginPage(loginService service.LoginService, settingsManager *SettingsMa
 			register := c.PostForm("Register") == "true"
 
 			if login == "" {
-				return c.PostForm(prevUrlWithErrorName) + emptyLoginKey
+				return c.PostForm(prevUrlWithErrorName) + common.ErrorEmptyLoginKey
 			}
 			if password == "" {
-				return c.PostForm(prevUrlWithErrorName) + emptyPasswordKey
+				return c.PostForm(prevUrlWithErrorName) + common.ErrorEmptyPasswordKey
 			}
 
 			var userId uint64
 			var err error
 			if register {
 				if c.PostForm(confirmPasswordName) != password {
-					return c.PostForm(prevUrlWithErrorName) + wrongConfirmPasswordKey
+					return c.PostForm(prevUrlWithErrorName) + common.ErrorWrongConfirmPasswordKey
 				}
 
 				userId, err = loginService.Register(ctx, login, password)
@@ -98,7 +93,7 @@ func newLoginPage(loginService service.LoginService, settingsManager *SettingsMa
 			}
 
 			if err != nil {
-				return c.PostForm(prevUrlWithErrorName) + url.QueryEscape(err.Error())
+				return c.PostForm(prevUrlWithErrorName) + common.FilterErrorMsg(logger, err.Error())
 			}
 
 			s := GetSession(c)

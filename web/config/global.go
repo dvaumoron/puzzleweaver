@@ -26,6 +26,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumclient "github.com/dvaumoron/puzzleweaver/web/forum/client"
+	"github.com/dvaumoron/puzzleweaver/web/loginclient"
 	"github.com/dvaumoron/puzzleweaver/web/profileclient"
 	remotewidgetclient "github.com/dvaumoron/puzzleweaver/web/remotewidget/client"
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
@@ -105,9 +106,17 @@ type GlobalServiceConfig struct {
 	WidgetService           remoteservice.RemoteWidgetService
 }
 
-func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService service.LoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
+func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
 	// TODO read default picture file
 	var defaultPicture []byte
+
+	loginServiceWrapper := loginclient.MakeLoginServiceWrapper(
+		loginService, saltService, passwordStrengthService, globalConfig.DateFormat,
+	)
+	profileServiceWrapper := profileclient.MakeProfileServiceWrapper(
+		profileService, loginServiceWrapper, adminService, loggerGetter, globalConfig.ProfileGroupId, defaultPicture,
+	)
+
 	return &GlobalServiceConfig{
 		GlobalConfig:            globalConfig,
 		LoggerGetter:            loggerGetter,
@@ -116,16 +125,14 @@ func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionSe
 		SettingsService:         settingsService,
 		PasswordStrengthService: passwordStrengthService,
 		SaltService:             saltService,
-		LoginService:            loginService,
+		LoginService:            loginServiceWrapper,
 		AdminService:            adminService,
-		ProfileService: profileclient.MakeProfileServiceWrapper(
-			profileService, loginService, adminService, loggerGetter, globalConfig.ProfileGroupId, defaultPicture,
-		),
-		ForumService:    forumService,
-		MarkdownService: markdownService,
-		BlogService:     blogService,
-		WikiService:     wikiService,
-		WidgetService:   widgetService,
+		ProfileService:          profileServiceWrapper,
+		ForumService:            forumService,
+		MarkdownService:         markdownService,
+		BlogService:             blogService,
+		WikiService:             wikiService,
+		WidgetService:           widgetService,
 	}
 }
 

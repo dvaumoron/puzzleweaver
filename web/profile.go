@@ -19,7 +19,6 @@
 package web
 
 import (
-	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -30,10 +29,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
 )
-
-var errEmptyLogin = errors.New(emptyLoginKey)
-var errEmptyPassword = errors.New(emptyPasswordKey)
-var errWrongConfirm = errors.New(wrongConfirmPasswordKey)
 
 type profileWidget struct {
 	defaultHandler        gin.HandlerFunc
@@ -177,7 +172,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			newLogin := c.PostForm(loginName)
 			password := c.PostForm(passwordName)
 
-			err := errEmptyLogin
+			err := common.ErrEmptyLogin
 			if newLogin != "" {
 				err = loginService.ChangeLogin(c.Request.Context(), userId, oldLogin, newLogin, password)
 			}
@@ -202,9 +197,9 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			newPassword := c.PostForm("newPassword")
 			confirmPassword := c.PostForm(confirmPasswordName)
 
-			err := errEmptyPassword
+			err := common.ErrEmptyPassword
 			if newPassword != "" {
-				err = errWrongConfirm
+				err = common.ErrWrongConfirm
 				if newPassword == confirmPassword {
 					err = loginService.ChangePassword(c.Request.Context(), userId, login, oldPassword, newPassword)
 				}
