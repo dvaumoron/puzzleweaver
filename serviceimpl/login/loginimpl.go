@@ -20,7 +20,6 @@ package loginimpl
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/ServiceWeaver/weaver"
@@ -32,8 +31,6 @@ import (
 // check matching with interface
 var _ service.LoginService = &loginImpl{}
 
-var errWeakPassword = errors.New("WeakPassword")
-
 type loginImpl struct {
 	weaver.Implements[service.FullLoginService]
 	saltService     weaver.Ref[service.SaltService]
@@ -41,36 +38,31 @@ type loginImpl struct {
 	dateFormat      string
 }
 
-func (impl *loginImpl) Verify(ctx context.Context, login string, password string) (bool, uint64, error) {
+func (impl *loginImpl) Verify(ctx context.Context, login string, password string) (uint64, error) {
 	_, err := impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {
-		return false, 0, err
+		return 0, err
 	}
 
-	success := true
 	id := uint64(0)
 	// TODO
-	return success, id, nil
+	return id, nil
 }
 
-func (impl *loginImpl) Register(ctx context.Context, login string, password string) (bool, uint64, error) {
-	strong, err := impl.strengthService.Get().Validate(ctx, password)
+func (impl *loginImpl) Register(ctx context.Context, login string, password string) (uint64, error) {
+	err := impl.strengthService.Get().Validate(ctx, password)
 	if err != nil {
-		return false, 0, err
-	}
-	if !strong {
-		return false, 0, errWeakPassword
+		return 0, err
 	}
 
 	_, err = impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {
-		return false, 0, err
+		return 0, err
 	}
 
-	success := true
 	id := uint64(0)
 	// TODO
-	return success, id, nil
+	return id, nil
 }
 
 // You should remove duplicate id in list
@@ -104,12 +96,9 @@ func (impl *loginImpl) ChangeLogin(ctx context.Context, userId uint64, oldLogin 
 }
 
 func (impl *loginImpl) ChangePassword(ctx context.Context, userId uint64, login string, oldPassword string, newPassword string) error {
-	strong, err := impl.strengthService.Get().Validate(ctx, newPassword)
+	err := impl.strengthService.Get().Validate(ctx, newPassword)
 	if err != nil {
 		return err
-	}
-	if !strong {
-		return errWeakPassword
 	}
 
 	oldSalted, err := impl.saltService.Get().Salt(ctx, login, oldPassword)

@@ -30,18 +30,28 @@ const ErrorKey = "error"
 const QueryError = "?error="
 
 // error displayed to user
-const ErrorBaseVersionKey = "BaseVersionOutdated"
-const ErrorNotAuthorizedKey = "ErrorNotAuthorized"
-const ErrorTechnicalKey = "ErrorTechnicalProblem"
-const ErrorUpdateKey = "ErrorUpdate"
-const ErrorWrongLangKey = "WrongLang"
+const (
+	ErrorBaseVersionKey   = "BaseVersionOutdated"
+	ErrorExistingLoginKey = "ExistingLogin"
+	ErrorNotAuthorizedKey = "ErrorNotAuthorized"
+	ErrorTechnicalKey     = "ErrorTechnicalProblem"
+	ErrorUpdateKey        = "ErrorUpdate"
+	ErrorWeakPasswordKey  = "WeakPassword"
+	ErrorWrongLangKey     = "WrongLang"
+	ErrorWrongLoginKey    = "WrongLogin"
+)
 
 const originalErrorMsg = "Original error"
 
-var ErrBaseVersion = errors.New(ErrorBaseVersionKey)
-var ErrNotAuthorized = errors.New(ErrorNotAuthorizedKey)
-var ErrTechnical = errors.New(ErrorTechnicalKey)
-var ErrUpdate = errors.New(ErrorUpdateKey)
+var (
+	ErrBaseVersion   = errors.New(ErrorBaseVersionKey)
+	ErrExistingLogin = errors.New(ErrorExistingLoginKey)
+	ErrNotAuthorized = errors.New(ErrorNotAuthorizedKey)
+	ErrTechnical     = errors.New(ErrorTechnicalKey)
+	ErrUpdate        = errors.New(ErrorUpdateKey)
+	ErrWeakPassword  = errors.New(ErrorWeakPasswordKey)
+	ErrWrongLogin    = errors.New(ErrorWrongLangKey)
+)
 
 func LogOriginalError(logger *slog.Logger, err error) {
 	logger.Warn(originalErrorMsg, ErrorKey, err.Error())
@@ -57,7 +67,7 @@ func DefaultErrorRedirect(logger *slog.Logger, errorMsg string) string {
 }
 
 func filterErrorMsg(logger *slog.Logger, errorMsg string) string {
-	if errorMsg == ErrorBaseVersionKey || errorMsg == ErrorNotAuthorizedKey || errorMsg == ErrorTechnicalKey || errorMsg == ErrorUpdateKey || errorMsg == ErrorWrongLangKey {
+	if errorMsg == ErrorBaseVersionKey || errorMsg == ErrorExistingLoginKey || errorMsg == ErrorNotAuthorizedKey || errorMsg == ErrorTechnicalKey || errorMsg == ErrorUpdateKey || errorMsg == ErrorWeakPasswordKey || errorMsg == ErrorWrongLangKey || errorMsg == ErrorWrongLoginKey {
 		return errorMsg
 	}
 	logger.Warn(originalErrorMsg, ErrorKey, errorMsg)

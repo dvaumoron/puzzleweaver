@@ -35,7 +35,7 @@ type SettingsService interface {
 }
 
 type PasswordStrengthService interface {
-	Validate(ctx context.Context, password string) (bool, error)
+	Validate(ctx context.Context, password string) error
 	GetRules(ctx context.Context, lang string) (string, error)
 }
 

@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"github.com/ServiceWeaver/weaver"
+	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
@@ -32,10 +33,13 @@ type strengthImpl struct {
 	weaver.Implements[service.PasswordStrengthService]
 }
 
-func (impl *strengthImpl) Validate(ctx context.Context, password string) (bool, error) {
-	success := true
+func (impl *strengthImpl) Validate(ctx context.Context, password string) error {
+	strong := true
 	//TODO
-	return success, nil
+	if !strong {
+		return common.ErrWeakPassword
+	}
+	return nil
 }
 
 func (client *strengthImpl) GetRules(ctx context.Context, lang string) (string, error) {
