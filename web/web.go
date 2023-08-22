@@ -97,6 +97,7 @@ func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Lis
 
 	engine.HTMLRender = templates.NewServiceRender(globalConfig.TemplateService, globalConfig.LoggerGetter)
 
+	// TODO manage file system
 	engine.Static("/static", globalConfig.StaticPath)
 	engine.StaticFile(config.DefaultFavicon, globalConfig.FaviconPath)
 
