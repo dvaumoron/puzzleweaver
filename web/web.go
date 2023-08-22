@@ -97,7 +97,7 @@ func (site *Site) initEngine(globalConfig *config.GlobalServiceConfig) *gin.Engi
 		engine.MaxMultipartMemory = memorySize
 	}
 
-	engine.HTMLRender = templates.NewServiceRender(globalConfig.TemplateService)
+	engine.HTMLRender = templates.NewServiceRender(globalConfig.TemplateService, globalConfig.LoggerGetter)
 
 	engine.Static("/static", globalConfig.StaticPath)
 	engine.StaticFile(config.DefaultFavicon, globalConfig.FaviconPath)

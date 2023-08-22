@@ -20,9 +20,12 @@ package templates
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
+	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 )
 
@@ -32,19 +35,26 @@ var htmlContentType = []string{"text/html; charset=utf-8"}
 
 type ContextAndData struct {
 	Ctx  context.Context
-	Data any
+	Data gin.H
 }
 
 // match Render interface from gin.
 type remoteHTML struct {
-	templateService service.TemplateService
-	dataWithCtx     ContextAndData
-	templateName    string
+	remoteHTMLRender
+	dataWithCtx  ContextAndData
+	templateName string
 }
 
 func (r remoteHTML) Render(w http.ResponseWriter) error {
 	r.WriteContentType(w)
-	content, err := r.templateService.Render(r.dataWithCtx.Ctx, r.templateName, r.dataWithCtx.Data)
+	ctx := r.dataWithCtx.Ctx
+	data := r.dataWithCtx.Data
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		r.loggerGetter.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)
+		return common.ErrTechnical
+	}
+	content, err := r.templateService.Render(ctx, r.templateName, dataBytes)
 	if err != nil {
 		return err
 	}
@@ -63,13 +73,14 @@ func (r remoteHTML) WriteContentType(w http.ResponseWriter) {
 // match HTMLRender interface from gin.
 type remoteHTMLRender struct {
 	templateService service.TemplateService
+	loggerGetter    common.LoggerGetter
 }
 
 func (r remoteHTMLRender) Instance(name string, dataWithCtx any) render.Render {
 	casted := dataWithCtx.(ContextAndData)
-	return remoteHTML{templateService: r.templateService, dataWithCtx: casted, templateName: name}
+	return remoteHTML{remoteHTMLRender: r, dataWithCtx: casted, templateName: name}
 }
 
-func NewServiceRender(templateService service.TemplateService) render.HTMLRender {
-	return remoteHTMLRender{templateService: templateService}
+func NewServiceRender(templateService service.TemplateService, loggerGetter common.LoggerGetter) render.HTMLRender {
+	return remoteHTMLRender{templateService: templateService, loggerGetter: loggerGetter}
 }

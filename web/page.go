@@ -161,11 +161,10 @@ func (p Page) extractSubPageAndNameFromPath(path string) (Page, string) {
 
 func CreateTemplate(redirecter common.TemplateRedirecter) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx := c.Request.Context()
 		data := initData(c)
 		tmpl, redirect := redirecter(data, c)
 		if redirect == "" {
-			otelgin.HTML(c, http.StatusOK, tmpl, templates.ContextAndData{Ctx: ctx, Data: data})
+			otelgin.HTML(c, http.StatusOK, tmpl, templates.ContextAndData{Ctx: c.Request.Context(), Data: data})
 		} else {
 			c.Redirect(http.StatusFound, redirect)
 		}

@@ -20,10 +20,8 @@ package templatesimpl
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/ServiceWeaver/weaver"
-	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
@@ -34,13 +32,7 @@ type templateClient struct {
 	weaver.Implements[service.TemplateService]
 }
 
-func (impl *templateClient) Render(ctx context.Context, templateName string, data any) ([]byte, error) {
-	dataBytes, err := json.Marshal(data)
-	if err != nil {
-		impl.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)
-		return nil, common.ErrTechnical
-	}
-
+func (impl *templateClient) Render(ctx context.Context, templateName string, data []byte) ([]byte, error) {
 	// TODO
-	return dataBytes, nil
+	return nil, nil
 }

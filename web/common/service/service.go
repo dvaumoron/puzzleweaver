@@ -26,7 +26,7 @@ type SessionService interface {
 }
 
 type TemplateService interface {
-	Render(ctx context.Context, templateName string, data any) ([]byte, error)
+	Render(ctx context.Context, templateName string, data []byte) ([]byte, error)
 }
 
 type SettingsService interface {
