@@ -29,7 +29,7 @@ import (
 type SessionService service.SessionService
 
 type sessionImpl struct {
-	weaver.Implements[service.SessionService]
+	weaver.Implements[SessionService]
 }
 
 func (impl *sessionImpl) Generate(ctx context.Context) (uint64, error) {

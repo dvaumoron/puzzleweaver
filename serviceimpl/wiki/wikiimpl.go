@@ -29,7 +29,7 @@ import (
 type RemoteWikiService remoteservice.RemoteWikiService
 
 type remoteWikiImpl struct {
-	weaver.Implements[remoteservice.RemoteWikiService]
+	weaver.Implements[RemoteWikiService]
 }
 
 func (*remoteWikiImpl) Load(ctx context.Context, wikiId uint64, wikiRef string, version uint64) (remoteservice.RawWikiContent, error) {
