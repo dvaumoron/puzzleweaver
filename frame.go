@@ -53,6 +53,7 @@ func main() {
 type frameApp struct {
 	weaver.Implements[weaver.Main]
 	weaver.WithConfig[config.GlobalConfig]
+	listener                weaver.Listener
 	sessionService          weaver.Ref[service.SessionService]
 	templateService         weaver.Ref[service.TemplateService]
 	settingsService         weaver.Ref[service.SettingsService]
@@ -106,7 +107,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 			}
 		}
 	}
-	return site.Run(globalConfig)
+	return site.Run(globalConfig, app.listener.Listener)
 }
 
 func makeWidgetPage(app *frameApp, pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, logger *slog.Logger, widgetConfig config.WidgetConfig) (web.Page, bool) {

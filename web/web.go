@@ -20,7 +20,7 @@ package web
 
 import (
 	"context"
-	"net/http"
+	"net"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
@@ -30,9 +30,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/templates"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"go.uber.org/zap"
 	"golang.org/x/exp/slog"
-	"golang.org/x/sync/errgroup"
 )
 
 const siteName = "Site"
@@ -89,7 +87,7 @@ func (site *Site) manageTimeOut(c *gin.Context) {
 	c.Next()
 }
 
-func (site *Site) initEngine(globalConfig *config.GlobalServiceConfig) *gin.Engine {
+func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Listener) error {
 	engine := gin.New()
 	engine.Use(site.manageTimeOut, otelgin.Middleware(config.WebKey), gin.Recovery())
 
@@ -120,29 +118,7 @@ func (site *Site) initEngine(globalConfig *config.GlobalServiceConfig) *gin.Engi
 
 	site.root.Widget.LoadInto(engine)
 	engine.NoRoute(common.CreateRedirectString(globalConfig.Page404Url))
-	return engine
-}
-
-func (site *Site) Run(globalConfig *config.GlobalServiceConfig) error {
-	return site.initEngine(globalConfig).Run(common.CheckPort(globalConfig.Port))
-}
-
-type SiteAndConfig struct {
-	Site   *Site
-	Config *config.GlobalServiceConfig
-}
-
-func Run(ginLogger *zap.Logger, sites ...SiteAndConfig) error {
-	var g errgroup.Group
-	for _, siteAndConfig := range sites {
-		port := common.CheckPort(siteAndConfig.Config.Port)
-		handler := siteAndConfig.Site.initEngine(siteAndConfig.Config).Handler()
-		g.Go(func() error {
-			server := &http.Server{Addr: port, Handler: handler}
-			return server.ListenAndServe()
-		})
-	}
-	return g.Wait()
+	return engine.RunListener(listener)
 }
 
 func changeLangRedirecter(c *gin.Context) string {

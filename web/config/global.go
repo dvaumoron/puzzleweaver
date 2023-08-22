@@ -43,7 +43,6 @@ const DefaultFavicon = "/favicon.ico"
 
 type GlobalConfig struct {
 	Domain string
-	Port   string
 
 	AllLang            []string
 	SessionTimeOut     int
@@ -145,7 +144,7 @@ func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, ar
 			c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
 		),
 		MarkdownService: c.MarkdownService,
-		Domain:          c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
+		Domain:          c.Domain, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
 		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,
 	}
 }
