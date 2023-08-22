@@ -28,7 +28,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
-	"github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slog"
 )
@@ -81,7 +80,7 @@ func MakeRemotePage(pageName string, ctx context.Context, logger *slog.Logger, w
 				retrieveContextData(pathKeys, queryKeys, data, c)
 			}
 			handler = createHandler(actionName, dataAdder, widgetService)
-		case service.RawResult:
+		case widgetservice.RawResult:
 			httpMethod = http.MethodGet
 			handler = func(c *gin.Context) {
 				data := gin.H{}

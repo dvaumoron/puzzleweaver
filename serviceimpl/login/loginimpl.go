@@ -19,10 +19,8 @@
 package loginimpl
 
 import (
-	"cmp"
 	"context"
 	"errors"
-	"slices"
 	"time"
 
 	"github.com/ServiceWeaver/weaver"
@@ -41,10 +39,6 @@ type loginImpl struct {
 	saltService     weaver.Ref[service.SaltService]
 	strengthService weaver.Ref[service.PasswordStrengthService]
 	dateFormat      string
-}
-
-func cmpAsc(a *pb.User, b *pb.User) int {
-	return cmp.Compare(a.Login, b.Login)
 }
 
 func (impl *loginImpl) Verify(ctx context.Context, login string, password string) (bool, uint64, error) {
@@ -140,7 +134,6 @@ func (impl *loginImpl) ListUsers(ctx context.Context, start uint64, end uint64, 
 	// TODO
 	total := uint64(0)
 	list := []*pb.User{}
-	slices.SortFunc(list, cmpAsc)
 	users := make([]service.User, 0, len(list))
 	for _, user := range list {
 		users = append(users, convertUser(user, impl.dateFormat))

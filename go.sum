@@ -27,8 +27,6 @@ github.com/dvaumoron/puzzleloginservice v1.7.0 h1:o5W2j/rbUeSctEe8+yDc49/3R5vzfw
 github.com/dvaumoron/puzzleloginservice v1.7.0/go.mod h1:K/m2nN30p+uAJamWT85Vh1Mtea7+ahSz+fnIughCok0=
 github.com/dvaumoron/puzzleprofileservice v1.2.0 h1:zg7KCjU7nqG8yJTQZ3cXb/Dl8J9LlJVUH0plJeF8FZs=
 github.com/dvaumoron/puzzleprofileservice v1.2.0/go.mod h1:E75JbpF/o5L52ifNN8QYaFK5zDviHJnPl2jiq4QBmJ8=
-github.com/dvaumoron/puzzleweb v1.8.5 h1:IWKfLq8INivq+FZYlN2nv3cVeGjufqtcMu5LEeNvZFY=
-github.com/dvaumoron/puzzleweb v1.8.5/go.mod h1:QUGBLSHbmWAxTmGG6blIUSWHK5KB72vD4dbZVnh5VZ4=
 github.com/dvaumoron/puzzlewidgetservice v1.2.0 h1:emjrpOqV3o9vwU9+I3dg1jT4QegxM83B7/UOg47FiJE=
 github.com/dvaumoron/puzzlewidgetservice v1.2.0/go.mod h1:4SoELSrFGpUQOU1tnLa0wn+uoom19ZfBIrPZBQyr5dY=
 github.com/felixge/httpsnoop v1.0.3 h1:s/nj+GCswXYzN5v2DpNMuMQYe+0DDwt5WVCU6CWBdXk=
@@ -126,10 +124,6 @@ github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.2.11 h1:BMaWp1Bb6fHwEtbplGBGJ498wD+LKlNSl25MjdZY4dU=
 github.com/ugorji/go/codec v1.2.11/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
-github.com/uptrace/opentelemetry-go-extra/otelutil v0.2.2 h1:CNznWHkrbA6o1q2H/BsH4tIHf4zbKNtndeoV+AH8z0U=
-github.com/uptrace/opentelemetry-go-extra/otelutil v0.2.2/go.mod h1:7YSrHCmYPHIXjTWnKSU7EGT0TFEcm3WwSeQquwCGg38=
-github.com/uptrace/opentelemetry-go-extra/otelzap v0.2.2 h1:uyrW06oJi4iWvhjPLVfk4qrSP2Zm0AMozKKDmp6i4pE=
-github.com/uptrace/opentelemetry-go-extra/otelzap v0.2.2/go.mod h1:PMAs2dNxP55lgt6xu0if+Jasm6s+Xpmqn6ev1NyDfnI=
 go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.42.0 h1:l7AmwSVqozWKKXeZHycpdmpycQECRpoGwJ1FW2sWfTo=
 go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.42.0/go.mod h1:Ep4uoO2ijR0f49Pr7jAqyTjSCyS1SRL18wwttKfwqXA=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 h1:pginetY7+onl4qN1vl0xW/V/v6OBZ0vVdH+esuJgvmM=

@@ -6,7 +6,6 @@ require (
 	github.com/ServiceWeaver/weaver v0.19.0
 	github.com/dvaumoron/puzzleloginservice v1.7.0
 	github.com/dvaumoron/puzzleprofileservice v1.2.0
-	github.com/dvaumoron/puzzleweb v1.8.5
 	github.com/dvaumoron/puzzlewidgetservice v1.2.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/feeds v1.1.1
@@ -54,8 +53,6 @@ require (
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelutil v0.2.2 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelzap v0.2.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.16.0 // indirect
