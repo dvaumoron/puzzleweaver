@@ -26,10 +26,10 @@ import (
 )
 
 // check matching with interface
-var _ service.SaltService = &saltImpl{}
+type SaltService service.SaltService
 
 type saltImpl struct {
-	weaver.Implements[service.SaltService]
+	weaver.Implements[SaltService]
 }
 
 func (*saltImpl) Salt(ctx context.Context, loginPasswords ...[2]string) ([]string, error) {

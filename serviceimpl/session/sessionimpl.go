@@ -26,8 +26,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-// check matching with interface
-var _ service.SessionService = &sessionImpl{}
+type SessionService service.SessionService
 
 type sessionImpl struct {
 	weaver.Implements[service.SessionService]

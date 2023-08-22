@@ -26,8 +26,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 )
 
-// check matching with interface
-var _ remoteservice.RemoteWikiService = &remoteWikiImpl{}
+type RemoteWikiService remoteservice.RemoteWikiService
 
 type remoteWikiImpl struct {
 	weaver.Implements[remoteservice.RemoteWikiService]

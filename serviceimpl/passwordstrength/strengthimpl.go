@@ -26,11 +26,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-// check matching with interface
-var _ service.PasswordStrengthService = &strengthImpl{}
+type PasswordStrengthService service.PasswordStrengthService
 
 type strengthImpl struct {
-	weaver.Implements[service.PasswordStrengthService]
+	weaver.Implements[PasswordStrengthService]
 }
 
 func (impl *strengthImpl) Validate(ctx context.Context, password string) error {

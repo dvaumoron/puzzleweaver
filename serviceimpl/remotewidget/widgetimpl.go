@@ -26,11 +26,10 @@ import (
 	pb "github.com/dvaumoron/puzzlewidgetservice"
 )
 
-// check matching with interface
-var _ remoteservice.RemoteWidgetService = &remoteWidgetImpl{}
+type RemoteWidgetService remoteservice.RemoteWidgetService
 
 type remoteWidgetImpl struct {
-	weaver.Implements[remoteservice.RemoteWidgetService]
+	weaver.Implements[RemoteWidgetService]
 }
 
 func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, name string) ([]remoteservice.RawWidgetAction, error) {

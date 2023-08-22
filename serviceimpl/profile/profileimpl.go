@@ -27,11 +27,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 )
 
-// check matching with interface
-var _ remoteservice.RemoteProfileService = &remoteProfileImpl{}
+type RemoteProfileService remoteservice.RemoteProfileService
 
 type remoteProfileImpl struct {
-	weaver.Implements[remoteservice.RemoteProfileService]
+	weaver.Implements[RemoteProfileService]
 }
 
 func (impl *remoteProfileImpl) UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error {

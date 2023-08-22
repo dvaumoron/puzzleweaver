@@ -25,11 +25,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-// check matching with interface
-var _ service.TemplateService = &templateClient{}
+type TemplateService service.TemplateService
 
 type templateClient struct {
-	weaver.Implements[service.TemplateService]
+	weaver.Implements[TemplateService]
 }
 
 func (impl *templateClient) Render(ctx context.Context, templateName string, data []byte) ([]byte, error) {

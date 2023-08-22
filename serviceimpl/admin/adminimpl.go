@@ -27,11 +27,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-// check matching with interface
-var _ service.AdminService = &AdminImpl{}
+type AdminService service.AdminService
 
 type AdminImpl struct {
-	weaver.Implements[service.AdminService]
+	weaver.Implements[AdminService]
 	weaver.WithConfig[adminConf]
 	confMutex       sync.RWMutex
 	initializedConf *initializedAdminConf

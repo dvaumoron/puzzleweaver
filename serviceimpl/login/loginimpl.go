@@ -26,11 +26,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 )
 
-// check matching with interface
-var _ remoteservice.RemoteLoginService = &loginImpl{}
+type RemoteLoginService remoteservice.RemoteLoginService
 
 type loginImpl struct {
-	weaver.Implements[remoteservice.RemoteLoginService]
+	weaver.Implements[RemoteLoginService]
 }
 
 func (impl *loginImpl) Verify(ctx context.Context, login string, salted string) (uint64, error) {

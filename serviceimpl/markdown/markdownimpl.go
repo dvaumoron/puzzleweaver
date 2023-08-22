@@ -25,11 +25,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-// check matching with interface
-var _ service.MarkdownService = &markdownImpl{}
+type MarkdownService service.MarkdownService
 
 type markdownImpl struct {
-	weaver.Implements[service.MarkdownService]
+	weaver.Implements[MarkdownService]
 }
 
 func (impl *markdownImpl) Apply(ctx context.Context, text string) (string, error) {

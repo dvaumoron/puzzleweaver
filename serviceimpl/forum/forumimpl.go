@@ -26,11 +26,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 )
 
-// check matching with interface
-var _ remoteservice.RemoteForumService = &remoteForumImpl{}
+type RemoteForumService remoteservice.RemoteForumService
 
 type remoteForumImpl struct {
-	weaver.Implements[remoteservice.RemoteForumService]
+	weaver.Implements[RemoteForumService]
 }
 
 func (*remoteForumImpl) CreateThread(ctx context.Context, objectId uint64, userId uint64, title string, message string) (uint64, error) {

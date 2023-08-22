@@ -26,11 +26,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
-// check matching with interface
-var _ service.SettingsService = &settingsImpl{}
+type SettingsService service.SettingsService
 
 type settingsImpl struct {
-	weaver.Implements[service.SettingsService]
+	weaver.Implements[SettingsService]
 }
 
 func (impl *settingsImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {

@@ -25,11 +25,10 @@ import (
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 )
 
-// check matching with interface
-var _ remoteservice.RemoteBlogService = &remoteBlogImpl{}
+type RemoteBlogService remoteservice.RemoteBlogService
 
 type remoteBlogImpl struct {
-	weaver.Implements[remoteservice.RemoteBlogService]
+	weaver.Implements[RemoteBlogService]
 }
 
 func (*remoteBlogImpl) CreatePost(ctx context.Context, blogId uint64, userId uint64, title string, content string) (uint64, error) {
