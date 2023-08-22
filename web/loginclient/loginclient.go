@@ -20,11 +20,14 @@ package loginclient
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
+
+var errNotEnoughValues = errors.New("not enough return values from saltService call")
 
 type loginServiceWrapper struct {
 	loginService    remoteservice.RemoteLoginService
@@ -40,11 +43,14 @@ func MakeLoginServiceWrapper(loginService remoteservice.RemoteLoginService, salt
 }
 
 func (client loginServiceWrapper) Verify(ctx context.Context, login string, password string) (uint64, error) {
-	salted, err := client.saltService.Salt(ctx, login, password)
+	salteds, err := client.saltService.Salt(ctx, [2]string{login, password})
 	if err != nil {
 		return 0, err
 	}
-	return client.loginService.Verify(ctx, login, salted)
+	if len(salteds) == 0 {
+		return 0, errNotEnoughValues
+	}
+	return client.loginService.Verify(ctx, login, salteds[0])
 }
 
 func (client loginServiceWrapper) Register(ctx context.Context, login string, password string) (uint64, error) {
@@ -53,11 +59,14 @@ func (client loginServiceWrapper) Register(ctx context.Context, login string, pa
 		return 0, err
 	}
 
-	salted, err := client.saltService.Salt(ctx, login, password)
+	salteds, err := client.saltService.Salt(ctx, [2]string{login, password})
 	if err != nil {
 		return 0, err
 	}
-	return client.loginService.Register(ctx, login, salted)
+	if len(salteds) == 0 {
+		return 0, errNotEnoughValues
+	}
+	return client.loginService.Register(ctx, login, salteds[0])
 }
 
 // You should remove duplicate id in list
@@ -80,17 +89,14 @@ func (client loginServiceWrapper) ChangeLogin(ctx context.Context, userId uint64
 		return nil
 	}
 
-	oldSalted, err := client.saltService.Salt(ctx, oldLogin, password)
+	salteds, err := client.saltService.Salt(ctx, [2]string{oldLogin, password}, [2]string{newLogin, password})
 	if err != nil {
 		return err
 	}
-
-	newSalted, err := client.saltService.Salt(ctx, newLogin, password)
-	if err != nil {
-		return err
+	if len(salteds) < 2 {
+		return errNotEnoughValues
 	}
-
-	return client.loginService.ChangeLogin(ctx, userId, newLogin, oldSalted, newSalted)
+	return client.loginService.ChangeLogin(ctx, userId, newLogin, salteds[0], salteds[1])
 }
 
 func (client loginServiceWrapper) ChangePassword(ctx context.Context, userId uint64, login string, oldPassword string, newPassword string) error {
@@ -104,21 +110,19 @@ func (client loginServiceWrapper) ChangePassword(ctx context.Context, userId uin
 		return err
 	}
 
-	oldSalted, err := client.saltService.Salt(ctx, login, oldPassword)
+	salteds, err := client.saltService.Salt(ctx, [2]string{login, oldPassword}, [2]string{login, newPassword})
 	if err != nil {
 		return err
 	}
-
-	newSalted, err := client.saltService.Salt(ctx, login, newPassword)
-	if err != nil {
-		return err
+	if len(salteds) < 2 {
+		return errNotEnoughValues
 	}
 
 	// avoid useless call (unlikely since oldPassword != newPassword)
-	if oldSalted == newSalted {
+	if salteds[0] == salteds[1] {
 		return nil
 	}
-	return client.loginService.ChangePassword(ctx, userId, oldSalted, newSalted)
+	return client.loginService.ChangePassword(ctx, userId, salteds[0], salteds[1])
 }
 
 func (client loginServiceWrapper) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []service.User, error) {
