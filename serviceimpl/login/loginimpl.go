@@ -32,12 +32,13 @@ import (
 var _ service.LoginService = &loginImpl{}
 
 type loginImpl struct {
-	weaver.Implements[service.FullLoginService]
+	weaver.Implements[service.LoginService]
 	saltService     weaver.Ref[service.SaltService]
 	strengthService weaver.Ref[service.PasswordStrengthService]
 	dateFormat      string
 }
 
+// TODO Ensure no clear password on network
 func (impl *loginImpl) Verify(ctx context.Context, login string, password string) (uint64, error) {
 	_, err := impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {

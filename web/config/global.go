@@ -95,7 +95,7 @@ type GlobalServiceConfig struct {
 	SettingsService         service.SettingsService
 	PasswordStrengthService service.PasswordStrengthService
 	SaltService             service.SaltService
-	LoginService            service.FullLoginService
+	LoginService            service.LoginService
 	AdminService            service.AdminService
 	ProfileService          service.ProfileService
 	ForumService            remoteservice.RemoteForumService
@@ -105,7 +105,7 @@ type GlobalServiceConfig struct {
 	WidgetService           remoteservice.RemoteWidgetService
 }
 
-func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService service.FullLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
+func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService service.LoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
 	// TODO read default picture file
 	var defaultPicture []byte
 	return &GlobalServiceConfig{

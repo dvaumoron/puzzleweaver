@@ -51,7 +51,7 @@ func (w loginWidget) LoadInto(router gin.IRouter) {
 	router.GET("/logout", w.logoutHandler)
 }
 
-func newLoginPage(loginService service.FullLoginService, settingsManager *SettingsManager) Page {
+func newLoginPage(loginService service.LoginService, settingsManager *SettingsManager) Page {
 	p := MakeHiddenPage("login")
 	p.Widget = loginWidget{
 		displayHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {

@@ -34,20 +34,12 @@ type UserService interface {
 	GetUsers(ctx context.Context, userIds []uint64) (map[uint64]User, error)
 }
 
-type AdvancedUserService interface {
+type LoginService interface {
 	UserService
 	ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []User, error)
 	Delete(ctx context.Context, userId uint64) error
-}
-
-type LoginService interface {
 	Verify(ctx context.Context, login string, password string) (uint64, error)
 	Register(ctx context.Context, login string, password string) (uint64, error)
 	ChangeLogin(ctx context.Context, userId uint64, oldLogin string, newLogin string, password string) error
 	ChangePassword(ctx context.Context, userId uint64, login string, oldPassword string, newPassword string) error
-}
-
-type FullLoginService interface {
-	LoginService
-	AdvancedUserService
 }
