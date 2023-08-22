@@ -32,12 +32,12 @@ type strengthImpl struct {
 	weaver.Implements[service.PasswordStrengthService]
 }
 
-func (impl strengthImpl) Validate(ctx context.Context, password string) (bool, error) {
+func (impl *strengthImpl) Validate(ctx context.Context, password string) (bool, error) {
 	success := true
 	//TODO
 	return success, nil
 }
 
-func (client strengthImpl) GetRules(ctx context.Context, lang string) (string, error) {
+func (client *strengthImpl) GetRules(ctx context.Context, lang string) (string, error) {
 	return "todo", nil
 }

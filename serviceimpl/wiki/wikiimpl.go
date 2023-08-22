@@ -33,12 +33,12 @@ type remoteWikiImpl struct {
 	weaver.Implements[remoteservice.RemoteWikiService]
 }
 
-func (remoteWikiImpl) Load(ctx context.Context, wikiId uint64, wikiRef string, version uint64) (remoteservice.RawWikiContent, error) {
+func (*remoteWikiImpl) Load(ctx context.Context, wikiId uint64, wikiRef string, version uint64) (remoteservice.RawWikiContent, error) {
 	// TODO
 	return remoteservice.RawWikiContent{}, nil
 }
 
-func (remoteWikiImpl) Store(ctx context.Context, wikiId uint64, userId uint64, wikiRef string, last uint64, markdown string) error {
+func (*remoteWikiImpl) Store(ctx context.Context, wikiId uint64, userId uint64, wikiRef string, last uint64, markdown string) error {
 	success := true
 	// TODO
 	if !success {
@@ -51,12 +51,12 @@ func (remoteWikiImpl) Store(ctx context.Context, wikiId uint64, userId uint64, w
 	return nil
 }
 
-func (remoteWikiImpl) GetVersions(ctx context.Context, wikiId uint64, wikiRef string) ([]remoteservice.RawWikiContent, error) {
+func (*remoteWikiImpl) GetVersions(ctx context.Context, wikiId uint64, wikiRef string) ([]remoteservice.RawWikiContent, error) {
 	// TODO
 	return nil, nil
 }
 
-func (remoteWikiImpl) Delete(ctx context.Context, wikiId uint64, wikiRef string, version uint64) error {
+func (*remoteWikiImpl) Delete(ctx context.Context, wikiId uint64, wikiRef string, version uint64) error {
 	// TODO
 	return nil
 }

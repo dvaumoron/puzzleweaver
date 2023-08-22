@@ -32,6 +32,6 @@ type markdownImpl struct {
 	weaver.Implements[service.MarkdownService]
 }
 
-func (impl markdownImpl) Apply(ctx context.Context, text string) (string, error) {
+func (impl *markdownImpl) Apply(ctx context.Context, text string) (string, error) {
 	return "todo", nil
 }

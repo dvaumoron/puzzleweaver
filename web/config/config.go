@@ -20,10 +20,8 @@ package config
 
 import (
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
-	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
-	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 )
 
@@ -51,9 +49,4 @@ type WikiConfig struct {
 	WikiService     wikiservice.WikiService
 	MarkdownService service.MarkdownService
 	Args            []string
-}
-
-type WidgetServiceConfig struct {
-	WidgetService widgetservice.WidgetService
-	LoggerGetter  common.LoggerGetter
 }

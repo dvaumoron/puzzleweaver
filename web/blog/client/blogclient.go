@@ -19,14 +19,15 @@
 package blogclient
 
 import (
+	"cmp"
 	"context"
+	"slices"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
-	"golang.org/x/exp/slices"
 )
 
 type blogServiceWrapper struct {
@@ -46,8 +47,8 @@ func MakeBlogServiceWrapper(blogService remoteservice.RemoteBlogService, authSer
 	}
 }
 
-func cmpDesc(a remoteservice.RawBlogPost, b remoteservice.RawBlogPost) bool {
-	return a.CreatedAt > b.CreatedAt
+func cmpDesc(a remoteservice.RawBlogPost, b remoteservice.RawBlogPost) int {
+	return -cmp.Compare(a.CreatedAt, b.CreatedAt)
 }
 
 func (client blogServiceWrapper) CreatePost(ctx context.Context, userId uint64, title string, content string) (uint64, error) {

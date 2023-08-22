@@ -27,7 +27,8 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumclient "github.com/dvaumoron/puzzleweaver/web/forum/client"
 	"github.com/dvaumoron/puzzleweaver/web/profileclient"
-	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
+	remotewidgetclient "github.com/dvaumoron/puzzleweaver/web/remotewidget/client"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
 )
 
@@ -59,7 +60,8 @@ type GlobalConfig struct {
 
 	LangPicturePaths map[string]string
 
-	ProfileGroupId uint64
+	ProfileGroupId            uint64
+	ProfileDefaultPicturePath string
 
 	PageGroups  []PageGroup
 	Widgets     map[string]WidgetConfig
@@ -100,10 +102,12 @@ type GlobalServiceConfig struct {
 	MarkdownService         service.MarkdownService
 	BlogService             remoteservice.RemoteBlogService
 	WikiService             remoteservice.RemoteWikiService
-	WidgetService           widgetservice.WidgetService
+	WidgetService           remoteservice.RemoteWidgetService
 }
 
-func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService service.FullLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService widgetservice.WidgetService) *GlobalServiceConfig {
+func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService service.FullLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
+	// TODO read default picture file
+	var defaultPicture []byte
 	return &GlobalServiceConfig{
 		GlobalConfig:            globalConfig,
 		LoggerGetter:            loggerGetter,
@@ -115,7 +119,7 @@ func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionSe
 		LoginService:            loginService,
 		AdminService:            adminService,
 		ProfileService: profileclient.MakeProfileServiceWrapper(
-			profileService, loginService, adminService, globalConfig.ProfileGroupId,
+			profileService, loginService, adminService, loggerGetter, globalConfig.ProfileGroupId, defaultPicture,
 		),
 		ForumService:    forumService,
 		MarkdownService: markdownService,
@@ -148,11 +152,8 @@ func (c *GlobalServiceConfig) CreateForumConfig(forumId uint64, groupId uint64, 
 	}
 }
 
-func (c *GlobalServiceConfig) CreateWidgetConfig(objectId uint64, groupId uint64) WidgetServiceConfig {
-	// TODO wrapper with objectId and groupId
-	return WidgetServiceConfig{
-		LoggerGetter: c.LoggerGetter, WidgetService: c.WidgetService,
-	}
+func (c *GlobalServiceConfig) CreateWidgetConfig(widgetName string, objectId uint64, groupId uint64) remotewidgetservice.WidgetService {
+	return remotewidgetclient.MakeWidgetServiceWrapper(c.WidgetService, c.LoggerGetter, widgetName, objectId, groupId)
 }
 
 func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {

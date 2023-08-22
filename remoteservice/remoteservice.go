@@ -66,6 +66,31 @@ type RemoteProfileService interface {
 	Delete(ctx context.Context, userId uint64) error
 }
 
+const (
+	KIND_GET uint8 = iota
+	KIND_HEAD
+	KIND_POST
+	KIND_PUT
+	KIND_PATCH
+	KIND_DELETE
+	KIND_CONNECT
+	KIND_OPTIONS
+	KIND_TRACE
+	KIND_RAW // added special category
+)
+
+type RawWidgetAction struct {
+	Kind       uint8
+	Name       string
+	Path       string
+	QueryNames []string
+}
+
+type RemoteWidgetService interface {
+	GetDesc(ctx context.Context, widgetName string) ([]RawWidgetAction, error)
+	Process(ctx context.Context, widgetName string, actionName string, files map[string][]byte) (string, string, []byte, error)
+}
+
 type RawWikiContent struct {
 	Version   uint64
 	CreatorId uint64

@@ -20,74 +20,26 @@ package remotewidgetimpl
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 
 	"github.com/ServiceWeaver/weaver"
-	"github.com/dvaumoron/puzzleweaver/web/common"
-	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
+	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	pb "github.com/dvaumoron/puzzlewidgetservice"
-	"github.com/gin-gonic/gin"
 )
 
 // check matching with interface
-var _ widgetservice.WidgetService = &widgetImpl{}
+var _ remoteservice.RemoteWidgetService = &remoteWidgetImpl{}
 
-type widgetImpl struct {
-	weaver.Implements[widgetservice.WidgetService]
-	objectId uint64
-	groupId  uint64
+type remoteWidgetImpl struct {
+	weaver.Implements[remoteservice.RemoteWidgetService]
 }
 
-func (impl widgetImpl) GetDesc(ctx context.Context, name string) ([]widgetservice.Action, error) {
+func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, name string) ([]remoteservice.RawWidgetAction, error) {
+	var _ pb.MethodKind
 	// TODO
-	return convertActions(nil), nil
+	return nil, nil
 }
 
-func (impl widgetImpl) Process(ctx context.Context, widgetName string, actionName string, data gin.H, files map[string][]byte) (string, string, []byte, error) {
-	data["objectId"] = impl.objectId
-	data["groupId"] = impl.groupId
-	dataBytes, err := json.Marshal(data)
-	if err != nil {
-		impl.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)
-		return "", "", nil, common.ErrTechnical
-	}
-
-	files["puzzledata.json"] = dataBytes
+func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, actionName string, files map[string][]byte) (string, string, []byte, error) {
 	// TODO
 	return "Redirect", "TemplateName", nil, nil
-}
-
-func convertActions(actions []*pb.Action) []widgetservice.Action {
-	res := make([]widgetservice.Action, 0, len(actions))
-	for _, action := range actions {
-		res = append(res, widgetservice.Action{
-			Kind: converKind(action.Kind), Name: action.Name, Path: action.Path, QueryNames: action.QueryNames},
-		)
-	}
-	return res
-}
-
-func converKind(kind pb.MethodKind) string {
-	switch kind {
-	case pb.MethodKind_HEAD:
-		return http.MethodHead
-	case pb.MethodKind_POST:
-		return http.MethodPost
-	case pb.MethodKind_PUT:
-		return http.MethodPut
-	case pb.MethodKind_PATCH:
-		return http.MethodPatch
-	case pb.MethodKind_DELETE:
-		return http.MethodDelete
-	case pb.MethodKind_CONNECT:
-		return http.MethodConnect
-	case pb.MethodKind_OPTIONS:
-		return http.MethodOptions
-	case pb.MethodKind_TRACE:
-		return http.MethodTrace
-	case pb.MethodKind_RAW:
-		return widgetservice.RawResult
-	}
-	return http.MethodGet
 }

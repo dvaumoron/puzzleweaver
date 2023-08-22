@@ -33,17 +33,17 @@ type sessionImpl struct {
 	weaver.Implements[service.SessionService]
 }
 
-func (impl sessionImpl) Generate(ctx context.Context) (uint64, error) {
+func (impl *sessionImpl) Generate(ctx context.Context) (uint64, error) {
 	// TODO
 	return 0, nil
 }
 
-func (impl sessionImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
+func (impl *sessionImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
 	// TODO
 	return nil, nil
 }
 
-func (impl sessionImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
+func (impl *sessionImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
 	success := true
 	// TODO
 	if !success {

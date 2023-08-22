@@ -28,13 +28,13 @@ import (
 )
 
 // check matching with interface
-var _ remoteservice.RemoteProfileService = &profileImpl{}
+var _ remoteservice.RemoteProfileService = &remoteProfileImpl{}
 
-type profileImpl struct {
+type remoteProfileImpl struct {
 	weaver.Implements[remoteservice.RemoteProfileService]
 }
 
-func (impl profileImpl) UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error {
+func (impl *remoteProfileImpl) UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error {
 	success := true
 	// TODO
 	if !success {
@@ -43,7 +43,7 @@ func (impl profileImpl) UpdateProfile(ctx context.Context, userId uint64, desc s
 	return nil
 }
 
-func (impl profileImpl) UpdatePicture(ctx context.Context, userId uint64, data []byte) error {
+func (impl *remoteProfileImpl) UpdatePicture(ctx context.Context, userId uint64, data []byte) error {
 	success := true
 	// TODO
 	if !success {
@@ -52,12 +52,12 @@ func (impl profileImpl) UpdatePicture(ctx context.Context, userId uint64, data [
 	return nil
 }
 
-func (impl profileImpl) GetPicture(ctx context.Context, userId uint64) ([]byte, error) {
+func (impl *remoteProfileImpl) GetPicture(ctx context.Context, userId uint64) ([]byte, error) {
 	// TODO
 	return nil, nil
 }
 
-func (impl profileImpl) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]remoteservice.RawUserProfile, error) {
+func (impl *remoteProfileImpl) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]remoteservice.RawUserProfile, error) {
 	// TODO
 	list := []*pb.UserProfile{}
 	profiles := map[uint64]remoteservice.RawUserProfile{}
@@ -68,7 +68,7 @@ func (impl profileImpl) GetProfiles(ctx context.Context, userIds []uint64) (map[
 	return profiles, nil
 }
 
-func (impl profileImpl) Delete(ctx context.Context, userId uint64) error {
+func (impl *remoteProfileImpl) Delete(ctx context.Context, userId uint64) error {
 	success := true
 	// TODO
 	if !success {

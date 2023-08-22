@@ -26,24 +26,24 @@ import (
 )
 
 // check matching with interface
-var _ remoteservice.RemoteBlogService = &blogImpl{}
+var _ remoteservice.RemoteBlogService = &remoteBlogImpl{}
 
-type blogImpl struct {
+type remoteBlogImpl struct {
 	weaver.Implements[remoteservice.RemoteBlogService]
 }
 
-func (blogImpl) CreatePost(ctx context.Context, blogId uint64, userId uint64, title string, content string) (uint64, error) {
+func (*remoteBlogImpl) CreatePost(ctx context.Context, blogId uint64, userId uint64, title string, content string) (uint64, error) {
 	return 0, nil
 }
 
-func (blogImpl) GetPost(ctx context.Context, blogId uint64, postId uint64) (remoteservice.RawBlogPost, error) {
+func (*remoteBlogImpl) GetPost(ctx context.Context, blogId uint64, postId uint64) (remoteservice.RawBlogPost, error) {
 	return remoteservice.RawBlogPost{}, nil
 }
 
-func (blogImpl) GetPosts(ctx context.Context, blogId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawBlogPost, error) {
+func (*remoteBlogImpl) GetPosts(ctx context.Context, blogId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawBlogPost, error) {
 	return 0, nil, nil
 }
 
-func (blogImpl) Delete(ctx context.Context, blogId uint64, postId uint64) error {
+func (*remoteBlogImpl) Delete(ctx context.Context, blogId uint64, postId uint64) error {
 	return nil
 }

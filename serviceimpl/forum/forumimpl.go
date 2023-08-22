@@ -33,7 +33,7 @@ type remoteForumImpl struct {
 	weaver.Implements[remoteservice.RemoteForumService]
 }
 
-func (remoteForumImpl) CreateThread(ctx context.Context, objectId uint64, userId uint64, title string, message string) (uint64, error) {
+func (*remoteForumImpl) CreateThread(ctx context.Context, objectId uint64, userId uint64, title string, message string) (uint64, error) {
 	id := uint64(0)
 	success := true
 	// TODO
@@ -43,7 +43,7 @@ func (remoteForumImpl) CreateThread(ctx context.Context, objectId uint64, userId
 	return id, nil
 }
 
-func (remoteForumImpl) CreateMessage(ctx context.Context, objectId uint64, userId uint64, threadId uint64, message string) error {
+func (*remoteForumImpl) CreateMessage(ctx context.Context, objectId uint64, userId uint64, threadId uint64, message string) error {
 	success := true
 	// TODO
 	if !success {
@@ -52,22 +52,22 @@ func (remoteForumImpl) CreateMessage(ctx context.Context, objectId uint64, userI
 	return nil
 }
 
-func (remoteForumImpl) GetThread(ctx context.Context, objectId uint64, threadId uint64, start uint64, end uint64, filter string) (uint64, remoteservice.RawForumContent, []remoteservice.RawForumContent, error) {
+func (*remoteForumImpl) GetThread(ctx context.Context, objectId uint64, threadId uint64, start uint64, end uint64, filter string) (uint64, remoteservice.RawForumContent, []remoteservice.RawForumContent, error) {
 	// TODO
 	return 0, remoteservice.RawForumContent{}, nil, nil
 }
 
-func (remoteForumImpl) GetThreads(ctx context.Context, objectId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawForumContent, error) {
+func (*remoteForumImpl) GetThreads(ctx context.Context, objectId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawForumContent, error) {
 	// TODO
 	return 0, nil, nil
 }
 
-func (remoteForumImpl) DeleteThread(ctx context.Context, containerId uint64, id uint64) error {
+func (*remoteForumImpl) DeleteThread(ctx context.Context, containerId uint64, id uint64) error {
 	// TODO
 	return nil
 }
 
-func (remoteForumImpl) DeleteMessage(ctx context.Context, containerId uint64, id uint64) error {
+func (*remoteForumImpl) DeleteMessage(ctx context.Context, containerId uint64, id uint64) error {
 	// TODO
 	return nil
 }

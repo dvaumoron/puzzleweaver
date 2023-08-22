@@ -33,12 +33,12 @@ type settingsImpl struct {
 	weaver.Implements[service.SettingsService]
 }
 
-func (impl settingsImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
+func (impl *settingsImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
 	// TODO
 	return nil, nil
 }
 
-func (impl settingsImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
+func (impl *settingsImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
 	success := true
 	// TODO
 	if !success {

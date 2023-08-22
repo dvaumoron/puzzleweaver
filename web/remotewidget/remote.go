@@ -27,10 +27,10 @@ import (
 
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/config"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	"github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/exp/slog"
 )
 
 const formKey = "formData"
@@ -54,11 +54,10 @@ func (w remoteWidget) LoadInto(router gin.IRouter) {
 	}
 }
 
-func MakeRemotePage(pageName string, ctx context.Context, widgetName string, widgetConfig config.WidgetServiceConfig) (web.Page, bool) {
-	widgetService := widgetConfig.WidgetService
-	actions, err := widgetService.GetDesc(ctx, widgetName)
+func MakeRemotePage(pageName string, ctx context.Context, logger *slog.Logger, widgetService widgetservice.WidgetService) (web.Page, bool) {
+	actions, err := widgetService.GetDesc(ctx)
 	if err != nil {
-		widgetConfig.LoggerGetter.Logger(ctx).Error(initMsg, common.ErrorKey, err)
+		logger.Error(initMsg, common.ErrorKey, err)
 		return web.Page{}, false
 	}
 
@@ -75,19 +74,19 @@ func MakeRemotePage(pageName string, ctx context.Context, widgetName string, wid
 			dataAdder := func(data gin.H, c *gin.Context) {
 				retrieveContextData(pathKeys, queryKeys, data, c)
 			}
-			handler = createHandler(widgetName, actionName, dataAdder, widgetService)
+			handler = createHandler(actionName, dataAdder, widgetService)
 		case http.MethodPost, http.MethodPut, http.MethodPatch:
 			dataAdder := func(data gin.H, c *gin.Context) {
 				data[formKey] = c.PostFormMap(formKey)
 				retrieveContextData(pathKeys, queryKeys, data, c)
 			}
-			handler = createHandler(widgetName, actionName, dataAdder, widgetService)
+			handler = createHandler(actionName, dataAdder, widgetService)
 		case service.RawResult:
 			httpMethod = http.MethodGet
 			handler = func(c *gin.Context) {
 				data := gin.H{}
 				retrieveContextData(pathKeys, queryKeys, data, c)
-				_, _, resData, err := widgetService.Process(ctx, widgetName, actionName, data, map[string][]byte{})
+				_, _, resData, err := widgetService.Process(ctx, actionName, data, map[string][]byte{})
 				if err != nil {
 					c.AbortWithStatus(http.StatusInternalServerError)
 					return
@@ -95,7 +94,7 @@ func MakeRemotePage(pageName string, ctx context.Context, widgetName string, wid
 				c.Data(http.StatusOK, http.DetectContentType(resData), resData)
 			}
 		default:
-			widgetConfig.LoggerGetter.Logger(ctx).Error(initMsg, "unknownActionKind", httpMethod)
+			logger.Error(initMsg, "unknownActionKind", httpMethod)
 			return web.Page{}, false
 		}
 		handlers = append(handlers, handlerDesc{httpMethod: httpMethod, path: actionPath, handler: handler})
@@ -176,7 +175,7 @@ func readFile(name string, files map[string][]byte, c *gin.Context) error {
 	return nil
 }
 
-func createHandler(widgetName string, actionName string, dataAdder common.DataAdder, widgetService widgetservice.WidgetService) gin.HandlerFunc {
+func createHandler(actionName string, dataAdder common.DataAdder, widgetService widgetservice.WidgetService) gin.HandlerFunc {
 	return web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 		ctx := c.Request.Context()
 		logger := web.GetLogger(c)
@@ -186,7 +185,7 @@ func createHandler(widgetName string, actionName string, dataAdder common.DataAd
 			logger.Error("Failed to retrieve post file", common.ErrorKey, err)
 			return "", common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 		}
-		redirect, templateName, resData, err := widgetService.Process(ctx, widgetName, actionName, data, files)
+		redirect, templateName, resData, err := widgetService.Process(ctx, actionName, data, files)
 		if err != nil {
 			return "", common.DefaultErrorRedirect(logger, err.Error())
 		}

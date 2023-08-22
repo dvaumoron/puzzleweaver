@@ -26,7 +26,7 @@ import (
 
 const RawResult = "RAW"
 
-type Action struct {
+type WidgetAction struct {
 	Kind       string
 	Name       string
 	Path       string
@@ -34,6 +34,6 @@ type Action struct {
 }
 
 type WidgetService interface {
-	GetDesc(ctx context.Context, widgetName string) ([]Action, error)
-	Process(ctx context.Context, widgetName string, actionName string, data gin.H, files map[string][]byte) (string, string, []byte, error)
+	GetDesc(ctx context.Context) ([]WidgetAction, error)
+	Process(ctx context.Context, actionName string, data gin.H, files map[string][]byte) (string, string, []byte, error)
 }

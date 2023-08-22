@@ -19,9 +19,10 @@
 package loginimpl
 
 import (
+	"cmp"
 	"context"
 	"errors"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/ServiceWeaver/weaver"
@@ -42,21 +43,11 @@ type loginImpl struct {
 	dateFormat      string
 }
 
-type sortableContents []*pb.User
-
-func (s sortableContents) Len() int {
-	return len(s)
+func cmpAsc(a *pb.User, b *pb.User) int {
+	return cmp.Compare(a.Login, b.Login)
 }
 
-func (s sortableContents) Less(i, j int) bool {
-	return s[i].Login < s[j].Login
-}
-
-func (s sortableContents) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (impl loginImpl) Verify(ctx context.Context, login string, password string) (bool, uint64, error) {
+func (impl *loginImpl) Verify(ctx context.Context, login string, password string) (bool, uint64, error) {
 	_, err := impl.saltService.Get().Salt(ctx, login, password)
 	if err != nil {
 		return false, 0, err
@@ -68,7 +59,7 @@ func (impl loginImpl) Verify(ctx context.Context, login string, password string)
 	return success, id, nil
 }
 
-func (impl loginImpl) Register(ctx context.Context, login string, password string) (bool, uint64, error) {
+func (impl *loginImpl) Register(ctx context.Context, login string, password string) (bool, uint64, error) {
 	strong, err := impl.strengthService.Get().Validate(ctx, password)
 	if err != nil {
 		return false, 0, err
@@ -89,7 +80,7 @@ func (impl loginImpl) Register(ctx context.Context, login string, password strin
 }
 
 // You should remove duplicate id in list
-func (impl loginImpl) GetUsers(ctx context.Context, userIds []uint64) (map[uint64]service.User, error) {
+func (impl *loginImpl) GetUsers(ctx context.Context, userIds []uint64) (map[uint64]service.User, error) {
 	list := []*pb.User{}
 	// TODO
 	logins := map[uint64]service.User{}
@@ -99,7 +90,7 @@ func (impl loginImpl) GetUsers(ctx context.Context, userIds []uint64) (map[uint6
 	return logins, nil
 }
 
-func (impl loginImpl) ChangeLogin(ctx context.Context, userId uint64, oldLogin string, newLogin string, password string) error {
+func (impl *loginImpl) ChangeLogin(ctx context.Context, userId uint64, oldLogin string, newLogin string, password string) error {
 	oldSalted, err := impl.saltService.Get().Salt(ctx, oldLogin, password)
 	if err != nil {
 		return err
@@ -118,7 +109,7 @@ func (impl loginImpl) ChangeLogin(ctx context.Context, userId uint64, oldLogin s
 	return nil
 }
 
-func (impl loginImpl) ChangePassword(ctx context.Context, userId uint64, login string, oldPassword string, newPassword string) error {
+func (impl *loginImpl) ChangePassword(ctx context.Context, userId uint64, login string, oldPassword string, newPassword string) error {
 	strong, err := impl.strengthService.Get().Validate(ctx, newPassword)
 	if err != nil {
 		return err
@@ -145,11 +136,11 @@ func (impl loginImpl) ChangePassword(ctx context.Context, userId uint64, login s
 	return nil
 }
 
-func (impl loginImpl) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []service.User, error) {
+func (impl *loginImpl) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []service.User, error) {
 	// TODO
 	total := uint64(0)
 	list := []*pb.User{}
-	sort.Sort(sortableContents(list))
+	slices.SortFunc(list, cmpAsc)
 	users := make([]service.User, 0, len(list))
 	for _, user := range list {
 		users = append(users, convertUser(user, impl.dateFormat))
@@ -158,7 +149,7 @@ func (impl loginImpl) ListUsers(ctx context.Context, start uint64, end uint64, f
 }
 
 // no right check
-func (impl loginImpl) Delete(ctx context.Context, userId uint64) error {
+func (impl *loginImpl) Delete(ctx context.Context, userId uint64) error {
 	success := true
 	// TODO
 	if !success {

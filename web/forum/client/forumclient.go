@@ -19,14 +19,15 @@
 package forumclient
 
 import (
+	"cmp"
 	"context"
+	"slices"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
-	"golang.org/x/exp/slices"
 	"golang.org/x/exp/slog"
 )
 
@@ -49,12 +50,12 @@ func MakeForumServiceWrapper(forumService remoteservice.RemoteForumService, auth
 
 type deleteRequestKind func(remoteservice.RemoteForumService, context.Context, uint64, uint64) error
 
-func cmpAsc(a remoteservice.RawForumContent, b remoteservice.RawForumContent) bool {
-	return a.CreatedAt < b.CreatedAt
+func cmpAsc(a remoteservice.RawForumContent, b remoteservice.RawForumContent) int {
+	return cmp.Compare(a.CreatedAt, b.CreatedAt)
 }
 
-func cmpDesc(a remoteservice.RawForumContent, b remoteservice.RawForumContent) bool {
-	return a.CreatedAt > b.CreatedAt
+func cmpDesc(a remoteservice.RawForumContent, b remoteservice.RawForumContent) int {
+	return -cmp.Compare(a.CreatedAt, b.CreatedAt)
 }
 
 func (client forumServiceWrapper) CreateThread(ctx context.Context, userId uint64, title string, message string) (uint64, error) {

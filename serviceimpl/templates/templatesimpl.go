@@ -34,7 +34,7 @@ type templateClient struct {
 	weaver.Implements[service.TemplateService]
 }
 
-func (impl templateClient) Render(ctx context.Context, templateName string, data any) ([]byte, error) {
+func (impl *templateClient) Render(ctx context.Context, templateName string, data any) ([]byte, error) {
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
 		impl.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)

@@ -31,7 +31,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/forum"
 	"github.com/dvaumoron/puzzleweaver/web/remotewidget"
-	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	"github.com/dvaumoron/puzzleweaver/web/wiki"
 	"golang.org/x/exp/slog"
 )
@@ -66,7 +65,7 @@ type frameApp struct {
 	markdownService         weaver.Ref[service.MarkdownService]
 	blogService             weaver.Ref[remoteservice.RemoteBlogService]
 	wikiService             weaver.Ref[remoteservice.RemoteWikiService]
-	widgetService           weaver.Ref[widgetservice.WidgetService]
+	widgetService           weaver.Ref[remoteservice.RemoteWidgetService]
 }
 
 // frameServe is called by weaver.Run and contains the body of the application.
@@ -110,26 +109,26 @@ func frameServe(ctx context.Context, app *frameApp) error {
 	return site.Run(globalConfig)
 }
 
-func makeWidgetPage(app *frameApp, pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, ctxLogger *slog.Logger, widgetConfig config.WidgetConfig) (web.Page, bool) {
+func makeWidgetPage(app *frameApp, pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, logger *slog.Logger, widgetConfig config.WidgetConfig) (web.Page, bool) {
 	switch widgetConfig.Kind {
 	case "forum":
-		return forum.MakeForumPage(pageName, ctxLogger, globalConfig.CreateForumConfig(
+		return forum.MakeForumPage(pageName, logger, globalConfig.CreateForumConfig(
 			widgetConfig.ObjectId, widgetConfig.GroupId, widgetConfig.Templates...,
 		)), true
 	case "blog":
-		return blog.MakeBlogPage(pageName, ctxLogger, globalConfig.CreateBlogConfig(
+		return blog.MakeBlogPage(pageName, logger, globalConfig.CreateBlogConfig(
 			widgetConfig.ObjectId, widgetConfig.GroupId, widgetConfig.Templates...,
 		)), true
 	case "wiki":
-		return wiki.MakeWikiPage(pageName, ctxLogger, globalConfig.CreateWikiConfig(
+		return wiki.MakeWikiPage(pageName, logger, globalConfig.CreateWikiConfig(
 			widgetConfig.ObjectId, widgetConfig.GroupId, widgetConfig.Templates...,
 		)), true
 	case "remote":
-		return remotewidget.MakeRemotePage(pageName, ctx, widgetConfig.WidgetName,
-			globalConfig.CreateWidgetConfig(widgetConfig.ObjectId, widgetConfig.GroupId),
-		)
+		return remotewidget.MakeRemotePage(pageName, ctx, logger, globalConfig.CreateWidgetConfig(
+			widgetConfig.WidgetName, widgetConfig.ObjectId, widgetConfig.GroupId,
+		))
 	default:
-		ctxLogger.Error("Widget kind unknown ", "kind", widgetConfig.Kind)
+		logger.Error("Widget kind unknown ", "kind", widgetConfig.Kind)
 		return web.Page{}, false
 	}
 }

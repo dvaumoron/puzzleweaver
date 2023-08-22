@@ -30,13 +30,15 @@ type profileServiceWrapper struct {
 	profileService remoteservice.RemoteProfileService
 	userService    service.UserService
 	authService    service.AuthService
+	loggerGetter   common.LoggerGetter
 	groupId        uint64
 	defaultPicture []byte
 }
 
-func MakeProfileServiceWrapper(profileService remoteservice.RemoteProfileService, userService service.UserService, authService service.AuthService, groupId uint64) service.ProfileService {
+func MakeProfileServiceWrapper(profileService remoteservice.RemoteProfileService, userService service.UserService, authService service.AuthService, loggerGetter common.LoggerGetter, groupId uint64, defaultPicture []byte) service.ProfileService {
 	return profileServiceWrapper{
-		profileService: profileService, userService: userService, authService: authService, groupId: groupId,
+		profileService: profileService, userService: userService, authService: authService,
+		loggerGetter: loggerGetter, groupId: groupId, defaultPicture: defaultPicture,
 	}
 }
 
@@ -49,8 +51,12 @@ func (client profileServiceWrapper) UpdatePicture(ctx context.Context, userId ui
 }
 
 func (client profileServiceWrapper) GetPicture(ctx context.Context, userId uint64) []byte {
-	// TODO
-	return client.defaultPicture
+	picture, err := client.profileService.GetPicture(ctx, userId)
+	if err != nil {
+		common.LogOriginalError(client.loggerGetter.Logger(ctx), err)
+		return client.defaultPicture
+	}
+	return picture
 }
 
 func (client profileServiceWrapper) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]service.UserProfile, error) {
