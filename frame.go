@@ -129,7 +129,7 @@ func makeWidgetPage(app *frameApp, pageName string, globalConfig *config.GlobalS
 			widgetConfig.WidgetName, widgetConfig.ObjectId, widgetConfig.GroupId,
 		))
 	default:
-		logger.Error("Widget kind unknown ", "kind", widgetConfig.Kind)
+		logger.Error("Widget kind unknown", "kind", widgetConfig.Kind)
 		return web.Page{}, false
 	}
 }
