@@ -18,7 +18,11 @@
 
 package service
 
-import "context"
+import (
+	"context"
+
+	"github.com/ServiceWeaver/weaver"
+)
 
 const AdminName = "admin"
 const PublicName = "public"
@@ -33,11 +37,13 @@ const (
 )
 
 type Group struct {
+	weaver.AutoMarshal
 	Id   uint64
 	Name string
 }
 
 type Role struct {
+	weaver.AutoMarshal
 	Name      string
 	GroupId   uint64
 	GroupName string

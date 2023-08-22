@@ -20,9 +20,12 @@ package remoteservice
 
 import (
 	"context"
+
+	"github.com/ServiceWeaver/weaver"
 )
 
 type RawBlogPost struct {
+	weaver.AutoMarshal
 	Id        uint64
 	CreatorId uint64
 	CreatedAt int64
@@ -38,6 +41,7 @@ type RemoteBlogService interface {
 }
 
 type RawForumContent struct {
+	weaver.AutoMarshal
 	Id        uint64
 	CreatorId uint64
 	CreatedAt int64
@@ -54,6 +58,7 @@ type RemoteForumService interface {
 }
 
 type RawUser struct {
+	weaver.AutoMarshal
 	Id          uint64
 	Login       string
 	RegistredAt int64
@@ -70,6 +75,7 @@ type RemoteLoginService interface {
 }
 
 type RawUserProfile struct {
+	weaver.AutoMarshal
 	Desc string
 	Info map[string]string
 }
@@ -96,6 +102,7 @@ const (
 )
 
 type RawWidgetAction struct {
+	weaver.AutoMarshal
 	Kind       uint8
 	Name       string
 	Path       string
@@ -108,6 +115,7 @@ type RemoteWidgetService interface {
 }
 
 type RawWikiContent struct {
+	weaver.AutoMarshal
 	Version   uint64
 	CreatorId uint64
 	CreatedAt int64
