@@ -16,22 +16,24 @@
  *
  */
 
-package templatesimpl
+package sessionimpl
 
 import (
-	"context"
+	"time"
 
-	"github.com/ServiceWeaver/weaver"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"github.com/redis/go-redis/v9"
 )
 
-type TemplateService service.TemplateService
-
-type templateImpl struct {
-	weaver.Implements[TemplateService]
+type sessionConf struct {
+	sessionTimeout time.Duration
+	retryNumber    int
 }
 
-func (impl *templateImpl) Render(ctx context.Context, templateName string, data []byte) ([]byte, error) {
+type initializedSessionConf struct {
+	rdb *redis.Client
+}
+
+func initSessionConf(conf *sessionConf) (*initializedSessionConf, error) {
 	// TODO
 	return nil, nil
 }

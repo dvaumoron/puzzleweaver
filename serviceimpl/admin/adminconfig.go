@@ -42,18 +42,18 @@ type initializedAdminConf struct {
 	nameToGroupId map[string]uint64
 }
 
-func initAdminConf(info *adminConf) (*initializedAdminConf, error) {
+func initAdminConf(conf *adminConf) *initializedAdminConf {
 	groupIdToName := map[uint64]string{
 		service.PublicGroupId: service.PublicName, service.AdminGroupId: service.AdminName,
 	}
 	nameToGroupId := map[string]uint64{
 		service.PublicName: service.PublicGroupId, service.AdminName: service.AdminGroupId,
 	}
-	for _, idName := range info.PermissionGroups {
+	for _, idName := range conf.PermissionGroups {
 		groupIdToName[idName.Id] = idName.Name
 		nameToGroupId[idName.Name] = idName.Id
 	}
 	return &initializedAdminConf{
 		groupIdToName: groupIdToName, nameToGroupId: nameToGroupId,
-	}, nil
+	}
 }
