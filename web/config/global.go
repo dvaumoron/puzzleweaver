@@ -19,6 +19,7 @@
 package config
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
@@ -31,6 +32,7 @@ import (
 	remotewidgetclient "github.com/dvaumoron/puzzleweaver/web/remotewidget/client"
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
+	"github.com/spf13/afero"
 )
 
 const WebKey = "puzzleWeaver"
@@ -90,6 +92,8 @@ type WidgetPageConfig struct {
 type GlobalServiceConfig struct {
 	*GlobalConfig
 	LoggerGetter            common.LoggerGetter
+	FileSystem              http.FileSystem
+	StaticFileSystem        http.FileSystem
 	SessionService          service.SessionService
 	TemplateService         service.TemplateService
 	SettingsService         service.SettingsService
@@ -106,6 +110,9 @@ type GlobalServiceConfig struct {
 }
 
 func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
+	// TODO manage switch to network FS
+	baseFS := afero.NewOsFs()
+
 	// TODO read default picture file
 	var defaultPicture []byte
 
@@ -119,6 +126,8 @@ func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionSe
 	return &GlobalServiceConfig{
 		GlobalConfig:            globalConfig,
 		LoggerGetter:            loggerGetter,
+		FileSystem:              afero.NewHttpFs(baseFS),
+		StaticFileSystem:        afero.NewHttpFs(afero.NewBasePathFs(baseFS, globalConfig.StaticPath)),
 		SessionService:          sessionService,
 		TemplateService:         templateService,
 		SettingsService:         settingsService,
