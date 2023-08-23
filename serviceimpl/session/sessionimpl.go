@@ -135,7 +135,7 @@ func (impl *sessionImpl) Update(ctx context.Context, id uint64, info map[string]
 		} else if v == "" {
 			keyToDelete = append(keyToDelete, k)
 		} else {
-			info[k] = v
+			infoCopy[k] = v
 		}
 	}
 	idStr := strconv.FormatUint(id, 10)
