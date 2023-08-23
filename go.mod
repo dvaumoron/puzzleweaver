@@ -8,6 +8,7 @@ require (
 	github.com/dvaumoron/puzzlewidgetservice v1.2.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/feeds v1.1.1
+	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
 	github.com/redis/go-redis/v9 v9.1.0
 	github.com/spf13/afero v1.9.5
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.42.0
@@ -51,6 +52,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
+	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

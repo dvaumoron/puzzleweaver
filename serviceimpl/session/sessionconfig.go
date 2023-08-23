@@ -19,21 +19,41 @@
 package sessionimpl
 
 import (
+	"context"
 	"time"
 
+	"github.com/dvaumoron/puzzleweaver/redisclient"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/exp/slog"
 )
 
 type sessionConf struct {
-	sessionTimeout time.Duration
-	retryNumber    int
+	SessionTimeout time.Duration
+	RetryNumber    int
+	RedisAddr      string
+	RedisUser      string
+	RedisPassword  string
+	RedisDBNum     int
+	Debug          bool
 }
 
 type initializedSessionConf struct {
-	rdb *redis.Client
+	rdb     *redis.Client
+	updater func(*redis.Client, context.Context, string, []string, map[string]any) error
 }
 
-func initSessionConf(conf *sessionConf) (*initializedSessionConf, error) {
-	// TODO
-	return nil, nil
+func initSessionConf(logger *slog.Logger, conf *sessionConf) *initializedSessionConf {
+	rdb := redisclient.New(logger, &redis.Options{
+		Addr:     conf.RedisAddr,
+		Username: conf.RedisUser,
+		Password: conf.RedisPassword,
+		DB:       conf.RedisDBNum,
+	})
+
+	updater := updateSessionInfoTx
+	if conf.Debug {
+		logger.Info("Mode debug on")
+		updater = updateSessionInfo
+	}
+	return &initializedSessionConf{rdb: rdb, updater: updater}
 }
