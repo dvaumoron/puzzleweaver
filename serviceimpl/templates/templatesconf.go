@@ -19,16 +19,24 @@
 package templatesimpl
 
 import (
+	"bufio"
+	"errors"
 	"html/template"
 	"io/fs"
+	"strings"
 
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 )
 
+var errNoLocale = errors.New("no locales declared")
+
 type templateConf struct {
+	AllLang      []string
 	TemplatePath string
+	LocalesPath  string
 }
 
 type initializedTemplateConf struct {
@@ -36,27 +44,34 @@ type initializedTemplateConf struct {
 	messages  map[string]map[string]string
 }
 
-func initTemplateConf(logger *slog.Logger, conf *templateConf) *initializedTemplateConf {
-	var fileSystem afero.Fs
-	// TODO
-	return &initializedTemplateConf{templates: load(logger, fileSystem, conf)}
+func initTemplateConf(logger *slog.Logger, conf *templateConf) (*initializedTemplateConf, error) {
+	// TODO manage switch to network FS
+	fileSystem := afero.NewOsFs()
+
+	templates, err := loadTemplates(logger, fileSystem, conf)
+	if err != nil {
+		return nil, err
+	}
+
+	messages, err := loadLocales(logger, fileSystem, conf)
+	if err != nil {
+		return nil, err
+	}
+
+	return &initializedTemplateConf{templates: templates, messages: messages}, nil
 }
 
-func load(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) *template.Template {
-	templatesPath := conf.TemplatePath
-	if last := len(templatesPath) - 1; templatesPath[last] != '/' {
-		templatesPath += "/"
-	}
+func loadTemplates(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) (*template.Template, error) {
+	templatesPath := cleanPath(conf.TemplatePath)
 
 	tmpl := template.New("")
 	inSize := len(templatesPath)
-	err := afero.Walk(fileSystem, templatesPath, func(path string, d fs.FileInfo, err error) error {
-		if err == nil && !d.IsDir() {
+	err := afero.Walk(fileSystem, templatesPath, func(path string, fi fs.FileInfo, err error) error {
+		if err == nil && !fi.IsDir() {
 			name := path[inSize:]
 			if end := len(name) - 5; name[end:] == ".html" {
 				var data []byte
-				data, err = afero.ReadFile(fileSystem, path)
-				if err == nil {
+				if data, err = afero.ReadFile(fileSystem, path); err == nil {
 					_, err = tmpl.New(name[:end]).Parse(string(data))
 				}
 			}
@@ -66,6 +81,76 @@ func load(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) *templat
 
 	if err != nil {
 		logger.Error("Failed to load templates", common.ErrorKey, err)
+		return nil, servicecommon.ErrInternal
 	}
-	return tmpl
+	return tmpl, nil
+}
+
+func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) (map[string]map[string]string, error) {
+	if len(conf.AllLang) == 0 {
+		return nil, errNoLocale
+	}
+
+	localesPath := cleanPath(conf.LocalesPath)
+	messages := map[string]map[string]string{}
+	for _, lang := range conf.AllLang {
+		messagesLang := map[string]string{}
+		messages[lang] = messagesLang
+
+		var pathBuilder strings.Builder
+		pathBuilder.WriteString(localesPath)
+		pathBuilder.WriteString("/messages_")
+		pathBuilder.WriteString(lang)
+		pathBuilder.WriteString(".properties")
+
+		if err := parseFile(fileSystem, pathBuilder.String(), messagesLang); err != nil {
+			return nil, err
+		}
+	}
+
+	defaultLang := conf.AllLang[0]
+	messagesDefaultLang := messages[defaultLang]
+	for _, lang := range conf.AllLang {
+		if lang == defaultLang {
+			continue
+		}
+		messagesLang := messages[lang]
+		for key, value := range messagesDefaultLang {
+			if messagesLang[key] == "" {
+				messagesLang[key] = value
+			}
+		}
+	}
+	return messages, nil
+}
+
+// separated function to close file sooner
+func parseFile(fileSystem afero.Fs, path string, messagesLang map[string]string) error {
+	file, err := fileSystem.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) != 0 && line[0] != '#' {
+			if equal := strings.Index(line, "="); equal > 0 {
+				if key := strings.TrimSpace(line[:equal]); key != "" {
+					if value := strings.TrimSpace(line[equal+1:]); value != "" {
+						messagesLang[key] = value
+					}
+				}
+			}
+		}
+	}
+	return scanner.Err()
+}
+
+func cleanPath(path string) string {
+	if last := len(path) - 1; last == -1 || path[last] != '/' {
+		path += "/"
+	}
+	return path
 }

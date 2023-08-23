@@ -40,29 +40,35 @@ type templateImpl struct {
 	initializedConf *initializedTemplateConf
 }
 
-func (impl *templateImpl) getInitializedConf(logger *slog.Logger) *initializedTemplateConf {
+func (impl *templateImpl) getInitializedConf(logger *slog.Logger) (*initializedTemplateConf, error) {
 	impl.confMutex.RLock()
 	initializedConf := impl.initializedConf
 	impl.confMutex.RUnlock()
 	if initializedConf != nil {
-		return initializedConf
+		return initializedConf, nil
 	}
 
 	impl.confMutex.Lock()
 	defer impl.confMutex.Unlock()
 	if impl.initializedConf == nil {
-		impl.initializedConf = initTemplateConf(logger, impl.Config())
+		var err error
+		impl.initializedConf, err = initTemplateConf(logger, impl.Config())
+		if err != nil {
+			return nil, err
+		}
 	}
-	return impl.initializedConf
+	return impl.initializedConf, nil
 }
 
 func (impl *templateImpl) Render(ctx context.Context, templateName string, data []byte) ([]byte, error) {
 	logger := impl.Logger(ctx)
-	initializedConf := impl.getInitializedConf(logger)
+	initializedConf, err := impl.getInitializedConf(logger)
+	if err != nil {
+		return nil, servicecommon.ErrInternal
+	}
 
 	var parsedData map[string]any
-	err := json.Unmarshal(data, &parsedData)
-	if err != nil {
+	if err = json.Unmarshal(data, &parsedData); err != nil {
 		logger.Error("Failed during JSON parsing", common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
