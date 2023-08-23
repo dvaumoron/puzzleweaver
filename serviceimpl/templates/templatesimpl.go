@@ -19,19 +19,63 @@
 package templatesimpl
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"sync"
 
 	"github.com/ServiceWeaver/weaver"
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
+	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"golang.org/x/exp/slog"
 )
 
 type TemplateService service.TemplateService
 
 type templateImpl struct {
 	weaver.Implements[TemplateService]
+	weaver.WithConfig[templateConf]
+	confMutex       sync.RWMutex
+	initializedConf *initializedTemplateConf
+}
+
+func (impl *templateImpl) getInitializedConf(logger *slog.Logger) *initializedTemplateConf {
+	impl.confMutex.RLock()
+	initializedConf := impl.initializedConf
+	impl.confMutex.RUnlock()
+	if initializedConf != nil {
+		return initializedConf
+	}
+
+	impl.confMutex.Lock()
+	defer impl.confMutex.Unlock()
+	if impl.initializedConf == nil {
+		impl.initializedConf = initTemplateConf(logger, impl.Config())
+	}
+	return impl.initializedConf
 }
 
 func (impl *templateImpl) Render(ctx context.Context, templateName string, data []byte) ([]byte, error) {
-	// TODO
-	return nil, nil
+	logger := impl.Logger(ctx)
+	initializedConf := impl.getInitializedConf(logger)
+
+	var parsedData map[string]any
+	err := json.Unmarshal(data, &parsedData)
+	if err != nil {
+		logger.Error("Failed during JSON parsing", common.ErrorKey, err)
+		return nil, servicecommon.ErrInternal
+	}
+	parsedData["Messages"] = initializedConf.messages[asString(parsedData["lang"])]
+	var content bytes.Buffer
+	if err = initializedConf.templates.ExecuteTemplate(&content, templateName, parsedData); err != nil {
+		logger.Error("Failed during go template call", common.ErrorKey, err)
+		return nil, servicecommon.ErrInternal
+	}
+	return content.Bytes(), nil
+}
+
+func asString(value any) string {
+	s, _ := value.(string)
+	return s
 }

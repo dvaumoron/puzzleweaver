@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/ServiceWeaver/weaver"
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/redis/go-redis/v9"
@@ -39,7 +40,7 @@ const creationTimeName = "sessionCreationTime"
 
 const redisCallMsg = "Failed during Redis call"
 
-var errInternal = errors.New("internal service error")
+var errGenerateRetry = errors.New("generate reached maximum number of retries")
 
 type SessionService service.SessionService
 
@@ -88,19 +89,19 @@ func (impl *sessionImpl) Generate(ctx context.Context) (uint64, error) {
 		nb, err := rdb.Exists(ctx, idStr).Result()
 		if err != nil {
 			logger.Error(redisCallMsg, common.ErrorKey, err)
-			return 0, errInternal
+			return 0, servicecommon.ErrInternal
 		}
 		if nb == 0 {
 			err := rdb.HSet(ctx, idStr, creationTimeName, time.Now().String()).Err()
 			if err != nil {
 				logger.Error(redisCallMsg, common.ErrorKey, err)
-				return 0, errInternal
+				return 0, servicecommon.ErrInternal
 			}
 			impl.updateWithDefaultTTL(ctx, logger, idStr)
 			return id, nil
 		}
 	}
-	return 0, errors.New("generate reached maximum number of retries")
+	return 0, errGenerateRetry
 }
 
 func (impl *sessionImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
@@ -115,7 +116,7 @@ func (impl *sessionImpl) Get(ctx context.Context, id uint64) (map[string]string,
 		}
 
 		logger.Error(redisCallMsg, common.ErrorKey, err)
-		return nil, errInternal
+		return nil, servicecommon.ErrInternal
 	}
 
 	impl.updateWithDefaultTTL(ctx, logger, idStr)
@@ -141,7 +142,7 @@ func (impl *sessionImpl) Update(ctx context.Context, id uint64, info map[string]
 	idStr := strconv.FormatUint(id, 10)
 	if err := initializedConf.updater(initializedConf.rdb, ctx, idStr, keyToDelete, infoCopy); err != nil {
 		logger.Error(redisCallMsg, common.ErrorKey, err)
-		return errInternal
+		return servicecommon.ErrInternal
 	}
 	impl.updateWithDefaultTTL(ctx, logger, idStr)
 	return nil
