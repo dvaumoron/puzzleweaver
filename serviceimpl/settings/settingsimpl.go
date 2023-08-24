@@ -16,32 +16,101 @@
  *
  */
 
-package sesttingsimpl
+package settingsimpl
 
 import (
 	"context"
+	"sync"
 
 	"github.com/ServiceWeaver/weaver"
+	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+const collectionName = "settings"
+
+const userIdKey = "userId"
+const settingsKey = collectionName // currently the same
+
+const mongoCallMsg = "Failed during MongoDB call"
+
+var optsOnlySettingsField = options.FindOne().SetProjection(bson.D{{Key: settingsKey, Value: true}})
+var optsCreateUnexisting = options.Replace().SetUpsert(true)
 
 type SettingsService service.SettingsService
 
 type settingsImpl struct {
 	weaver.Implements[SettingsService]
+	weaver.WithConfig[settingsConf]
+	confMutex       sync.RWMutex
+	initializedConf *initializedSettingsConf
+}
+
+func (impl *settingsImpl) getInitializedConf() *initializedSettingsConf {
+	impl.confMutex.RLock()
+	initializedConf := impl.initializedConf
+	impl.confMutex.RUnlock()
+	if initializedConf != nil {
+		return initializedConf
+	}
+
+	impl.confMutex.Lock()
+	defer impl.confMutex.Unlock()
+	if impl.initializedConf == nil {
+		impl.initializedConf = initSettingsConf(impl.Config())
+	}
+	return impl.initializedConf
 }
 
 func (impl *settingsImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
-	// TODO
-	return nil, nil
+	logger := impl.Logger(ctx)
+	client, err := mongo.Connect(ctx, impl.getInitializedConf().clientOptions)
+	if err != nil {
+		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		return nil, servicecommon.ErrInternal
+	}
+	defer mongoclient.Disconnect(client, ctx, logger)
+
+	collection := client.Database(impl.Config().MongoDatabaseName).Collection(collectionName)
+	var result bson.D
+	err = collection.FindOne(
+		ctx, bson.D{{Key: userIdKey, Value: id}}, optsOnlySettingsField,
+	).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+
+		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		return nil, servicecommon.ErrInternal
+	}
+
+	// call [1] to get picture because result has only the id and one field
+	return mongoclient.ExtractStringMap(result[1].Value), nil
 }
 
 func (impl *settingsImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
-	success := true
-	// TODO
-	if !success {
-		return common.ErrUpdate
+	logger := impl.Logger(ctx)
+	client, err := mongo.Connect(ctx, impl.getInitializedConf().clientOptions)
+	if err != nil {
+		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		return servicecommon.ErrInternal
+	}
+	defer mongoclient.Disconnect(client, ctx, logger)
+
+	settings := bson.M{userIdKey: id, settingsKey: info}
+	collection := client.Database(impl.Config().MongoDatabaseName).Collection(collectionName)
+	_, err = collection.ReplaceOne(
+		ctx, bson.D{{Key: userIdKey, Value: id}}, settings, optsCreateUnexisting,
+	)
+	if err != nil {
+		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		return servicecommon.ErrInternal
 	}
 	return nil
 }
