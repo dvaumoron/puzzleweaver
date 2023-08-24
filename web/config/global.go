@@ -33,6 +33,7 @@ import (
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
 	"github.com/spf13/afero"
+	"golang.org/x/exp/slog"
 )
 
 const WebKey = "puzzleWeaver"
@@ -109,12 +110,19 @@ type GlobalServiceConfig struct {
 	WidgetService           remoteservice.RemoteWidgetService
 }
 
-func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
+func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
 	// TODO manage switch to network FS
 	baseFS := afero.NewOsFs()
 
-	// TODO read default picture file
-	var defaultPicture []byte
+	// read default picture file
+	defaultPicturePath := globalConfig.ProfileDefaultPicturePath
+	if defaultPicturePath == "" {
+		defaultPicturePath = globalConfig.StaticPath + "/images/unknownuser.png"
+	}
+	defaultPicture, err := afero.ReadFile(baseFS, defaultPicturePath)
+	if err != nil {
+		logger.Error("Can not read", "defaultPicturePath", defaultPicturePath, common.ErrorKey, err)
+	}
 
 	loginServiceWrapper := loginclient.MakeLoginServiceWrapper(
 		loginService, saltService, passwordStrengthService, globalConfig.DateFormat,

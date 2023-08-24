@@ -71,6 +71,8 @@ type frameApp struct {
 
 // frameServe is called by weaver.Run and contains the body of the application.
 func frameServe(ctx context.Context, app *frameApp) error {
+	logger := app.Logger(ctx)
+
 	globalConfig := config.New(
 		app.Config(), app, app.sessionService.Get(), app.templateService.Get(), app.settingsService.Get(),
 		app.passwordStrengthService.Get(), app.saltService.Get(), app.loginService.Get(), app.adminService.Get(),
@@ -78,7 +80,6 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		app.wikiService.Get(), app.widgetService.Get(),
 	)
 
-	logger := app.Logger(ctx)
 	site := web.BuildDefaultSite(logger, globalConfig)
 
 	site.AddPage(web.MakeHiddenStaticPage(app, notFound, service.PublicGroupId, notFound))
