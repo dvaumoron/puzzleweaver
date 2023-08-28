@@ -19,14 +19,8 @@
 package adminimpl
 
 import (
-	"errors"
-
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
-
-const configErrorMsg = "Error in AdminImpl config"
-
-var errConfig = errors.New("ErrorConfigKey")
 
 type permissionGroup struct {
 	Id   uint64
