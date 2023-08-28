@@ -64,18 +64,19 @@ func (impl *templateImpl) Render(ctx context.Context, templateName string, data 
 	logger := impl.Logger(ctx)
 	initializedConf, err := impl.getInitializedConf(logger)
 	if err != nil {
+		logger.Error("Failed to load templates configuration", common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
 
 	var parsedData map[string]any
 	if err = json.Unmarshal(data, &parsedData); err != nil {
-		logger.Error("Failed during JSON parsing", common.ErrorKey, err)
+		logger.Error("Failed to parse JSON", common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
 	parsedData["Messages"] = initializedConf.messages[asString(parsedData["lang"])]
 	var content bytes.Buffer
 	if err = initializedConf.templates.ExecuteTemplate(&content, templateName, parsedData); err != nil {
-		logger.Error("Failed during go template call", common.ErrorKey, err)
+		logger.Error("Failed to call go template", common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
 	return content.Bytes(), nil

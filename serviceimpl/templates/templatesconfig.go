@@ -25,8 +25,6 @@ import (
 	"io/fs"
 	"strings"
 
-	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 )
@@ -80,8 +78,7 @@ func loadTemplates(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf)
 	})
 
 	if err != nil {
-		logger.Error("Failed to load templates", common.ErrorKey, err)
-		return nil, servicecommon.ErrInternal
+		return nil, err
 	}
 	return tmpl, nil
 }
@@ -92,7 +89,7 @@ func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) (
 	}
 
 	localesPath := cleanPath(conf.LocalesPath)
-	messages := map[string]map[string]string{}
+	messages := make(map[string]map[string]string, len(conf.AllLang))
 	for _, lang := range conf.AllLang {
 		messagesLang := map[string]string{}
 		messages[lang] = messagesLang

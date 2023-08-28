@@ -47,9 +47,13 @@ func initStrengthConf(logger *slog.Logger, conf *strengthConf) *initializedStren
 }
 
 func readRulesConfig(logger *slog.Logger, fileSystem afero.Fs, conf *strengthConf) map[string]string {
-	allLang := conf.AllLang
-	localizedRules := make(map[string]string, len(allLang))
-	for _, lang := range allLang {
+	if len(conf.AllLang) == 0 {
+		logger.Error("No locales declared")
+		return nil
+	}
+
+	localizedRules := make(map[string]string, len(conf.AllLang))
+	for _, lang := range conf.AllLang {
 		lang = strings.TrimSpace(lang)
 
 		var pathBuilder strings.Builder

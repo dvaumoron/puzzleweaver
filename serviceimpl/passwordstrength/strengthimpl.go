@@ -20,17 +20,15 @@ package passwordstrengthimpl
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/ServiceWeaver/weaver"
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	passwordvalidator "github.com/wagslane/go-password-validator"
 	"golang.org/x/exp/slog"
 )
-
-var errNotFound = errors.New("locale not found")
 
 type PasswordStrengthService service.PasswordStrengthService
 
@@ -61,7 +59,7 @@ func (impl *strengthImpl) Validate(ctx context.Context, password string) error {
 	logger := impl.Logger(ctx)
 	err := passwordvalidator.Validate(password, impl.getInitializedConf(logger).minEntropy)
 	if err != nil {
-		common.LogOriginalError(logger, err)
+		logger.Error("Password not validated", common.ErrorKey, err)
 		return common.ErrWeakPassword
 	}
 	return nil
@@ -71,7 +69,8 @@ func (impl *strengthImpl) GetRules(ctx context.Context, lang string) (string, er
 	logger := impl.Logger(ctx)
 	description, ok := impl.getInitializedConf(logger).localizedRules[lang]
 	if !ok {
-		return "", errNotFound
+		logger.Error("Locale not found")
+		return "", servicecommon.ErrInternal
 	}
 	return description, nil
 }
