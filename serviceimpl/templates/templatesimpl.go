@@ -40,34 +40,27 @@ type templateImpl struct {
 	initializedConf *initializedTemplateConf
 }
 
-func (impl *templateImpl) getInitializedConf(logger *slog.Logger) (*initializedTemplateConf, error) {
+func (impl *templateImpl) getInitializedConf(logger *slog.Logger) *initializedTemplateConf {
 	impl.confMutex.RLock()
 	initializedConf := impl.initializedConf
 	impl.confMutex.RUnlock()
 	if initializedConf != nil {
-		return initializedConf, nil
+		return initializedConf
 	}
 
 	impl.confMutex.Lock()
 	defer impl.confMutex.Unlock()
 	if impl.initializedConf == nil {
-		var err error
-		impl.initializedConf, err = initTemplateConf(logger, impl.Config())
-		if err != nil {
-			return nil, err
-		}
+		impl.initializedConf = initTemplateConf(logger, impl.Config())
 	}
-	return impl.initializedConf, nil
+	return impl.initializedConf
 }
 
 func (impl *templateImpl) Render(ctx context.Context, templateName string, data []byte) ([]byte, error) {
 	logger := impl.Logger(ctx)
-	initializedConf, err := impl.getInitializedConf(logger)
-	if err != nil {
-		logger.Error("Failed to load templates configuration", common.ErrorKey, err)
-		return nil, servicecommon.ErrInternal
-	}
+	initializedConf := impl.getInitializedConf(logger)
 
+	var err error
 	var parsedData map[string]any
 	if err = json.Unmarshal(data, &parsedData); err != nil {
 		logger.Error("Failed to parse JSON", common.ErrorKey, err)

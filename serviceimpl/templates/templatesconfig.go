@@ -25,6 +25,7 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
 )
@@ -42,24 +43,16 @@ type initializedTemplateConf struct {
 	messages  map[string]map[string]string
 }
 
-func initTemplateConf(logger *slog.Logger, conf *templateConf) (*initializedTemplateConf, error) {
+func initTemplateConf(logger *slog.Logger, conf *templateConf) *initializedTemplateConf {
 	// TODO manage switch to network FS
 	fileSystem := afero.NewOsFs()
 
-	templates, err := loadTemplates(logger, fileSystem, conf)
-	if err != nil {
-		return nil, err
-	}
-
-	messages, err := loadLocales(logger, fileSystem, conf)
-	if err != nil {
-		return nil, err
-	}
-
-	return &initializedTemplateConf{templates: templates, messages: messages}, nil
+	templates := loadTemplates(logger, fileSystem, conf)
+	messages := loadLocales(logger, fileSystem, conf)
+	return &initializedTemplateConf{templates: templates, messages: messages}
 }
 
-func loadTemplates(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) (*template.Template, error) {
+func loadTemplates(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) *template.Template {
 	templatesPath := cleanPath(conf.TemplatePath)
 
 	tmpl := template.New("")
@@ -78,14 +71,15 @@ func loadTemplates(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf)
 	})
 
 	if err != nil {
-		return nil, err
+		logger.Error("Failed to load templates", common.ErrorKey, err)
 	}
-	return tmpl, nil
+	return tmpl
 }
 
-func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) (map[string]map[string]string, error) {
+func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) map[string]map[string]string {
 	if len(conf.AllLang) == 0 {
-		return nil, errNoLocale
+		logger.Error("No locales declared")
+		return nil
 	}
 
 	localesPath := cleanPath(conf.LocalesPath)
@@ -101,7 +95,7 @@ func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) (
 		pathBuilder.WriteString(".properties")
 
 		if err := parseFile(fileSystem, pathBuilder.String(), messagesLang); err != nil {
-			return nil, err
+			logger.Error("Failed to load file", common.ErrorKey, err)
 		}
 	}
 
@@ -118,7 +112,7 @@ func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) (
 			}
 		}
 	}
-	return messages, nil
+	return messages
 }
 
 // separated function to close file sooner
