@@ -20,12 +20,20 @@ package loginclient
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"golang.org/x/crypto/scrypt"
 )
+
+// those values are not configurable because a change imply a migration of user database.
+const n = 1 << 16
+const r = 8
+const p = 1
+const keyLen = 64
 
 var errNotEnoughValues = errors.New("not enough return values from saltService call")
 
@@ -43,7 +51,7 @@ func MakeLoginServiceWrapper(loginService remoteservice.RemoteLoginService, salt
 }
 
 func (client loginServiceWrapper) Verify(ctx context.Context, login string, password string) (uint64, error) {
-	salteds, err := client.saltService.Salt(ctx, [2]string{login, password})
+	salteds, err := client.salt(ctx, [2]string{login, password})
 	if err != nil {
 		return 0, err
 	}
@@ -59,7 +67,7 @@ func (client loginServiceWrapper) Register(ctx context.Context, login string, pa
 		return 0, err
 	}
 
-	salteds, err := client.saltService.Salt(ctx, [2]string{login, password})
+	salteds, err := client.salt(ctx, [2]string{login, password})
 	if err != nil {
 		return 0, err
 	}
@@ -89,7 +97,7 @@ func (client loginServiceWrapper) ChangeLogin(ctx context.Context, userId uint64
 		return nil
 	}
 
-	salteds, err := client.saltService.Salt(ctx, [2]string{oldLogin, password}, [2]string{newLogin, password})
+	salteds, err := client.salt(ctx, [2]string{oldLogin, password}, [2]string{newLogin, password})
 	if err != nil {
 		return err
 	}
@@ -110,7 +118,7 @@ func (client loginServiceWrapper) ChangePassword(ctx context.Context, userId uin
 		return err
 	}
 
-	salteds, err := client.saltService.Salt(ctx, [2]string{login, oldPassword}, [2]string{login, newPassword})
+	salteds, err := client.salt(ctx, [2]string{login, oldPassword}, [2]string{login, newPassword})
 	if err != nil {
 		return err
 	}
@@ -141,6 +149,29 @@ func (client loginServiceWrapper) ListUsers(ctx context.Context, start uint64, e
 // no right check
 func (client loginServiceWrapper) Delete(ctx context.Context, userId uint64) error {
 	return client.loginService.Delete(ctx, userId)
+}
+
+func (client loginServiceWrapper) salt(ctx context.Context, loginPasswords ...[2]string) ([]string, error) {
+	size := len(loginPasswords)
+	logins := make([]string, 0, size)
+	for _, loginPassword := range loginPasswords {
+		logins = append(logins, loginPassword[0])
+	}
+
+	salts, err := client.saltService.LoadOrGenerate(ctx, logins...)
+	if err != nil {
+		return nil, err
+	}
+
+	salteds := make([]string, 0, size)
+	for index, salt := range salts {
+		dk, err := scrypt.Key([]byte(loginPasswords[index][1]), salt, n, r, p, keyLen)
+		if err != nil {
+			return nil, err
+		}
+		salteds = append(salteds, base64.StdEncoding.EncodeToString(dk))
+	}
+	return salteds, nil
 }
 
 func convertUser(user remoteservice.RawUser, dateFormat string) service.User {

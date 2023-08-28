@@ -17,22 +17,3 @@
  */
 
 package saltimpl
-
-import (
-	"context"
-
-	"github.com/ServiceWeaver/weaver"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
-)
-
-// check matching with interface
-type SaltService service.SaltService
-
-type saltImpl struct {
-	weaver.Implements[SaltService]
-}
-
-func (impl *saltImpl) LoadOrGenerate(ctx context.Context, logins ...string) ([][]byte, error) {
-	// TODO
-	return nil, nil
-}

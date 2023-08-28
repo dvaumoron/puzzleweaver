@@ -21,7 +21,7 @@ package service
 import "context"
 
 type SaltService interface {
-	Salt(ctx context.Context, loginPasswords ...[2]string) ([]string, error)
+	LoadOrGenerate(ctx context.Context, logins ...string) ([][]byte, error)
 }
 
 type User struct {
