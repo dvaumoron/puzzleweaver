@@ -17,3 +17,31 @@
  */
 
 package saltimpl
+
+import (
+	redisclient "github.com/dvaumoron/puzzleweaver/client/redis"
+	"github.com/redis/go-redis/v9"
+	"golang.org/x/exp/slog"
+)
+
+type saltConf struct {
+	RedisAddr     string
+	RedisUser     string
+	RedisPassword string
+	RedisDBNum    int
+	SaltLen       int
+}
+
+type initializedSaltConf struct {
+	rdb *redis.Client
+}
+
+func initSaltConf(logger *slog.Logger, conf *saltConf) *initializedSaltConf {
+	rdb := redisclient.New(logger, &redis.Options{
+		Addr:     conf.RedisAddr,
+		Username: conf.RedisUser,
+		Password: conf.RedisPassword,
+		DB:       conf.RedisDBNum,
+	})
+	return &initializedSaltConf{rdb: rdb}
+}
