@@ -20,27 +20,58 @@ package passwordstrengthimpl
 
 import (
 	"context"
+	"errors"
+	"sync"
 
 	"github.com/ServiceWeaver/weaver"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	passwordvalidator "github.com/wagslane/go-password-validator"
+	"golang.org/x/exp/slog"
 )
+
+var errNotFound = errors.New("locale not found")
 
 type PasswordStrengthService service.PasswordStrengthService
 
 type strengthImpl struct {
 	weaver.Implements[PasswordStrengthService]
+	weaver.WithConfig[strengthConf]
+	confMutex       sync.RWMutex
+	initializedConf *initializedStrengthConf
+}
+
+func (impl *strengthImpl) getInitializedConf(logger *slog.Logger) *initializedStrengthConf {
+	impl.confMutex.RLock()
+	initializedConf := impl.initializedConf
+	impl.confMutex.RUnlock()
+	if initializedConf != nil {
+		return initializedConf
+	}
+
+	impl.confMutex.Lock()
+	defer impl.confMutex.Unlock()
+	if impl.initializedConf == nil {
+		impl.initializedConf = initStrengthConf(logger, impl.Config())
+	}
+	return impl.initializedConf
 }
 
 func (impl *strengthImpl) Validate(ctx context.Context, password string) error {
-	strong := true
-	//TODO
-	if !strong {
+	logger := impl.Logger(ctx)
+	err := passwordvalidator.Validate(password, impl.getInitializedConf(logger).minEntropy)
+	if err != nil {
+		common.LogOriginalError(logger, err)
 		return common.ErrWeakPassword
 	}
 	return nil
 }
 
-func (client *strengthImpl) GetRules(ctx context.Context, lang string) (string, error) {
-	return "todo", nil
+func (impl *strengthImpl) GetRules(ctx context.Context, lang string) (string, error) {
+	logger := impl.Logger(ctx)
+	description, ok := impl.getInitializedConf(logger).localizedRules[lang]
+	if !ok {
+		return "", errNotFound
+	}
+	return description, nil
 }

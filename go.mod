@@ -11,6 +11,7 @@ require (
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
 	github.com/redis/go-redis/v9 v9.1.0
 	github.com/spf13/afero v1.9.5
+	github.com/wagslane/go-password-validator v0.3.0
 	go.mongodb.org/mongo-driver v1.12.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.42.0
 	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo v0.42.0
