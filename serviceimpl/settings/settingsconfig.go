@@ -24,7 +24,7 @@ import (
 )
 
 type settingsConf struct {
-	MongoAddr         string
+	MongoAddress      string
 	MongoDatabaseName string
 }
 
@@ -33,6 +33,5 @@ type initializedSettingsConf struct {
 }
 
 func initSettingsConf(conf *settingsConf) *initializedSettingsConf {
-	clientOptions := mongoclient.New(conf.MongoAddr)
-	return &initializedSettingsConf{clientOptions: clientOptions}
+	return &initializedSettingsConf{clientOptions: mongoclient.New(conf.MongoAddress)}
 }
