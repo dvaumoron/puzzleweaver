@@ -20,4 +20,7 @@ package servicecommon
 
 import "errors"
 
+const LoadFileErrorMsg = "Failed to load file"
+const NolocalesErrorMsg = "No locales declared"
+
 var ErrInternal = errors.New("internal service error")

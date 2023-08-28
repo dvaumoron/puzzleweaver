@@ -25,6 +25,7 @@ import (
 	"io/fs"
 	"strings"
 
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slog"
@@ -78,7 +79,7 @@ func loadTemplates(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf)
 
 func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) map[string]map[string]string {
 	if len(conf.AllLang) == 0 {
-		logger.Error("No locales declared")
+		logger.Error(servicecommon.NolocalesErrorMsg)
 		return nil
 	}
 
@@ -95,7 +96,7 @@ func loadLocales(logger *slog.Logger, fileSystem afero.Fs, conf *templateConf) m
 		pathBuilder.WriteString(".properties")
 
 		if err := parseFile(fileSystem, pathBuilder.String(), messagesLang); err != nil {
-			logger.Error("Failed to load file", common.ErrorKey, err)
+			logger.Error(servicecommon.LoadFileErrorMsg, common.ErrorKey, err)
 		}
 	}
 

@@ -21,6 +21,7 @@ package passwordstrengthimpl
 import (
 	"strings"
 
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/spf13/afero"
 	passwordvalidator "github.com/wagslane/go-password-validator"
@@ -48,7 +49,7 @@ func initStrengthConf(logger *slog.Logger, conf *strengthConf) *initializedStren
 
 func readRulesConfig(logger *slog.Logger, fileSystem afero.Fs, conf *strengthConf) map[string]string {
 	if len(conf.AllLang) == 0 {
-		logger.Error("No locales declared")
+		logger.Error(servicecommon.NolocalesErrorMsg)
 		return nil
 	}
 
@@ -64,7 +65,7 @@ func readRulesConfig(logger *slog.Logger, fileSystem afero.Fs, conf *strengthCon
 		if err == nil {
 			localizedRules[lang] = strings.TrimSpace(string(content))
 		} else {
-			logger.Error("Failed to load file", common.ErrorKey, err)
+			logger.Error(servicecommon.LoadFileErrorMsg, common.ErrorKey, err)
 		}
 	}
 	return localizedRules
