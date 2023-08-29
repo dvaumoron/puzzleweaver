@@ -49,9 +49,9 @@ type sessionImpl struct {
 	generateMutex   sync.Mutex
 }
 
-func (impl *sessionImpl) Init(ctx context.Context) error {
-	impl.initializedConf = initSessionConf(impl.Logger(ctx), impl.Config())
-	return nil
+func (impl *sessionImpl) Init(ctx context.Context) (err error) {
+	impl.initializedConf, err = initSessionConf(impl.Logger(ctx), impl.Config())
+	return
 }
 
 func (impl *sessionImpl) updateWithDefaultTTL(ctx context.Context, logger *slog.Logger, id string) {

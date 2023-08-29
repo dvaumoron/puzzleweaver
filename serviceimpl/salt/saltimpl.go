@@ -42,9 +42,9 @@ type saltImpl struct {
 	initializedConf initializedSaltConf
 }
 
-func (impl *saltImpl) Init(ctx context.Context) error {
-	impl.initializedConf = initSaltConf(impl.Logger(ctx), impl.Config())
-	return nil
+func (impl *saltImpl) Init(ctx context.Context) (err error) {
+	impl.initializedConf, err = initSaltConf(impl.Logger(ctx), impl.Config())
+	return
 }
 
 func (impl *saltImpl) LoadOrGenerate(ctx context.Context, logins ...string) ([][]byte, error) {

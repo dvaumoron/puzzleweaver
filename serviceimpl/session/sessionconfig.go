@@ -30,7 +30,7 @@ import (
 type sessionConf struct {
 	SessionTimeout time.Duration
 	RetryNumber    int
-	RedisAddr      string
+	RedisAddress   string
 	RedisUser      string
 	RedisPassword  string
 	RedisDBNum     int
@@ -42,18 +42,21 @@ type initializedSessionConf struct {
 	updater func(*redis.Client, context.Context, string, []string, map[string]any) error
 }
 
-func initSessionConf(logger *slog.Logger, conf *sessionConf) initializedSessionConf {
-	rdb := redisclient.New(logger, &redis.Options{
-		Addr:     conf.RedisAddr,
+func initSessionConf(logger *slog.Logger, conf *sessionConf) (initializedSessionConf, error) {
+	rdb, err := redisclient.New(logger, &redis.Options{
+		Addr:     conf.RedisAddress,
 		Username: conf.RedisUser,
 		Password: conf.RedisPassword,
 		DB:       conf.RedisDBNum,
 	})
+	if err != nil {
+		return initializedSessionConf{}, err
+	}
 
 	updater := updateSessionInfoTx
 	if conf.Debug {
 		logger.Info("Mode debug on")
 		updater = updateSessionInfo
 	}
-	return initializedSessionConf{rdb: rdb, updater: updater}
+	return initializedSessionConf{rdb: rdb, updater: updater}, nil
 }

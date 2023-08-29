@@ -78,6 +78,6 @@ func FilterErrorMsg(logger *slog.Logger, errorMsg string) string {
 		errorMsg == ErrorWrongLangKey || errorMsg == ErrorWrongLoginKey {
 		return errorMsg
 	}
-	logger.Warn(originalErrorMsg, ErrorKey, errorMsg)
+	logger.Error(originalErrorMsg, ErrorKey, errorMsg)
 	return ErrorTechnicalKey
 }

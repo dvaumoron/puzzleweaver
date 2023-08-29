@@ -71,7 +71,6 @@ func newLoginPage(loginService service.LoginService, settingsManager *SettingsMa
 			logger := GetLogger(c)
 			login := c.PostForm(loginName)
 			password := c.PostForm(passwordName)
-			register := c.PostForm("Register") == "true"
 
 			if login == "" {
 				return c.PostForm(prevUrlWithErrorName) + common.ErrorEmptyLoginKey
@@ -82,7 +81,7 @@ func newLoginPage(loginService service.LoginService, settingsManager *SettingsMa
 
 			var userId uint64
 			var err error
-			if register {
+			if c.PostForm("Register") == "true" {
 				if c.PostForm(confirmPasswordName) != password {
 					return c.PostForm(prevUrlWithErrorName) + common.ErrorWrongConfirmPasswordKey
 				}

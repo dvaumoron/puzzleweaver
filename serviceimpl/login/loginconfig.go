@@ -16,13 +16,23 @@
  *
  */
 
-package servicecommon
+package loginimpl
 
-import "errors"
+import (
+	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
+	"gorm.io/gorm"
+)
 
-const DBAccessMsg = "Failed to access database"
-const MongoCallMsg = "Failed during MongoDB call"
-const RedisCallMsg = "Failed during Redis call"
+type loginConf struct {
+	DatabaseKind    string
+	DatabaseAddress string
+}
 
-var ErrInternal = errors.New("internal service error")
-var ErrNolocales = errors.New("no locales declared")
+type initializedLoginConf struct {
+	db *gorm.DB
+}
+
+func initLoginConf(conf *loginConf) (initializedLoginConf, error) {
+	db, err := dbclient.New(conf.DatabaseKind, conf.DatabaseAddress)
+	return initializedLoginConf{db: db}, err
+}

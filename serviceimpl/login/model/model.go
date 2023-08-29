@@ -16,13 +16,13 @@
  *
  */
 
-package servicecommon
+package model
 
-import "errors"
+import "time"
 
-const DBAccessMsg = "Failed to access database"
-const MongoCallMsg = "Failed during MongoDB call"
-const RedisCallMsg = "Failed during Redis call"
-
-var ErrInternal = errors.New("internal service error")
-var ErrNolocales = errors.New("no locales declared")
+type User struct {
+	ID        uint64
+	CreatedAt time.Time
+	Login     string
+	Password  string
+}

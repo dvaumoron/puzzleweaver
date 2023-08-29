@@ -19,23 +19,20 @@
 package redisclient
 
 import (
-	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/exp/slog"
 )
 
-func New(logger *slog.Logger, options *redis.Options) *redis.Client {
+func New(logger *slog.Logger, options *redis.Options) (*redis.Client, error) {
 	rdb := redis.NewClient(options)
 
 	// Enable tracing instrumentation.
 	if err := redisotel.InstrumentTracing(rdb); err != nil {
-		logger.Error("Failed to enable tracing instrumentation", common.ErrorKey, err)
+		return nil, err
 	}
 
 	// Enable metrics instrumentation.
-	if err := redisotel.InstrumentMetrics(rdb); err != nil {
-		logger.Error("Failed to enable metrics instrumentation", common.ErrorKey, err)
-	}
-	return rdb
+	err := redisotel.InstrumentMetrics(rdb)
+	return rdb, err
 }
