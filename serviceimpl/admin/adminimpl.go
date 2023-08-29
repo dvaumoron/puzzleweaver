@@ -290,7 +290,7 @@ func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, r
 		if !allThere {
 			break
 		}
-		resRoles = append(resRoles, convertRoleFromModel(name, role))
+		resRoles = append(resRoles, impl.convertRoleFromModel(name, role))
 	}
 	impl.idToNameMutex.RUnlock()
 	if allThere {
@@ -306,7 +306,7 @@ func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, r
 		id := role.NameId
 		name, ok := impl.idToName[id]
 		if ok {
-			resRoles = append(resRoles, convertRoleFromModel(name, role))
+			resRoles = append(resRoles, impl.convertRoleFromModel(name, role))
 		} else {
 			allThere = false
 			missingIdSet.Add(id)
@@ -328,7 +328,7 @@ func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, r
 
 	resRoles = resRoles[:0]
 	for _, role := range roles {
-		resRoles = append(resRoles, convertRoleFromModel(impl.idToName[role.NameId], role))
+		resRoles = append(resRoles, impl.convertRoleFromModel(impl.idToName[role.NameId], role))
 	}
 	return resRoles, nil
 }
@@ -363,9 +363,9 @@ func convertDataFromRolesModel(roles []model.Role) []any {
 	return res
 }
 
-func convertRoleFromModel(name string, role model.Role) service.Role {
+func (impl *adminImpl) convertRoleFromModel(name string, role model.Role) service.Role {
 	return service.Role{
-		Name: name, GroupId: role.ObjectId,
+		Name: name, GroupId: role.ObjectId, GroupName: impl.initializedConf.groupIdToName[role.ObjectId],
 		Actions: convertActionsFromFlags(role.ActionFlags),
 	}
 }
