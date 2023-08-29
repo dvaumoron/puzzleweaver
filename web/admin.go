@@ -149,6 +149,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
+			// TODO improve to do only one call
 			updateRight := adminService.AuthQuery(ctx, adminId, service.AdminGroupId, service.ActionUpdate) == nil
 
 			user := users[userId]
@@ -170,6 +171,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
+			// TODO improve to do only one call
 			userRoles, err := adminService.GetUserRoles(ctx, adminId, userId)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
@@ -236,6 +238,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
+			// TODO improve to do only one call
 			allGroups, err := adminService.GetAllGroups(ctx)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
