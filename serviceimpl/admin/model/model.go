@@ -16,27 +16,22 @@
  *
  */
 
-package loginimpl
+package model
 
-import (
-	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
-	"github.com/dvaumoron/puzzleweaver/serviceimpl/login/model"
-	"gorm.io/gorm"
-)
-
-type loginConf struct {
-	DatabaseKind    string
-	DatabaseAddress string
+type RoleName struct {
+	ID   uint64
+	Name string
 }
 
-type initializedLoginConf struct {
-	db *gorm.DB
+type Role struct {
+	ID          uint64
+	NameId      uint64
+	ObjectId    uint64
+	ActionFlags uint8
 }
 
-func initLoginConf(conf *loginConf) (initializedLoginConf, error) {
-	db, err := dbclient.New(conf.DatabaseKind, conf.DatabaseAddress)
-	if err == nil {
-		err = db.AutoMigrate(&model.User{})
-	}
-	return initializedLoginConf{db: db}, err
+type UserRoles struct {
+	ID     uint64
+	UserId uint64
+	RoleId uint64
 }

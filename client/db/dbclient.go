@@ -33,20 +33,20 @@ import (
 
 var errUnknownKind = errors.New("Unknown database type")
 
-func New(kind string, addr string) (*gorm.DB, error) {
+func New(kind string, address string) (*gorm.DB, error) {
 	kind = strings.ToLower(kind)
 	var dialector gorm.Dialector
 	switch kind {
 	case "sqlite":
-		dialector = sqlite.Open(addr)
+		dialector = sqlite.Open(address)
 	case "postgres":
-		dialector = postgres.Open(addr)
+		dialector = postgres.Open(address)
 	case "mysql":
-		dialector = mysql.Open(addr)
+		dialector = mysql.Open(address)
 	case "sqlserver":
-		dialector = sqlserver.Open(addr)
+		dialector = sqlserver.Open(address)
 	case "clickhouse":
-		dialector = clickhouse.Open(addr)
+		dialector = clickhouse.Open(address)
 	default:
 		return nil, errUnknownKind
 	}

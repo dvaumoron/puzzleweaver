@@ -41,9 +41,6 @@ type loginImpl struct {
 
 func (impl *loginImpl) Init(ctx context.Context) (err error) {
 	impl.initializedConf, err = initLoginConf(impl.Config())
-	if err == nil {
-		err = impl.initializedConf.db.AutoMigrate(&model.User{})
-	}
 	return
 }
 
