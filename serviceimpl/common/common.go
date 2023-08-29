@@ -20,7 +20,8 @@ package servicecommon
 
 import "errors"
 
-const LoadFileErrorMsg = "Failed to load file"
-const NolocalesErrorMsg = "No locales declared"
+const MongoCallMsg = "Failed during MongoDB call"
+const RedisCallMsg = "Failed during Redis call"
 
 var ErrInternal = errors.New("internal service error")
+var ErrNolocales = errors.New("no locales declared")

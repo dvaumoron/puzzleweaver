@@ -36,7 +36,7 @@ type initializedAdminConf struct {
 	nameToGroupId map[string]uint64
 }
 
-func initAdminConf(conf *adminConf) *initializedAdminConf {
+func initAdminConf(conf *adminConf) initializedAdminConf {
 	groupIdToName := map[uint64]string{
 		service.PublicGroupId: service.PublicName, service.AdminGroupId: service.AdminName,
 	}
@@ -47,7 +47,5 @@ func initAdminConf(conf *adminConf) *initializedAdminConf {
 		groupIdToName[idName.Id] = idName.Name
 		nameToGroupId[idName.Name] = idName.Id
 	}
-	return &initializedAdminConf{
-		groupIdToName: groupIdToName, nameToGroupId: nameToGroupId,
-	}
+	return initializedAdminConf{groupIdToName: groupIdToName, nameToGroupId: nameToGroupId}
 }

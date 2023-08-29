@@ -38,8 +38,6 @@ import (
 // but it is never send to client nor updated by it
 const creationTimeName = "sessionCreationTime"
 
-const redisCallMsg = "Failed during Redis call"
-
 var errGenerateRetry = errors.New("generate reached maximum number of retries")
 
 type SessionService service.SessionService
@@ -47,38 +45,23 @@ type SessionService service.SessionService
 type sessionImpl struct {
 	weaver.Implements[SessionService]
 	weaver.WithConfig[sessionConf]
-	confMutex       sync.RWMutex
-	initializedConf *initializedSessionConf
+	initializedConf initializedSessionConf
 	generateMutex   sync.Mutex
 }
 
-func (impl *sessionImpl) getInitializedConf(logger *slog.Logger) *initializedSessionConf {
-	impl.confMutex.RLock()
-	initializedConf := impl.initializedConf
-	impl.confMutex.RUnlock()
-	if initializedConf != nil {
-		return initializedConf
-	}
-
-	impl.confMutex.Lock()
-	defer impl.confMutex.Unlock()
-	if impl.initializedConf == nil {
-		impl.initializedConf = initSessionConf(logger, impl.Config())
-	}
-	return impl.initializedConf
+func (impl *sessionImpl) Init(ctx context.Context) error {
+	impl.initializedConf = initSessionConf(impl.Logger(ctx), impl.Config())
+	return nil
 }
 
 func (impl *sessionImpl) updateWithDefaultTTL(ctx context.Context, logger *slog.Logger, id string) {
-	rdb := impl.getInitializedConf(logger).rdb
-	if err := rdb.Expire(ctx, id, impl.Config().SessionTimeout).Err(); err != nil {
+	if err := impl.initializedConf.rdb.Expire(ctx, id, impl.Config().SessionTimeout).Err(); err != nil {
 		logger.Info("Failed to set TTL", common.ErrorKey, err)
 	}
-
 }
 
 func (impl *sessionImpl) Generate(ctx context.Context) (uint64, error) {
 	logger := impl.Logger(ctx)
-	rdb := impl.getInitializedConf(logger).rdb
 
 	// avoid id clash when generating, but possible bottleneck
 	impl.generateMutex.Lock()
@@ -86,15 +69,15 @@ func (impl *sessionImpl) Generate(ctx context.Context) (uint64, error) {
 	for i := 0; i < impl.Config().RetryNumber; i++ {
 		id := rand.Uint64()
 		idStr := strconv.FormatUint(id, 10)
-		nb, err := rdb.Exists(ctx, idStr).Result()
+		nb, err := impl.initializedConf.rdb.Exists(ctx, idStr).Result()
 		if err != nil {
-			logger.Error(redisCallMsg, common.ErrorKey, err)
+			logger.Error(servicecommon.RedisCallMsg, common.ErrorKey, err)
 			return 0, servicecommon.ErrInternal
 		}
 		if nb == 0 {
-			err := rdb.HSet(ctx, idStr, creationTimeName, time.Now().String()).Err()
+			err := impl.initializedConf.rdb.HSet(ctx, idStr, creationTimeName, time.Now().String()).Err()
 			if err != nil {
-				logger.Error(redisCallMsg, common.ErrorKey, err)
+				logger.Error(servicecommon.RedisCallMsg, common.ErrorKey, err)
 				return 0, servicecommon.ErrInternal
 			}
 			impl.updateWithDefaultTTL(ctx, logger, idStr)
@@ -106,16 +89,15 @@ func (impl *sessionImpl) Generate(ctx context.Context) (uint64, error) {
 
 func (impl *sessionImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
 	logger := impl.Logger(ctx)
-	rdb := impl.getInitializedConf(logger).rdb
 
 	idStr := strconv.FormatUint(id, 10)
-	info, err := rdb.HGetAll(ctx, idStr).Result()
+	info, err := impl.initializedConf.rdb.HGetAll(ctx, idStr).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
 		}
 
-		logger.Error(redisCallMsg, common.ErrorKey, err)
+		logger.Error(servicecommon.RedisCallMsg, common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
 
@@ -126,7 +108,6 @@ func (impl *sessionImpl) Get(ctx context.Context, id uint64) (map[string]string,
 
 func (impl *sessionImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
 	logger := impl.Logger(ctx)
-	initializedConf := impl.getInitializedConf(logger)
 
 	infoCopy := map[string]any{}
 	keyToDelete := []string{}
@@ -140,8 +121,8 @@ func (impl *sessionImpl) Update(ctx context.Context, id uint64, info map[string]
 		}
 	}
 	idStr := strconv.FormatUint(id, 10)
-	if err := initializedConf.updater(initializedConf.rdb, ctx, idStr, keyToDelete, infoCopy); err != nil {
-		logger.Error(redisCallMsg, common.ErrorKey, err)
+	if err := impl.initializedConf.updater(impl.initializedConf.rdb, ctx, idStr, keyToDelete, infoCopy); err != nil {
+		logger.Error(servicecommon.RedisCallMsg, common.ErrorKey, err)
 		return servicecommon.ErrInternal
 	}
 	impl.updateWithDefaultTTL(ctx, logger, idStr)

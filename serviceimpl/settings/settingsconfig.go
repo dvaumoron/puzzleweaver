@@ -32,6 +32,6 @@ type initializedSettingsConf struct {
 	clientOptions *options.ClientOptions
 }
 
-func initSettingsConf(conf *settingsConf) *initializedSettingsConf {
-	return &initializedSettingsConf{clientOptions: mongoclient.New(conf.MongoAddress)}
+func initSettingsConf(conf *settingsConf) initializedSettingsConf {
+	return initializedSettingsConf{clientOptions: mongoclient.New(conf.MongoAddress)}
 }

@@ -21,7 +21,6 @@ package saltimpl
 import (
 	"context"
 	"crypto/rand"
-	"sync"
 
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
@@ -40,24 +39,12 @@ type SaltService service.SaltService
 type saltImpl struct {
 	weaver.Implements[SaltService]
 	weaver.WithConfig[saltConf]
-	confMutex       sync.RWMutex
-	initializedConf *initializedSaltConf
+	initializedConf initializedSaltConf
 }
 
-func (impl *saltImpl) getInitializedConf(logger *slog.Logger) *initializedSaltConf {
-	impl.confMutex.RLock()
-	initializedConf := impl.initializedConf
-	impl.confMutex.RUnlock()
-	if initializedConf != nil {
-		return initializedConf
-	}
-
-	impl.confMutex.Lock()
-	defer impl.confMutex.Unlock()
-	if impl.initializedConf == nil {
-		impl.initializedConf = initSaltConf(logger, impl.Config())
-	}
-	return impl.initializedConf
+func (impl *saltImpl) Init(ctx context.Context) error {
+	impl.initializedConf = initSaltConf(impl.Logger(ctx), impl.Config())
+	return nil
 }
 
 func (impl *saltImpl) LoadOrGenerate(ctx context.Context, logins ...string) ([][]byte, error) {
@@ -74,7 +61,7 @@ func (impl *saltImpl) LoadOrGenerate(ctx context.Context, logins ...string) ([][
 }
 
 func (impl *saltImpl) innerLoadOrGenerate(ctx context.Context, logger *slog.Logger, login string) ([]byte, error) {
-	rdb := impl.getInitializedConf(logger).rdb
+	rdb := impl.initializedConf.rdb
 	salt, err := rdb.Get(ctx, login).Result()
 	if err == nil {
 		return []byte(salt), nil

@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/spf13/afero"
 	passwordvalidator "github.com/wagslane/go-password-validator"
 	"golang.org/x/exp/slog"
@@ -38,19 +37,23 @@ type initializedStrengthConf struct {
 	localizedRules map[string]string
 }
 
-func initStrengthConf(logger *slog.Logger, conf *strengthConf) *initializedStrengthConf {
+func initStrengthConf(logger *slog.Logger, conf *strengthConf) (initializedStrengthConf, error) {
 	// TODO manage switch to network FS
 	fileSystem := afero.NewOsFs()
 
-	return &initializedStrengthConf{
-		minEntropy: passwordvalidator.GetEntropy(conf.DefaultPassword), localizedRules: readRulesConfig(logger, fileSystem, conf),
+	localizedRules, err := readRulesConfig(logger, fileSystem, conf)
+	if err != nil {
+		return initializedStrengthConf{}, err
 	}
+
+	return initializedStrengthConf{
+		minEntropy: passwordvalidator.GetEntropy(conf.DefaultPassword), localizedRules: localizedRules,
+	}, nil
 }
 
-func readRulesConfig(logger *slog.Logger, fileSystem afero.Fs, conf *strengthConf) map[string]string {
+func readRulesConfig(logger *slog.Logger, fileSystem afero.Fs, conf *strengthConf) (map[string]string, error) {
 	if len(conf.AllLang) == 0 {
-		logger.Error(servicecommon.NolocalesErrorMsg)
-		return nil
+		return nil, servicecommon.ErrNolocales
 	}
 
 	localizedRules := make(map[string]string, len(conf.AllLang))
@@ -65,8 +68,8 @@ func readRulesConfig(logger *slog.Logger, fileSystem afero.Fs, conf *strengthCon
 		if err == nil {
 			localizedRules[lang] = strings.TrimSpace(string(content))
 		} else {
-			logger.Error(servicecommon.LoadFileErrorMsg, common.ErrorKey, err)
+			return nil, err
 		}
 	}
-	return localizedRules
+	return localizedRules, nil
 }

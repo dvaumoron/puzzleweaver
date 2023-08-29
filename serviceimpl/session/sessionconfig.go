@@ -42,7 +42,7 @@ type initializedSessionConf struct {
 	updater func(*redis.Client, context.Context, string, []string, map[string]any) error
 }
 
-func initSessionConf(logger *slog.Logger, conf *sessionConf) *initializedSessionConf {
+func initSessionConf(logger *slog.Logger, conf *sessionConf) initializedSessionConf {
 	rdb := redisclient.New(logger, &redis.Options{
 		Addr:     conf.RedisAddr,
 		Username: conf.RedisUser,
@@ -55,5 +55,5 @@ func initSessionConf(logger *slog.Logger, conf *sessionConf) *initializedSession
 		logger.Info("Mode debug on")
 		updater = updateSessionInfo
 	}
-	return &initializedSessionConf{rdb: rdb, updater: updater}
+	return initializedSessionConf{rdb: rdb, updater: updater}
 }

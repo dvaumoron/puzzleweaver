@@ -20,7 +20,6 @@ package settingsimpl
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ServiceWeaver/weaver"
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
@@ -37,8 +36,6 @@ const collectionName = "settings"
 const userIdKey = "userId"
 const settingsKey = collectionName // currently the same
 
-const mongoCallMsg = "Failed during MongoDB call"
-
 var optsOnlySettingsField = options.FindOne().SetProjection(bson.D{{Key: settingsKey, Value: true}})
 var optsCreateUnexisting = options.Replace().SetUpsert(true)
 
@@ -47,31 +44,19 @@ type SettingsService service.SettingsService
 type settingsImpl struct {
 	weaver.Implements[SettingsService]
 	weaver.WithConfig[settingsConf]
-	confMutex       sync.RWMutex
-	initializedConf *initializedSettingsConf
+	initializedConf initializedSettingsConf
 }
 
-func (impl *settingsImpl) getInitializedConf() *initializedSettingsConf {
-	impl.confMutex.RLock()
-	initializedConf := impl.initializedConf
-	impl.confMutex.RUnlock()
-	if initializedConf != nil {
-		return initializedConf
-	}
-
-	impl.confMutex.Lock()
-	defer impl.confMutex.Unlock()
-	if impl.initializedConf == nil {
-		impl.initializedConf = initSettingsConf(impl.Config())
-	}
-	return impl.initializedConf
+func (impl *settingsImpl) Init(ctx context.Context) error {
+	impl.initializedConf = initSettingsConf(impl.Config())
+	return nil
 }
 
 func (impl *settingsImpl) Get(ctx context.Context, id uint64) (map[string]string, error) {
 	logger := impl.Logger(ctx)
-	client, err := mongo.Connect(ctx, impl.getInitializedConf().clientOptions)
+	client, err := mongo.Connect(ctx, impl.initializedConf.clientOptions)
 	if err != nil {
-		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
 	defer mongoclient.Disconnect(client, ctx, logger)
@@ -86,7 +71,7 @@ func (impl *settingsImpl) Get(ctx context.Context, id uint64) (map[string]string
 			return nil, nil
 		}
 
-		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
 
@@ -96,9 +81,9 @@ func (impl *settingsImpl) Get(ctx context.Context, id uint64) (map[string]string
 
 func (impl *settingsImpl) Update(ctx context.Context, id uint64, info map[string]string) error {
 	logger := impl.Logger(ctx)
-	client, err := mongo.Connect(ctx, impl.getInitializedConf().clientOptions)
+	client, err := mongo.Connect(ctx, impl.initializedConf.clientOptions)
 	if err != nil {
-		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
 		return servicecommon.ErrInternal
 	}
 	defer mongoclient.Disconnect(client, ctx, logger)
@@ -109,7 +94,7 @@ func (impl *settingsImpl) Update(ctx context.Context, id uint64, info map[string
 		ctx, bson.D{{Key: userIdKey, Value: id}}, settings, optsCreateUnexisting,
 	)
 	if err != nil {
-		logger.Error(mongoCallMsg, common.ErrorKey, err)
+		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
 		return servicecommon.ErrInternal
 	}
 	return nil

@@ -20,14 +20,12 @@ package passwordstrengthimpl
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	passwordvalidator "github.com/wagslane/go-password-validator"
-	"golang.org/x/exp/slog"
 )
 
 type PasswordStrengthService service.PasswordStrengthService
@@ -35,29 +33,17 @@ type PasswordStrengthService service.PasswordStrengthService
 type strengthImpl struct {
 	weaver.Implements[PasswordStrengthService]
 	weaver.WithConfig[strengthConf]
-	confMutex       sync.RWMutex
-	initializedConf *initializedStrengthConf
+	initializedConf initializedStrengthConf
 }
 
-func (impl *strengthImpl) getInitializedConf(logger *slog.Logger) *initializedStrengthConf {
-	impl.confMutex.RLock()
-	initializedConf := impl.initializedConf
-	impl.confMutex.RUnlock()
-	if initializedConf != nil {
-		return initializedConf
-	}
-
-	impl.confMutex.Lock()
-	defer impl.confMutex.Unlock()
-	if impl.initializedConf == nil {
-		impl.initializedConf = initStrengthConf(logger, impl.Config())
-	}
-	return impl.initializedConf
+func (impl *strengthImpl) Init(ctx context.Context) (err error) {
+	impl.initializedConf, err = initStrengthConf(impl.Logger(ctx), impl.Config())
+	return
 }
 
 func (impl *strengthImpl) Validate(ctx context.Context, password string) error {
 	logger := impl.Logger(ctx)
-	err := passwordvalidator.Validate(password, impl.getInitializedConf(logger).minEntropy)
+	err := passwordvalidator.Validate(password, impl.initializedConf.minEntropy)
 	if err != nil {
 		logger.Error("Password not validated", common.ErrorKey, err)
 		return common.ErrWeakPassword
@@ -67,7 +53,7 @@ func (impl *strengthImpl) Validate(ctx context.Context, password string) error {
 
 func (impl *strengthImpl) GetRules(ctx context.Context, lang string) (string, error) {
 	logger := impl.Logger(ctx)
-	description, ok := impl.getInitializedConf(logger).localizedRules[lang]
+	description, ok := impl.initializedConf.localizedRules[lang]
 	if !ok {
 		logger.Error("Locale not found")
 		return "", servicecommon.ErrInternal

@@ -36,12 +36,12 @@ type initializedSaltConf struct {
 	rdb *redis.Client
 }
 
-func initSaltConf(logger *slog.Logger, conf *saltConf) *initializedSaltConf {
+func initSaltConf(logger *slog.Logger, conf *saltConf) initializedSaltConf {
 	rdb := redisclient.New(logger, &redis.Options{
 		Addr:     conf.RedisAddr,
 		Username: conf.RedisUser,
 		Password: conf.RedisPassword,
 		DB:       conf.RedisDBNum,
 	})
-	return &initializedSaltConf{rdb: rdb}
+	return initializedSaltConf{rdb: rdb}
 }

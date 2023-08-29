@@ -20,7 +20,6 @@ package adminimpl
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ServiceWeaver/weaver"
 	"github.com/dvaumoron/puzzleweaver/web/common"
@@ -32,36 +31,24 @@ type AdminService service.AdminService
 type adminImpl struct {
 	weaver.Implements[AdminService]
 	weaver.WithConfig[adminConf]
-	confMutex       sync.RWMutex
-	initializedConf *initializedAdminConf
+	initializedConf initializedAdminConf
 }
 
-func (impl *adminImpl) getInitializedConf() *initializedAdminConf {
-	impl.confMutex.RLock()
-	initializedConf := impl.initializedConf
-	impl.confMutex.RUnlock()
-	if initializedConf != nil {
-		return initializedConf
-	}
-
-	impl.confMutex.Lock()
-	defer impl.confMutex.Unlock()
-	if impl.initializedConf == nil {
-		impl.initializedConf = initAdminConf(impl.Config())
-	}
-	return impl.initializedConf
+func (impl *adminImpl) Init(ctx context.Context) error {
+	impl.initializedConf = initAdminConf(impl.Config())
+	return nil
 }
 
 func (impl *adminImpl) getGroupId(ctx context.Context, groupName string) (uint64, error) {
-	return impl.getInitializedConf().nameToGroupId[groupName], nil
+	return impl.initializedConf.nameToGroupId[groupName], nil
 }
 
 func (impl *adminImpl) getGroupName(ctx context.Context, groupId uint64) (string, error) {
-	return impl.getInitializedConf().groupIdToName[groupId], nil
+	return impl.initializedConf.groupIdToName[groupId], nil
 }
 
 func (impl *adminImpl) GetAllGroups(ctx context.Context) ([]service.Group, error) {
-	groupIdToName := impl.getInitializedConf().groupIdToName
+	groupIdToName := impl.initializedConf.groupIdToName
 	groups := make([]service.Group, 0, len(groupIdToName))
 	for id, name := range groupIdToName {
 		groups = append(groups, service.Group{Id: id, Name: name})
@@ -79,7 +66,7 @@ func (impl *adminImpl) AuthQuery(ctx context.Context, userId uint64, groupId uin
 }
 
 func (impl *adminImpl) GetAllRoles(ctx context.Context, adminId uint64) ([]service.Role, error) {
-	groupIdToName := impl.getInitializedConf().groupIdToName
+	groupIdToName := impl.initializedConf.groupIdToName
 	groupIds := make([]uint64, 0, len(groupIdToName))
 	for groupId := range groupIdToName {
 		groupIds = append(groupIds, groupId)

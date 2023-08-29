@@ -22,13 +22,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"sync"
 
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
-	"golang.org/x/exp/slog"
 )
 
 type TemplateService service.TemplateService
@@ -36,29 +34,16 @@ type TemplateService service.TemplateService
 type templateImpl struct {
 	weaver.Implements[TemplateService]
 	weaver.WithConfig[templateConf]
-	confMutex       sync.RWMutex
-	initializedConf *initializedTemplateConf
+	initializedConf initializedTemplateConf
 }
 
-func (impl *templateImpl) getInitializedConf(logger *slog.Logger) *initializedTemplateConf {
-	impl.confMutex.RLock()
-	initializedConf := impl.initializedConf
-	impl.confMutex.RUnlock()
-	if initializedConf != nil {
-		return initializedConf
-	}
-
-	impl.confMutex.Lock()
-	defer impl.confMutex.Unlock()
-	if impl.initializedConf == nil {
-		impl.initializedConf = initTemplateConf(logger, impl.Config())
-	}
-	return impl.initializedConf
+func (impl *templateImpl) Init(ctx context.Context) (err error) {
+	impl.initializedConf, err = initTemplateConf(impl.Config())
+	return
 }
 
 func (impl *templateImpl) Render(ctx context.Context, templateName string, data []byte) ([]byte, error) {
 	logger := impl.Logger(ctx)
-	initializedConf := impl.getInitializedConf(logger)
 
 	var err error
 	var parsedData map[string]any
@@ -66,9 +51,9 @@ func (impl *templateImpl) Render(ctx context.Context, templateName string, data 
 		logger.Error("Failed to parse JSON", common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
-	parsedData["Messages"] = initializedConf.messages[asString(parsedData["lang"])]
+	parsedData["Messages"] = impl.initializedConf.messages[asString(parsedData["lang"])]
 	var content bytes.Buffer
-	if err = initializedConf.templates.ExecuteTemplate(&content, templateName, parsedData); err != nil {
+	if err = impl.initializedConf.templates.ExecuteTemplate(&content, templateName, parsedData); err != nil {
 		logger.Error("Failed to call go template", common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
