@@ -139,7 +139,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 
-			updateRight, roles, err := adminService.ViewUserRoles(ctx, adminId, userId)
+			updateRight, groups, err := adminService.ViewUserRoles(ctx, adminId, userId)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
@@ -152,7 +152,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			user := users[userId]
 			data[common.ViewedUserName] = user
 			data[common.AllowedToUpdateName] = updateRight
-			data[groupsName] = displayGroups(roles)
+			data[groupsName] = displayGroups(groups)
 			return "admin/user/view", ""
 		}),
 		editUserHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
@@ -183,14 +183,20 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			err := common.ErrTechnical
 			if userId != 0 {
 				rolesStr := c.PostFormArray("roles")
-				roles := make([]service.Role, 0, len(rolesStr))
+				nameToGroup := make(map[string]service.Group, len(rolesStr))
 				for _, roleStr := range rolesStr {
 					splitted := strings.Split(roleStr, "/")
 					if len(splitted) > 1 {
-						roles = append(roles, service.Role{Name: splitted[0], Group: service.Group{Name: splitted[1]}})
+						groupName := splitted[1]
+						group, ok := nameToGroup[groupName]
+						if !ok {
+							group = service.Group{Name: groupName}
+						}
+						group.Roles = append(group.Roles, service.Role{Name: splitted[0]})
+						nameToGroup[groupName] = group
 					}
 				}
-				err = adminService.UpdateUser(ctx, GetSessionUserId(c), userId, roles)
+				err = adminService.UpdateUser(ctx, GetSessionUserId(c), userId, common.MapToValueSlice(nameToGroup))
 			}
 
 			targetBuilder := userListUrlBuilder()
@@ -206,7 +212,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			if userId != 0 {
 				// an empty slice delete the user right
 				// only the first service call do a right check
-				err = adminService.UpdateUser(ctx, GetSessionUserId(c), userId, []service.Role{})
+				err = adminService.UpdateUser(ctx, GetSessionUserId(c), userId, nil)
 				if err == nil {
 					err = profileService.Delete(ctx, userId)
 					if err == nil {
@@ -222,19 +228,12 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			return targetBuilder.String()
 		}),
 		listRoleHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
-			ctx := c.Request.Context()
 			adminId, _ := data[common.IdName].(uint64)
-			allRoles, err := adminService.GetAllRoles(ctx, adminId)
+			allGroups, err := adminService.GetAllGroups(c.Request.Context(), adminId)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
-
-			// TODO improve to do only one call
-			allGroups, err := adminService.GetAllGroups(ctx)
-			if err != nil {
-				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
-			}
-			data[groupsName] = displayAllGroups(allGroups, allRoles)
+			data[groupsName] = displayGroups(allGroups)
 			return "admin/role/list", ""
 		}),
 		editRoleHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
@@ -267,9 +266,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			if roleName != "new" {
 				group := c.PostForm(groupName)
 				actions := c.PostFormArray("actions")
-				err = adminService.UpdateRole(c.Request.Context(), GetSessionUserId(c), service.Role{
-					Name: roleName, Group: service.Group{Name: group}, Actions: actions,
-				})
+				err = adminService.UpdateRole(c.Request.Context(), GetSessionUserId(c), roleName, group, actions)
 			}
 
 			var targetBuilder strings.Builder
@@ -287,20 +284,22 @@ func getGroupDisplayNameKey(name string) string {
 	return "GroupLabel" + locale.CamelCase(name)
 }
 
-func displayGroups(roles []service.Role) []*GroupDisplay {
+func displayGroups(groups []service.Group) []*GroupDisplay {
 	nameToGroup := map[string]*GroupDisplay{}
-	populateGroup(nameToGroup, roles, rolesAppender)
+	populateGroup(nameToGroup, groups, rolesAppender)
 	return sortGroups(nameToGroup)
 }
 
-func populateGroup(nameToGroup map[string]*GroupDisplay, roles []service.Role, appender func(*GroupDisplay, service.Role)) {
-	for _, role := range roles {
-		group := nameToGroup[role.Group.Name]
-		if group == nil {
-			group = NewGroupDisplay(role.Group.Id, role.Group.Name)
-			nameToGroup[role.Group.Name] = group
+func populateGroup(nameToGroup map[string]*GroupDisplay, groups []service.Group, appender func(*GroupDisplay, service.Role)) {
+	for _, group := range groups {
+		groupDisplay := nameToGroup[group.Name]
+		if groupDisplay == nil {
+			groupDisplay = NewGroupDisplay(group.Id, group.Name)
+			nameToGroup[group.Name] = groupDisplay
 		}
-		appender(group, role)
+		for _, role := range group.Roles {
+			appender(groupDisplay, role)
+		}
 	}
 }
 
@@ -338,7 +337,7 @@ func sortGroups(nameToGroup map[string]*GroupDisplay) []*GroupDisplay {
 	return groupRoles
 }
 
-func displayEditGroups(userRoles []service.Role, allRoles []service.Role) []*GroupDisplay {
+func displayEditGroups(userRoles []service.Group, allRoles []service.Group) []*GroupDisplay {
 	nameToGroup := map[string]*GroupDisplay{}
 	populateGroup(nameToGroup, userRoles, rolesAppender)
 	populateGroup(nameToGroup, allRoles, addableRolesAppender)
@@ -354,15 +353,6 @@ func addableRolesAppender(group *GroupDisplay, role service.Role) {
 	if !contains {
 		group.AddableRoles = append(group.AddableRoles, MakeRoleDisplay(role))
 	}
-}
-
-func displayAllGroups(groups []service.Group, roles []service.Role) []*GroupDisplay {
-	nameToGroup := map[string]*GroupDisplay{}
-	for _, group := range groups {
-		nameToGroup[group.Name] = NewGroupDisplay(group.Id, group.Name)
-	}
-	populateGroup(nameToGroup, roles, rolesAppender)
-	return sortGroups(nameToGroup)
 }
 
 func setActionChecked(data gin.H, actionSet common.Set[string], toTest string, name string) {

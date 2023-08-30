@@ -55,13 +55,14 @@ func (impl *adminImpl) Init(ctx context.Context) (err error) {
 	return
 }
 
-func (impl *adminImpl) GetAllGroups(ctx context.Context) ([]service.Group, error) {
-	return impl.initializedConf.groups, nil
-}
-
 func (impl *adminImpl) AuthQuery(ctx context.Context, userId uint64, groupId uint64, action string) error {
 	db := impl.initializedConf.db.WithContext(ctx)
 	return impl.innerAuthQuery(ctx, db, userId, groupId, convertActionToFlag(action))
+}
+
+func (impl *adminImpl) GetAllGroups(ctx context.Context, adminId uint64) ([]service.Group, error) {
+	db := impl.initializedConf.db.WithContext(ctx)
+	return impl.getAllRoles(ctx, db, adminId)
 }
 
 func (impl *adminImpl) GetActions(ctx context.Context, adminId uint64, roleName string, groupName string) ([]string, error) {
@@ -86,19 +87,19 @@ func (impl *adminImpl) GetActions(ctx context.Context, adminId uint64, roleName 
 	return convertActionsFromFlags(role.ActionFlags), nil
 }
 
-func (impl *adminImpl) UpdateUser(ctx context.Context, adminId uint64, userId uint64, roles []service.Role) error {
+func (impl *adminImpl) UpdateUser(ctx context.Context, adminId uint64, userId uint64, groups []service.Group) error {
 	db := impl.initializedConf.db.WithContext(ctx)
 	err := impl.innerAuthQuery(ctx, db, adminId, service.AdminGroupId, updateFlag)
 	if err != nil {
 		return err
 	}
 
-	mRoles, err := impl.loadRoles(ctx, db, roles)
+	roles, err := impl.loadRoles(ctx, db, groups)
 	if err != nil {
 		return err
 	}
 
-	rolesLen := len(mRoles)
+	rolesLen := len(roles)
 	if rolesLen == 0 {
 		// delete unused user
 		return impl.handleUpdateError(ctx, db.Delete(&model.UserRoles{}, "user_id = ?", userId).Error)
@@ -114,29 +115,29 @@ func (impl *adminImpl) UpdateUser(ctx context.Context, adminId uint64, userId ui
 	}
 
 	userRoles := make([]model.UserRoles, 0, rolesLen)
-	for _, role := range mRoles {
+	for _, role := range roles {
 		userRoles = append(userRoles, model.UserRoles{UserId: userId, RoleId: role.ID})
 	}
 	return impl.handleUpdateError(ctx, tx.Create(&userRoles).Error)
 }
 
-func (impl *adminImpl) UpdateRole(ctx context.Context, adminId uint64, role service.Role) error {
+func (impl *adminImpl) UpdateRole(ctx context.Context, adminId uint64, roleName string, groupName string, actions []string) error {
 	db := impl.initializedConf.db.WithContext(ctx)
 	err := impl.innerAuthQuery(ctx, db, adminId, service.AdminGroupId, updateFlag)
 	if err != nil {
 		return err
 	}
 
-	roleGroupId := impl.initializedConf.nameToGroupId[role.Group.Name]
+	roleGroupId := impl.initializedConf.nameToGroupId[groupName]
 	if roleGroupId == service.PublicGroupId {
 		// right on public part are not updatable
 		return common.ErrUpdate
 	}
 
-	actionFlags := convertActionsToFlags(role.Actions)
+	actionFlags := convertActionsToFlags(actions)
 	if actionFlags == 0 {
 		// delete unused role
-		nameSubQuery := db.Model(&model.RoleName{}).Select("id").Where("name = ?", role.Name)
+		nameSubQuery := db.Model(&model.RoleName{}).Select("id").Where("name = ?", roleName)
 		var mRole model.Role
 		if err = db.First(&mRole, "name_id IN (?) AND object_id = ?", nameSubQuery, roleGroupId).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -169,27 +170,27 @@ func (impl *adminImpl) UpdateRole(ctx context.Context, adminId uint64, role serv
 	tx := db.Begin()
 	defer impl.commitOrRollBack(ctx, tx, &err)
 
-	var roleName model.RoleName
-	if err = tx.FirstOrCreate(&roleName, model.RoleName{Name: role.Name}).Error; err != nil {
+	var mRoleName model.RoleName
+	if err = tx.FirstOrCreate(&mRoleName, model.RoleName{Name: roleName}).Error; err != nil {
 		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
 		return servicecommon.ErrInternal
 	}
 
 	var mRole model.Role
-	err = db.First(&mRole, "name_id = ? AND object_id = ?", roleName.ID, roleGroupId).Error
+	err = db.First(&mRole, "name_id = ? AND object_id = ?", mRoleName.ID, roleGroupId).Error
 	if err == nil {
-		return impl.handleUpdateError(ctx, tx.Model(&role).Update("action_flags", actionFlags).Error)
+		return impl.handleUpdateError(ctx, tx.Model(&mRole).Update("action_flags", actionFlags).Error)
 	}
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
 		return servicecommon.ErrInternal
 	}
 
-	mRole = model.Role{NameId: roleName.ID, ObjectId: roleGroupId, ActionFlags: actionFlags}
+	mRole = model.Role{NameId: mRoleName.ID, ObjectId: roleGroupId, ActionFlags: actionFlags}
 	return impl.handleUpdateError(ctx, tx.Create(&mRole).Error)
 }
 
-func (impl *adminImpl) GetUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]service.Role, error) {
+func (impl *adminImpl) GetUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]service.Group, error) {
 	db := impl.initializedConf.db.WithContext(ctx)
 	if adminId == userId {
 		return impl.getUserRoles(ctx, db, userId)
@@ -202,7 +203,7 @@ func (impl *adminImpl) GetUserRoles(ctx context.Context, adminId uint64, userId 
 	return impl.getUserRoles(ctx, db, userId)
 }
 
-func (impl *adminImpl) ViewUserRoles(ctx context.Context, adminId uint64, userId uint64) (bool, []service.Role, error) {
+func (impl *adminImpl) ViewUserRoles(ctx context.Context, adminId uint64, userId uint64) (bool, []service.Group, error) {
 	db := impl.initializedConf.db.WithContext(ctx)
 	adminRoles, err := impl.retrieveUserRoles(ctx, db, adminId, service.AdminGroupId)
 	if err != nil {
@@ -225,7 +226,7 @@ func (impl *adminImpl) ViewUserRoles(ctx context.Context, adminId uint64, userId
 	return updateRight, userRoles, err
 }
 
-func (impl *adminImpl) EditUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]service.Role, []service.Role, error) {
+func (impl *adminImpl) EditUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]service.Group, []service.Group, error) {
 	db := impl.initializedConf.db.WithContext(ctx)
 	allRoles, err := impl.getAllRoles(ctx, db, adminId)
 	if err != nil {
@@ -236,7 +237,7 @@ func (impl *adminImpl) EditUserRoles(ctx context.Context, adminId uint64, userId
 	return userRoles, allRoles, err
 }
 
-func (impl *adminImpl) getUserRoles(ctx context.Context, db *gorm.DB, userId uint64) ([]service.Role, error) {
+func (impl *adminImpl) getUserRoles(ctx context.Context, db *gorm.DB, userId uint64) ([]service.Group, error) {
 	subQuery := db.Model(&model.UserRoles{}).Select("role_id").Where("user_id = ?", userId)
 
 	var roles []model.Role
@@ -248,7 +249,7 @@ func (impl *adminImpl) getUserRoles(ctx context.Context, db *gorm.DB, userId uin
 	return impl.convertRolesFromModel(ctx, db, roles)
 }
 
-func (impl *adminImpl) getAllRoles(ctx context.Context, db *gorm.DB, adminId uint64) ([]service.Role, error) {
+func (impl *adminImpl) getAllRoles(ctx context.Context, db *gorm.DB, adminId uint64) ([]service.Group, error) {
 	err := impl.innerAuthQuery(ctx, db, adminId, service.AdminGroupId, accessFlag)
 	if err != nil {
 		return nil, err
@@ -297,9 +298,9 @@ func (impl *adminImpl) evalOPA(ctx context.Context, userId uint64, groupId uint6
 	return nil
 }
 
-func (impl *adminImpl) loadRoles(ctx context.Context, db *gorm.DB, roles []service.Role) ([]model.Role, error) {
-	resRoles := make([]model.Role, 0, len(roles)) // probably lot more space than necessary
-	for name, objectIdSet := range impl.extractNamesToObjectIdSet(roles) {
+func (impl *adminImpl) loadRoles(ctx context.Context, db *gorm.DB, groups []service.Group) ([]model.Role, error) {
+	resRoles := make([]model.Role, 0, len(groups)) // probably fewer space than necessary
+	for name, objectIdSet := range impl.extractNamesToObjectIdSet(groups) {
 		subQuery := db.Model(&model.RoleName{}).Select("id").Where("name = ?", name)
 
 		var tempRoles []model.Role
@@ -319,41 +320,40 @@ func (impl *adminImpl) loadRoles(ctx context.Context, db *gorm.DB, roles []servi
 	return resRoles, nil
 }
 
-func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, roles []model.Role) ([]service.Role, error) {
+func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, roles []model.Role) ([]service.Group, error) {
 	allThere := true
-	resRoles := make([]service.Role, 0, len(roles))
+	groups := map[uint64]service.Group{}
 	impl.idToNameMutex.RLock()
 	for _, role := range roles {
 		var name string
-		id := role.NameId
-		name, allThere = impl.idToName[id]
+		name, allThere = impl.idToName[role.NameId]
 		if !allThere {
 			break
 		}
-		resRoles = append(resRoles, impl.convertRoleFromModel(name, role))
+		impl.addRoleToGroups(groups, name, role)
 	}
 	impl.idToNameMutex.RUnlock()
 	if allThere {
-		return resRoles, nil
+		return common.MapToValueSlice(groups), nil
 	}
 
 	impl.idToNameMutex.Lock()
 	defer impl.idToNameMutex.Unlock()
 	allThere = true
-	resRoles = resRoles[:0]
+	groups = map[uint64]service.Group{}
 	missingIdSet := common.MakeSet[uint64](nil)
 	for _, role := range roles {
 		id := role.NameId
 		name, ok := impl.idToName[id]
 		if ok {
-			resRoles = append(resRoles, impl.convertRoleFromModel(name, role))
+			impl.addRoleToGroups(groups, name, role)
 		} else {
 			allThere = false
 			missingIdSet.Add(id)
 		}
 	}
 	if allThere {
-		return resRoles, nil
+		return common.MapToValueSlice(groups), nil
 	}
 
 	var roleNames []model.RoleName
@@ -366,11 +366,38 @@ func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, r
 		impl.idToName[roleName.ID] = roleName.Name
 	}
 
-	resRoles = resRoles[:0]
+	groups = map[uint64]service.Group{}
 	for _, role := range roles {
-		resRoles = append(resRoles, impl.convertRoleFromModel(impl.idToName[role.NameId], role))
+		impl.addRoleToGroups(groups, impl.idToName[role.NameId], role)
 	}
-	return resRoles, nil
+	return common.MapToValueSlice(groups), nil
+}
+
+func (impl *adminImpl) addRoleToGroups(groups map[uint64]service.Group, name string, role model.Role) {
+	group, ok := groups[role.ObjectId]
+	if !ok {
+		group = service.Group{Id: role.ObjectId, Name: impl.initializedConf.groupIdToName[role.ObjectId]}
+	}
+	group.Roles = append(group.Roles, service.Role{
+		Name: name, Actions: convertActionsFromFlags(role.ActionFlags),
+	})
+	groups[role.ObjectId] = group
+}
+
+func (impl *adminImpl) extractNamesToObjectIdSet(groups []service.Group) map[string]common.Set[uint64] {
+	nameToObjectIdSet := map[string]common.Set[uint64]{}
+	for _, group := range groups {
+		groupId := impl.initializedConf.nameToGroupId[group.Name]
+		for _, role := range group.Roles {
+			objectIdSet := nameToObjectIdSet[role.Name]
+			if objectIdSet == nil {
+				objectIdSet = common.MakeSet[uint64](nil)
+				nameToObjectIdSet[role.Name] = objectIdSet
+			}
+			objectIdSet.Add(groupId)
+		}
+	}
+	return nameToObjectIdSet
 }
 
 func (impl *adminImpl) commitOrRollBack(ctx context.Context, tx *gorm.DB, err *error) {
@@ -403,15 +430,6 @@ func convertDataFromRolesModel(roles []model.Role) []any {
 	return res
 }
 
-func (impl *adminImpl) convertRoleFromModel(name string, role model.Role) service.Role {
-	return service.Role{
-		Name: name, Group: service.Group{
-			Id: role.ObjectId, Name: impl.initializedConf.groupIdToName[role.ObjectId],
-		},
-		Actions: convertActionsFromFlags(role.ActionFlags),
-	}
-}
-
 func convertActionsFromFlags(actionFlags uint8) []string {
 	resActions := make([]string, 0, 4)
 	if actionFlags&accessFlag != 0 {
@@ -427,19 +445,6 @@ func convertActionsFromFlags(actionFlags uint8) []string {
 		resActions = append(resActions, service.ActionDelete)
 	}
 	return resActions
-}
-
-func (impl *adminImpl) extractNamesToObjectIdSet(roles []service.Role) map[string]common.Set[uint64] {
-	nameToObjectIdSet := map[string]common.Set[uint64]{}
-	for _, role := range roles {
-		objectIdSet := nameToObjectIdSet[role.Name]
-		if objectIdSet == nil {
-			objectIdSet = common.MakeSet[uint64](nil)
-			nameToObjectIdSet[role.Name] = objectIdSet
-		}
-		objectIdSet.Add(impl.initializedConf.nameToGroupId[role.Group.Name])
-	}
-	return nameToObjectIdSet
 }
 
 func convertActionsToFlags(actions []string) uint8 {

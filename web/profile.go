@@ -86,9 +86,9 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
-			roles, err := adminService.GetUserRoles(ctx, currentUserId, viewedUserId)
+			groups, err := adminService.GetUserRoles(ctx, currentUserId, viewedUserId)
 			if err == nil {
-				data["UserRight"] = displayGroups(roles)
+				data["UserRight"] = displayGroups(groups)
 			} else if err != common.ErrNotAuthorized {
 				// ignore ErrNotAuthorized
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())

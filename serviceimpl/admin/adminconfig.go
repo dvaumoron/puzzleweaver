@@ -46,7 +46,6 @@ type initializedAdminConf struct {
 	query         rego.PreparedEvalQuery
 	groupIdToName map[uint64]string
 	nameToGroupId map[string]uint64
-	groups        []service.Group
 	groupIds      []uint64
 }
 
@@ -67,9 +66,9 @@ func initAdminConf(ctx context.Context, conf *adminConf) (initializedAdminConf, 
 		return initializedAdminConf{}, err
 	}
 
-	groupIdToName, nameToGroupId, groups, groupIds := initMapping(conf.PermissionGroups)
+	groupIdToName, nameToGroupId, groupIds := initMapping(conf.PermissionGroups)
 	return initializedAdminConf{
-		db: db, query: query, groupIdToName: groupIdToName, nameToGroupId: nameToGroupId, groups: groups, groupIds: groupIds,
+		db: db, query: query, groupIdToName: groupIdToName, nameToGroupId: nameToGroupId, groupIds: groupIds,
 	}, nil
 }
 
@@ -86,7 +85,7 @@ func readRule(ctx context.Context, fileSystem afero.Fs, modulePath string) (rego
 	return rule.PrepareForEval(ctx)
 }
 
-func initMapping(permissionGroups []permissionGroup) (map[uint64]string, map[string]uint64, []service.Group, []uint64) {
+func initMapping(permissionGroups []permissionGroup) (map[uint64]string, map[string]uint64, []uint64) {
 	groupIdToName := map[uint64]string{
 		service.PublicGroupId: service.PublicName, service.AdminGroupId: service.AdminName,
 	}
@@ -94,18 +93,12 @@ func initMapping(permissionGroups []permissionGroup) (map[uint64]string, map[str
 		service.PublicName: service.PublicGroupId, service.AdminName: service.AdminGroupId,
 	}
 
-	size := len(permissionGroups) + 2
-	groups := make([]service.Group, 0, size)
-	groups = append(groups, service.Group{Id: service.PublicGroupId, Name: service.PublicName})
-	groups = append(groups, service.Group{Id: service.AdminGroupId, Name: service.AdminName})
-
-	groupIds := make([]uint64, 0, size)
+	groupIds := make([]uint64, 0, len(permissionGroups)+2)
 	groupIds = append(groupIds, service.PublicGroupId, service.AdminGroupId)
 	for _, idName := range permissionGroups {
 		groupIdToName[idName.Id] = idName.Name
 		nameToGroupId[idName.Name] = idName.Id
-		groups = append(groups, service.Group{Id: idName.Id, Name: idName.Name})
 		groupIds = append(groupIds, idName.Id)
 	}
-	return groupIdToName, nameToGroupId, groups, groupIds
+	return groupIdToName, nameToGroupId, groupIds
 }
