@@ -20,7 +20,6 @@ package web
 
 import (
 	"cmp"
-	"errors"
 	"slices"
 	"strings"
 
@@ -42,8 +41,6 @@ const (
 	updateKey = "UpdateLabel"
 	deleteKey = "DeleteLabel"
 )
-
-var errBadName = errors.New("ErrorBadRoleName")
 
 type GroupDisplay struct {
 	Id           uint64
@@ -262,7 +259,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 		}),
 		saveRoleHandler: common.CreateRedirect(func(c *gin.Context) string {
 			roleName := c.PostForm(roleNameName)
-			err := errBadName
+			err := common.ErrBadRoleName
 			if roleName != "new" {
 				group := c.PostForm(groupName)
 				actions := c.PostFormArray("actions")

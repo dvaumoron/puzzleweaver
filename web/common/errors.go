@@ -30,6 +30,7 @@ const QueryError = "?" + ErrorKey + "="
 
 // error displayed to user
 const (
+	ErrorBadRoleNameKey          = "ErrorBadRoleName"
 	ErrorBaseVersionKey          = "BaseVersionOutdated"
 	ErrorEmptyLoginKey           = "EmptyLogin"
 	ErrorEmptyPasswordKey        = "EmptyPassword"
@@ -46,6 +47,7 @@ const (
 const originalErrorMsg = "Original error"
 
 var (
+	ErrBadRoleName   = errors.New(ErrorBadRoleNameKey)
 	ErrBaseVersion   = errors.New(ErrorBaseVersionKey)
 	ErrEmptyLogin    = errors.New(ErrorEmptyLoginKey)
 	ErrEmptyPassword = errors.New(ErrorEmptyPasswordKey)
@@ -72,10 +74,10 @@ func DefaultErrorRedirect(logger *slog.Logger, errorMsg string) string {
 }
 
 func FilterErrorMsg(logger *slog.Logger, errorMsg string) string {
-	if errorMsg == ErrorBaseVersionKey || errorMsg == ErrorEmptyLoginKey || errorMsg == ErrorEmptyPasswordKey ||
-		errorMsg == ErrorExistingLoginKey || errorMsg == ErrorNotAuthorizedKey || errorMsg == ErrorTechnicalKey ||
-		errorMsg == ErrorUpdateKey || errorMsg == ErrorWeakPasswordKey || errorMsg == ErrorWrongConfirmPasswordKey ||
-		errorMsg == ErrorWrongLangKey || errorMsg == ErrorWrongLoginKey {
+	if errorMsg == ErrorBadRoleNameKey || errorMsg == ErrorBaseVersionKey || errorMsg == ErrorEmptyLoginKey ||
+		errorMsg == ErrorEmptyPasswordKey || errorMsg == ErrorExistingLoginKey || errorMsg == ErrorNotAuthorizedKey ||
+		errorMsg == ErrorTechnicalKey || errorMsg == ErrorUpdateKey || errorMsg == ErrorWeakPasswordKey ||
+		errorMsg == ErrorWrongConfirmPasswordKey || errorMsg == ErrorWrongLangKey || errorMsg == ErrorWrongLoginKey {
 		return errorMsg
 	}
 	logger.Error(originalErrorMsg, ErrorKey, errorMsg)
