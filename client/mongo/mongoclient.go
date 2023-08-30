@@ -31,7 +31,6 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-// Must be called after TracerProvider initialization.
 func New(serverAddr string) *options.ClientOptions {
 	clientOptions := options.Client()
 	clientOptions.Monitor = otelmongo.NewMonitor()

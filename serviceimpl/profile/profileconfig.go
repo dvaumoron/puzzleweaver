@@ -16,14 +16,22 @@
  *
  */
 
-package servicecommon
+package profileimpl
 
-import "errors"
+import (
+	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
 
-const DBAccessMsg = "Failed to access database"
-const MongoCallMsg = "Failed during MongoDB call"
-const RedisCallMsg = "Failed during Redis call"
+type profileConf struct {
+	MongoAddress      string
+	MongoDatabaseName string
+}
 
-var ErrInternal = errors.New("internal service error")
-var ErrNolocales = errors.New("no locales declared")
-var ErrPictureNotFound = errors.New("picture not found")
+type initializedProfileConf struct {
+	clientOptions *options.ClientOptions
+}
+
+func initProfileConf(conf *profileConf) initializedProfileConf {
+	return initializedProfileConf{clientOptions: mongoclient.New(conf.MongoAddress)}
+}
