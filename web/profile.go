@@ -87,12 +87,11 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			}
 
 			roles, err := adminService.GetUserRoles(ctx, currentUserId, viewedUserId)
-			// ignore ErrNotAuthorized
-			if err == common.ErrTechnical {
-				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
-			}
 			if err == nil {
-				data["UserRight"] = DisplayGroups(roles)
+				data["UserRight"] = displayGroups(roles)
+			} else if err != common.ErrNotAuthorized {
+				// ignore ErrNotAuthorized
+				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
 			userProfile := profiles[viewedUserId]

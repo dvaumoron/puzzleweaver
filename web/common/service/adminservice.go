@@ -44,10 +44,9 @@ type Group struct {
 
 type Role struct {
 	weaver.AutoMarshal
-	Name      string
-	GroupId   uint64
-	GroupName string
-	Actions   []string
+	Name    string
+	Group   Group
+	Actions []string
 }
 
 type AuthService interface {
@@ -57,9 +56,10 @@ type AuthService interface {
 type AdminService interface {
 	AuthService
 	GetAllGroups(ctx context.Context) ([]Group, error)
-	GetAllRoles(ctx context.Context, adminId uint64) ([]Role, error)
 	GetActions(ctx context.Context, adminId uint64, roleName string, groupName string) ([]string, error)
 	UpdateUser(ctx context.Context, adminId uint64, userId uint64, roles []Role) error
 	UpdateRole(ctx context.Context, adminId uint64, role Role) error
 	GetUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]Role, error)
+	ViewUserRoles(ctx context.Context, adminId uint64, userId uint64) (bool, []Role, error)
+	EditUserRoles(ctx context.Context, adminId uint64, userId uint64) ([]Role, []Role, error)
 }

@@ -93,16 +93,19 @@ func initMapping(permissionGroups []permissionGroup) (map[uint64]string, map[str
 	nameToGroupId := map[string]uint64{
 		service.PublicName: service.PublicGroupId, service.AdminName: service.AdminGroupId,
 	}
+
+	size := len(permissionGroups) + 2
+	groups := make([]service.Group, 0, size)
+	groups = append(groups, service.Group{Id: service.PublicGroupId, Name: service.PublicName})
+	groups = append(groups, service.Group{Id: service.AdminGroupId, Name: service.AdminName})
+
+	groupIds := make([]uint64, 0, size)
+	groupIds = append(groupIds, service.PublicGroupId, service.AdminGroupId)
 	for _, idName := range permissionGroups {
 		groupIdToName[idName.Id] = idName.Name
 		nameToGroupId[idName.Name] = idName.Id
-	}
-	size := len(groupIdToName)
-	groups := make([]service.Group, 0, size)
-	groupIds := make([]uint64, 0, size)
-	for id, name := range groupIdToName {
-		groups = append(groups, service.Group{Id: id, Name: name})
-		groupIds = append(groupIds, id)
+		groups = append(groups, service.Group{Id: idName.Id, Name: idName.Name})
+		groupIds = append(groupIds, idName.Id)
 	}
 	return groupIdToName, nameToGroupId, groups, groupIds
 }

@@ -139,7 +139,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 
-			roles, err := adminService.GetUserRoles(ctx, adminId, userId)
+			updateRight, roles, err := adminService.ViewUserRoles(ctx, adminId, userId)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
@@ -149,13 +149,10 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
 
-			// TODO improve to do only one call
-			updateRight := adminService.AuthQuery(ctx, adminId, service.AdminGroupId, service.ActionUpdate) == nil
-
 			user := users[userId]
 			data[common.ViewedUserName] = user
 			data[common.AllowedToUpdateName] = updateRight
-			data[groupsName] = DisplayGroups(roles)
+			data[groupsName] = displayGroups(roles)
 			return "admin/user/view", ""
 		}),
 		editUserHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
@@ -166,13 +163,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 
-			allRoles, err := adminService.GetAllRoles(ctx, adminId)
-			if err != nil {
-				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
-			}
-
-			// TODO improve to do only one call
-			userRoles, err := adminService.GetUserRoles(ctx, adminId, userId)
+			userRoles, allRoles, err := adminService.EditUserRoles(ctx, adminId, userId)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
 			}
@@ -196,7 +187,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				for _, roleStr := range rolesStr {
 					splitted := strings.Split(roleStr, "/")
 					if len(splitted) > 1 {
-						roles = append(roles, service.Role{Name: splitted[0], GroupName: splitted[1]})
+						roles = append(roles, service.Role{Name: splitted[0], Group: service.Group{Name: splitted[1]}})
 					}
 				}
 				err = adminService.UpdateUser(ctx, GetSessionUserId(c), userId, roles)
@@ -277,7 +268,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				group := c.PostForm(groupName)
 				actions := c.PostFormArray("actions")
 				err = adminService.UpdateRole(c.Request.Context(), GetSessionUserId(c), service.Role{
-					Name: roleName, GroupName: group, Actions: actions,
+					Name: roleName, Group: service.Group{Name: group}, Actions: actions,
 				})
 			}
 
@@ -296,7 +287,7 @@ func getGroupDisplayNameKey(name string) string {
 	return "GroupLabel" + locale.CamelCase(name)
 }
 
-func DisplayGroups(roles []service.Role) []*GroupDisplay {
+func displayGroups(roles []service.Role) []*GroupDisplay {
 	nameToGroup := map[string]*GroupDisplay{}
 	populateGroup(nameToGroup, roles, rolesAppender)
 	return sortGroups(nameToGroup)
@@ -304,11 +295,10 @@ func DisplayGroups(roles []service.Role) []*GroupDisplay {
 
 func populateGroup(nameToGroup map[string]*GroupDisplay, roles []service.Role, appender func(*GroupDisplay, service.Role)) {
 	for _, role := range roles {
-		groupName := role.GroupName
-		group := nameToGroup[groupName]
+		group := nameToGroup[role.Group.Name]
 		if group == nil {
-			group = NewGroupDisplay(role.GroupId, groupName)
-			nameToGroup[groupName] = group
+			group = NewGroupDisplay(role.Group.Id, role.Group.Name)
+			nameToGroup[role.Group.Name] = group
 		}
 		appender(group, role)
 	}
