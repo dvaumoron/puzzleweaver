@@ -45,7 +45,6 @@ func (impl *remoteForumImpl) Init(ctx context.Context) (err error) {
 
 func (impl *remoteForumImpl) CreateThread(ctx context.Context, objectId uint64, userId uint64, title string, message string) (uint64, error) {
 	db := impl.initializedConf.db.WithContext(ctx)
-
 	thread := model.Thread{
 		ObjectId: objectId, UserId: userId, Title: title,
 	}
@@ -71,13 +70,37 @@ func (impl *remoteForumImpl) CreateMessage(ctx context.Context, objectId uint64,
 
 func (impl *remoteForumImpl) GetThread(ctx context.Context, objectId uint64, threadId uint64, start uint64, end uint64, filter string) (uint64, remoteservice.RawForumContent, []remoteservice.RawForumContent, error) {
 	db := impl.initializedConf.db.WithContext(ctx)
-	var thread model.Thread
-	if err := db.First(&thread, threadId).Error; err != nil {
-		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
-		return 0, remoteservice.RawForumContent{}, nil, common.ErrUpdate
+
+	paginate := func(tx *gorm.DB) *gorm.DB {
+		return dbclient.Paginate(tx, start, end).Order("created_at asc")
 	}
-	total, messages, err := impl.getMessages(ctx, db, threadId, start, end, filter)
-	return total, convertThreadFromModel(thread), messages, err
+
+	preloadFilter := paginate
+	messageRequest := db.Model(&model.Message{})
+	if filter == "" {
+		messageRequest.Where("thread_id = ?", threadId)
+	} else {
+		filter = dbclient.BuildLikeFilter(filter)
+		messageRequest.Where("thread_id = ? AND text LIKE ?", threadId, filter)
+
+		preloadFilter = func(tx *gorm.DB) *gorm.DB {
+			return paginate(tx).Where("text LIKE ?", filter)
+		}
+	}
+
+	var total int64
+	err := messageRequest.Count(&total).Error
+	if err != nil {
+		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
+		return 0, remoteservice.RawForumContent{}, nil, servicecommon.ErrInternal
+	}
+
+	var thread model.Thread
+	if err := db.Preload("Messages", preloadFilter).First(&thread, threadId).Error; err != nil {
+		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
+		return 0, remoteservice.RawForumContent{}, nil, servicecommon.ErrInternal
+	}
+	return uint64(total), convertThreadFromModel(thread), convertMessagesFromModel(thread.Messages), nil
 }
 
 func (impl *remoteForumImpl) GetThreads(ctx context.Context, objectId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawForumContent, error) {
@@ -133,40 +156,6 @@ func (impl *remoteForumImpl) DeleteMessage(ctx context.Context, containerId uint
 		return common.ErrUpdate
 	}
 	return nil
-}
-
-func (impl *remoteForumImpl) getMessages(ctx context.Context, db *gorm.DB, threadId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawForumContent, error) {
-	messageRequest := db.Model(&model.Message{})
-	if filter == "" {
-		messageRequest.Where("thread_id = ?", threadId)
-	} else {
-		filter = dbclient.BuildLikeFilter(filter)
-		messageRequest.Where("thread_id = ? AND text LIKE ?", threadId, filter)
-	}
-
-	var total int64
-	err := messageRequest.Count(&total).Error
-	if err != nil {
-		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
-		return 0, nil, servicecommon.ErrInternal
-	}
-	if total == 0 {
-		return 0, nil, nil
-	}
-
-	var messages []model.Message
-	page := dbclient.Paginate(db, start, end).Order("created_at asc")
-	if filter == "" {
-		err = page.Find(&messages, "thread_id = ?", threadId).Error
-	} else {
-		err = page.Find(&messages, "thread_id = ? AND text LIKE ?", threadId, filter).Error
-	}
-
-	if err != nil {
-		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
-		return 0, nil, servicecommon.ErrInternal
-	}
-	return uint64(total), convertMessagesFromModel(messages), nil
 }
 
 func convertThreadFromModel(thread model.Thread) remoteservice.RawForumContent {
