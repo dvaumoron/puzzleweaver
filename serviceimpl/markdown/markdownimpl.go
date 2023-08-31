@@ -20,8 +20,11 @@ package markdownimpl
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ServiceWeaver/weaver"
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
+	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
@@ -29,8 +32,20 @@ type MarkdownService service.MarkdownService
 
 type markdownImpl struct {
 	weaver.Implements[MarkdownService]
+	weaver.WithConfig[markdownConf]
+	initializedConf initializedMarkdownConf
+}
+
+func (impl *markdownImpl) Init(ctx context.Context) (err error) {
+	impl.initializedConf = initMarkdownConf(impl.Config())
+	return
 }
 
 func (impl *markdownImpl) Apply(ctx context.Context, text string) (string, error) {
-	return "todo", nil
+	var resBuilder strings.Builder
+	if err := impl.initializedConf.engine.Convert([]byte(text), &resBuilder); err != nil {
+		impl.Logger(ctx).Error("Failed to transform markdown", common.ErrorKey, err)
+		return "", servicecommon.ErrInternal
+	}
+	return resBuilder.String(), nil
 }

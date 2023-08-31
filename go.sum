@@ -390,6 +390,8 @@ github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkp
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724 h1:1/c0u68+2LRI+XSpduQpV9BnKx1k1P6GTb3MVxCE3w4=
 github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724/go.mod h1:pTiKQhUCcxt2eQMAnv48oc5nAsmelPm573z44h6PSXc=
+github.com/dvaumoron/puzzlemarkdownextension v1.0.0 h1:MnGDILx1JYfn0uqECgyTvSrTI/yzEjE/jIYQogLRcRo=
+github.com/dvaumoron/puzzlemarkdownextension v1.0.0/go.mod h1:6DqrLyRJufVBRuKB84yMLwXF3v8H77VHypZNhJuwIhk=
 github.com/dvaumoron/puzzlewidgetservice v1.2.0 h1:emjrpOqV3o9vwU9+I3dg1jT4QegxM83B7/UOg47FiJE=
 github.com/dvaumoron/puzzlewidgetservice v1.2.0/go.mod h1:4SoELSrFGpUQOU1tnLa0wn+uoom19ZfBIrPZBQyr5dY=
 github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
@@ -1135,6 +1137,8 @@ github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9dec
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
+github.com/yuin/goldmark v1.5.5 h1:IJznPe8wOzfIKETmMkd06F8nXkmlhaHqFRM9l1hAGsU=
+github.com/yuin/goldmark v1.5.5/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 github.com/yusufpapurcu/wmi v1.2.2/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
 github.com/yvasiyarov/go-metrics v0.0.0-20140926110328-57bccd1ccd43/go.mod h1:aX5oPXxHm3bOH+xeAttToC8pqch2ScQN/JoXYupl6xs=
 github.com/yvasiyarov/gorelic v0.0.0-20141212073537-a9bba5b9ab50/go.mod h1:NUSPSUX/bi6SeDMUh6brw0nXpxHnc96TguQh0+r/ssA=

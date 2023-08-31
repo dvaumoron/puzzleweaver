@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/ServiceWeaver/weaver v0.19.0
+	github.com/dvaumoron/puzzlemarkdownextension v1.0.0
 	github.com/dvaumoron/puzzlewidgetservice v1.2.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/glebarez/sqlite v1.9.0
@@ -14,6 +15,7 @@ require (
 	github.com/spf13/afero v1.9.5
 	github.com/uptrace/opentelemetry-go-extra/otelgorm v0.2.2
 	github.com/wagslane/go-password-validator v0.3.0
+	github.com/yuin/goldmark v1.5.5
 	go.mongodb.org/mongo-driver v1.12.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.42.0
 	go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo v0.42.0
