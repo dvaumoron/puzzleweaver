@@ -77,7 +77,7 @@ func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64,
 		return nil, err
 	}
 	if len(list) != 0 {
-		content := client.cache.load(client.loggerGetter.Logger(ctx), wikiRef)
+		content := client.cache.load(logger, wikiRef)
 		if content != nil && maxVersion(list) == content.Version {
 			return content, nil
 		}
