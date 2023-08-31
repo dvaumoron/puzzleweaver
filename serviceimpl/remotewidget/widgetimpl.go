@@ -23,7 +23,6 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
-	pb "github.com/dvaumoron/puzzlewidgetservice"
 )
 
 type RemoteWidgetService remoteservice.RemoteWidgetService
@@ -33,7 +32,6 @@ type remoteWidgetImpl struct {
 }
 
 func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, name string) ([]remoteservice.RawWidgetAction, error) {
-	var _ pb.MethodKind
 	// TODO
 	return nil, nil
 }
