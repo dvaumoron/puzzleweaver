@@ -155,9 +155,7 @@ func MakeBlogPage(blogName string, logger *slog.Logger, blogConfig config.BlogCo
 			}
 
 			total, comments, err := commentService.GetCommentThread(ctx, userId, post.Title, start, end)
-			if err != nil {
-				return "", common.DefaultErrorRedirect(logger, err.Error())
-			}
+			// err is handled later with "CommentDisplayError"
 
 			common.InitPagination(data, "", pageNumber, end, total)
 			data[common.BaseUrlName] = common.GetBaseUrl(2, c)
