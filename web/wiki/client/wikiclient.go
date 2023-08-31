@@ -28,6 +28,7 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
+	"golang.org/x/exp/slog"
 )
 
 // check matching with interface
@@ -57,16 +58,18 @@ func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64,
 		return nil, err
 	}
 
+	logger := client.loggerGetter.Logger(ctx)
+
 	var version uint64
 	if versionStr != "" {
 		version, err = strconv.ParseUint(versionStr, 10, 64)
 		if err != nil {
-			client.loggerGetter.Logger(ctx).Info("Failed to parse wiki version, falling to last", common.ErrorKey, err)
+			logger.Info("Failed to parse wiki version, falling to last", common.ErrorKey, err)
 		}
 	}
 	wikiRef := buildRef(lang, title)
 	if version != 0 {
-		return client.innerLoadContent(ctx, wikiRef, version)
+		return client.innerLoadContent(ctx, logger, wikiRef, version)
 	}
 
 	list, err := client.wikiService.GetVersions(ctx, client.wikiId, wikiRef)
@@ -75,11 +78,11 @@ func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64,
 	}
 	if len(list) != 0 {
 		content := client.cache.load(client.loggerGetter.Logger(ctx), wikiRef)
-		if content != nil && maxVersion(list).Version == content.Version {
+		if content != nil && maxVersion(list) == content.Version {
 			return content, nil
 		}
 	}
-	return client.innerLoadContent(ctx, wikiRef, 0)
+	return client.innerLoadContent(ctx, logger, wikiRef, 0)
 }
 
 func (client wikiServiceWrapper) StoreContent(ctx context.Context, userId uint64, lang string, title string, last string, markdown string) error {
@@ -121,7 +124,7 @@ func (client wikiServiceWrapper) GetVersions(ctx context.Context, userId uint64,
 		return nil, nil
 	}
 
-	valueSet := make([]*remoteservice.RawWikiContent, maxVersion(list).Version+1)
+	valueSet := make([]*remoteservice.RawWikiContent, maxVersion(list)+1)
 	// no duplicate check, there is one in GetProfiles
 	userIds := make([]uint64, 0, size)
 	for _, value := range list {
@@ -152,13 +155,13 @@ func (client wikiServiceWrapper) DeleteContent(ctx context.Context, userId uint6
 		return err
 	}
 
+	logger := client.loggerGetter.Logger(ctx)
 	version, err := strconv.ParseUint(versionStr, 10, 64)
 	if err != nil {
-		client.loggerGetter.Logger(ctx).Warn("Failed to parse wiki version to delete", common.ErrorKey, err)
+		logger.Warn("Failed to parse wiki version to delete", common.ErrorKey, err)
 		return common.ErrTechnical
 	}
 
-	logger := client.loggerGetter.Logger(ctx)
 	wikiRef := buildRef(lang, title)
 	content := client.cache.load(logger, wikiRef)
 	if content != nil && version == content.Version {
@@ -171,20 +174,15 @@ func (impl wikiServiceWrapper) DeleteRight(ctx context.Context, userId uint64) b
 	return impl.authService.AuthQuery(ctx, userId, impl.groupId, service.ActionDelete) == nil
 }
 
-func (client wikiServiceWrapper) innerLoadContent(ctx context.Context, wikiRef string, askedVersion uint64) (*wikiservice.WikiContent, error) {
+func (client wikiServiceWrapper) innerLoadContent(ctx context.Context, logger *slog.Logger, wikiRef string, askedVersion uint64) (*wikiservice.WikiContent, error) {
 	res, err := client.wikiService.Load(ctx, client.wikiId, wikiRef, askedVersion)
-	if err != nil {
+	if err != nil || res.Version == 0 { // no stored wiki page
 		return nil, err
 	}
 
-	version := res.Version
-	if version == 0 { // no stored wiki page
-		return nil, nil
-	}
-
-	content := &wikiservice.WikiContent{Version: version, Markdown: res.Markdown}
+	content := &wikiservice.WikiContent{Version: res.Version, Markdown: res.Markdown}
 	if askedVersion == 0 {
-		client.cache.store(client.loggerGetter.Logger(ctx), wikiRef, content)
+		client.cache.store(logger, wikiRef, content)
 	}
 	return content, nil
 }
@@ -192,16 +190,16 @@ func (client wikiServiceWrapper) innerLoadContent(ctx context.Context, wikiRef s
 func buildRef(lang string, title string) string {
 	var refBuilder strings.Builder
 	refBuilder.WriteString(lang)
-	refBuilder.WriteString("/")
+	refBuilder.WriteByte('/')
 	refBuilder.WriteString(title)
 	return refBuilder.String()
 }
 
-func maxVersion(list []remoteservice.RawWikiContent) remoteservice.RawWikiContent {
-	res := list[0]
-	for _, current := range list {
-		if current.Version > res.Version {
-			res = current
+func maxVersion(list []remoteservice.RawWikiContent) uint64 {
+	res := list[0].Version
+	for _, current := range list[1:] {
+		if current.Version > res {
+			res = current.Version
 		}
 	}
 	return res
