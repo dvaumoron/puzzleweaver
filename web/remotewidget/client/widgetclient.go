@@ -29,9 +29,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// check matching with interface
-var _ = &widgetServiceWrapper{}
-
 type widgetServiceWrapper struct {
 	widgetService remoteservice.RemoteWidgetService
 	loggerGetter  common.LoggerGetter
