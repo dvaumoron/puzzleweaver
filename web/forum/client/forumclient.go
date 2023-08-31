@@ -159,21 +159,28 @@ func (client forumServiceWrapper) GetCommentThread(ctx context.Context, userId u
 		return 0, nil, err
 	}
 
-	total, threads, err := client.forumService.GetThreads(ctx, client.forumId, 0, 1, elemTitle)
+	_, threads, err := client.forumService.GetThreads(ctx, client.forumId, 0, 1, elemTitle)
 	if err != nil {
 		logCommentThreadNotFound(client.loggerGetter.Logger(ctx), client.forumId, elemTitle)
 		return 0, nil, err
 	}
 	if len(threads) == 0 {
-		return total, nil, nil
+		logCommentThreadNotFound(client.loggerGetter.Logger(ctx), client.forumId, elemTitle)
+		return 0, nil, common.ErrTechnical
 	}
 
-	users, err := client.profileService.GetProfiles(ctx, extractUserIds(threads))
+	threadId := threads[0].Id
+	total, _, messages, err := client.forumService.GetThread(ctx, client.forumId, threadId, start, end, "")
 	if err != nil {
 		return 0, nil, err
 	}
-	slices.SortFunc(threads, cmpAsc)
-	return total, convertContents(threads, users, client.dateFormat), nil
+
+	users, err := client.profileService.GetProfiles(ctx, extractUserIds(messages))
+	if err != nil {
+		return 0, nil, err
+	}
+	slices.SortFunc(messages, cmpAsc)
+	return total, convertContents(messages, users, client.dateFormat), nil
 }
 
 func (client forumServiceWrapper) DeleteThread(ctx context.Context, userId uint64, threadId uint64) error {
