@@ -22,6 +22,7 @@ import (
 	"context"
 
 	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
+	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	"github.com/dvaumoron/puzzleweaver/serviceimpl/admin/model"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/open-policy-agent/opa/rego"
@@ -50,8 +51,7 @@ type initializedAdminConf struct {
 }
 
 func initAdminConf(ctx context.Context, conf *adminConf) (initializedAdminConf, error) {
-	// TODO manage switch to network FS
-	fileSystem := afero.NewOsFs()
+	fileSystem := fsclient.New()
 
 	db, err := dbclient.New(conf.DatabaseKind, conf.DatabaseAddress)
 	if err == nil {

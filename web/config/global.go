@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"time"
 
+	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	blogclient "github.com/dvaumoron/puzzleweaver/web/blog/client"
 	"github.com/dvaumoron/puzzleweaver/web/common"
@@ -111,8 +112,7 @@ type GlobalServiceConfig struct {
 }
 
 func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
-	// TODO manage switch to network FS
-	baseFS := afero.NewOsFs()
+	baseFS := fsclient.New()
 
 	// read default picture file
 	defaultPicturePath := globalConfig.ProfileDefaultPicturePath

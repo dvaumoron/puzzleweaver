@@ -21,6 +21,7 @@ package passwordstrengthimpl
 import (
 	"strings"
 
+	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/spf13/afero"
 	passwordvalidator "github.com/wagslane/go-password-validator"
@@ -38,8 +39,7 @@ type initializedStrengthConf struct {
 }
 
 func initStrengthConf(logger *slog.Logger, conf *strengthConf) (initializedStrengthConf, error) {
-	// TODO manage switch to network FS
-	fileSystem := afero.NewOsFs()
+	fileSystem := fsclient.New()
 
 	localizedRules, err := readRulesConfig(logger, fileSystem, conf)
 	if err != nil {

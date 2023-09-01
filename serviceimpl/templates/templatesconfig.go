@@ -24,6 +24,7 @@ import (
 	"io/fs"
 	"strings"
 
+	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/spf13/afero"
 )
@@ -40,8 +41,7 @@ type initializedTemplateConf struct {
 }
 
 func initTemplateConf(conf *templateConf) (initializedTemplateConf, error) {
-	// TODO manage switch to network FS
-	fileSystem := afero.NewOsFs()
+	fileSystem := fsclient.New()
 
 	templates, err := loadTemplates(fileSystem, conf)
 	if err != nil {
