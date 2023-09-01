@@ -42,7 +42,9 @@ const commentMsgName = "CommentMsg"
 
 const parsingPostIdErrorMsg = "Failed to parse postId"
 
+// TODO move with displayable error in common
 var errEmptyComment = errors.New("EmptyComment")
+
 var errFeedFormat = errors.New("unrecognized feed format")
 
 // TODO draft with modify until publish ?
