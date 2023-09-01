@@ -69,7 +69,7 @@ func localizedTemplate(loggerGetter common.LoggerGetter, groupId uint64, templat
 		site := getSite(c)
 		ctx := c.Request.Context()
 		logger := loggerGetter.Logger(ctx)
-		userId, _ := data[common.IdName].(uint64)
+		userId, _ := data[common.UserIdName].(uint64)
 		err := site.authService.AuthQuery(ctx, userId, groupId, service.ActionAccess)
 		if err != nil {
 			return "", common.DefaultErrorRedirect(logger, err.Error())

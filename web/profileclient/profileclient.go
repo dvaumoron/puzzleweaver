@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
@@ -53,7 +54,9 @@ func (client profileServiceWrapper) UpdatePicture(ctx context.Context, userId ui
 func (client profileServiceWrapper) GetPicture(ctx context.Context, userId uint64) []byte {
 	picture, err := client.profileService.GetPicture(ctx, userId)
 	if err != nil {
-		common.LogOriginalError(client.loggerGetter.Logger(ctx), err)
+		if err != servicecommon.ErrPictureNotFound {
+			common.LogOriginalError(client.loggerGetter.Logger(ctx), err)
+		}
 		return client.defaultPicture
 	}
 	return picture

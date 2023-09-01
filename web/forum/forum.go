@@ -91,7 +91,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 	p.Widget = forumWidget{
 		listThreadHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			ctx := c.Request.Context()
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 
 			pageNumber, start, end, filter := common.GetPagination(defaultPageSize, c)
 
@@ -104,7 +104,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			data["Threads"] = threads
 			data[common.AllowedToCreateName] = forumService.CreateThreadRight(ctx, userId)
 			data[common.AllowedToDeleteName] = forumService.DeleteRight(ctx, userId)
-			web.InitNoELementMsg(data, len(threads), c)
+			web.InitNoELementMsg(data, len(threads))
 			return listTmpl, ""
 		}),
 		createThreadHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
@@ -157,7 +157,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 
 			pageNumber, start, end, filter := common.GetPagination(defaultPageSize, c)
 
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 			total, thread, messages, err := forumService.GetThread(ctx, userId, threadId, start, end, filter)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(logger, err.Error())
@@ -169,7 +169,7 @@ func MakeForumPage(forumName string, logger *slog.Logger, forumConfig config.For
 			data["ForumMessages"] = messages
 			data[common.AllowedToCreateName] = forumService.CreateMessageRight(ctx, userId)
 			data[common.AllowedToDeleteName] = forumService.DeleteRight(ctx, userId)
-			web.InitNoELementMsg(data, len(messages), c)
+			web.InitNoELementMsg(data, len(messages))
 			return viewTmpl, ""
 		}),
 		saveMessageHandler: common.CreateRedirect(func(c *gin.Context) string {

@@ -98,7 +98,7 @@ func newSettingsPage(settingsManager *SettingsManager) Page {
 	p := MakeHiddenPage("settings")
 	p.Widget = settingsWidget{
 		editHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 			if userId == 0 {
 				return "", common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 			}

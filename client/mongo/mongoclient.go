@@ -31,10 +31,10 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-func New(serverAddr string) *options.ClientOptions {
+func New(serverAddress string) *options.ClientOptions {
 	clientOptions := options.Client()
 	clientOptions.Monitor = otelmongo.NewMonitor()
-	clientOptions.ApplyURI(serverAddr)
+	clientOptions.ApplyURI(serverAddress)
 	return clientOptions
 }
 

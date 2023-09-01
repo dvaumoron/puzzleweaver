@@ -125,12 +125,12 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 
 			common.InitPagination(data, filter, pageNumber, end, total)
 			data["Users"] = users
-			InitNoELementMsg(data, len(users), c)
+			InitNoELementMsg(data, len(users))
 			return "admin/user/list", ""
 		}),
 		viewUserHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			ctx := c.Request.Context()
-			adminId, _ := data[common.IdName].(uint64)
+			adminId, _ := data[common.UserIdName].(uint64)
 			userId := GetRequestedUserId(c)
 			if userId == 0 {
 				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
@@ -154,7 +154,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 		}),
 		editUserHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			ctx := c.Request.Context()
-			adminId, _ := data[common.IdName].(uint64)
+			adminId, _ := data[common.UserIdName].(uint64)
 			userId := GetRequestedUserId(c)
 			if userId == 0 {
 				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
@@ -225,7 +225,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			return targetBuilder.String()
 		}),
 		listRoleHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
-			adminId, _ := data[common.IdName].(uint64)
+			adminId, _ := data[common.UserIdName].(uint64)
 			allGroups, err := adminService.GetAllGroups(c.Request.Context(), adminId)
 			if err != nil {
 				return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())
@@ -242,7 +242,7 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			data["GroupDisplayName"] = getGroupDisplayNameKey(group)
 
 			if roleName != "new" {
-				adminId, _ := data[common.IdName].(uint64)
+				adminId, _ := data[common.UserIdName].(uint64)
 				actions, err := adminService.GetActions(c.Request.Context(), adminId, roleName, group)
 				if err != nil {
 					return "", common.DefaultErrorRedirect(GetLogger(c), err.Error())

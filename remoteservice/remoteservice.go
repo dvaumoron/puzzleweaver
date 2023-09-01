@@ -101,6 +101,13 @@ const (
 	KIND_RAW // added special category
 )
 
+const (
+	DataKey     = "puzzledata.json"
+	FormKey     = "formData"
+	GroupIdKey  = "groupId"
+	ObjectIdKey = "objectId"
+)
+
 type RawWidgetAction struct {
 	weaver.AutoMarshal
 	Kind       uint8

@@ -110,7 +110,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 				return "", targetBuilder.String()
 			}
 
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 			version := c.Query(versionName)
 			content, err := wikiService.LoadContent(ctx, userId, lang, title, version)
 			if err != nil {
@@ -150,7 +150,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 				return "", targetBuilder.String()
 			}
 
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 			content, err := wikiService.LoadContent(c.Request.Context(), userId, lang, title, "")
 			if err != nil {
 				return "", common.DefaultErrorRedirect(logger, err.Error())
@@ -201,7 +201,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 				return "", targetBuilder.String()
 			}
 
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 			versions, err := wikiService.GetVersions(ctx, userId, lang, title)
 			if err != nil {
 				common.WriteError(targetBuilder, logger, err.Error())
@@ -212,7 +212,7 @@ func MakeWikiPage(wikiName string, logger *slog.Logger, wikiConfig config.WikiCo
 			data[versionsName] = versions
 			data[common.BaseUrlName] = common.GetBaseUrl(2, c)
 			data[common.AllowedToDeleteName] = wikiService.DeleteRight(ctx, userId)
-			web.InitNoELementMsg(data, len(versions), c)
+			web.InitNoELementMsg(data, len(versions))
 			return listTmpl, ""
 		}),
 		deleteHandler: common.CreateRedirect(func(c *gin.Context) string {

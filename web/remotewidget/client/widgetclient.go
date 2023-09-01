@@ -52,15 +52,15 @@ func (client widgetServiceWrapper) GetDesc(ctx context.Context) ([]widgetservice
 }
 
 func (client widgetServiceWrapper) Process(ctx context.Context, actionName string, data gin.H, files map[string][]byte) (string, string, []byte, error) {
-	data["objectId"] = client.objectId
-	data["groupId"] = client.groupId
+	data[remoteservice.ObjectIdKey] = client.objectId
+	data[remoteservice.GroupIdKey] = client.groupId
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
 		client.loggerGetter.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)
 		return "", "", nil, common.ErrTechnical
 	}
 
-	files["puzzledata.json"] = dataBytes
+	files[remoteservice.DataKey] = dataBytes
 	return client.widgetService.Process(ctx, client.widgetName, actionName, files)
 }
 

@@ -118,7 +118,7 @@ func MakeBlogPage(blogName string, logger *slog.Logger, blogConfig config.BlogCo
 	p.Widget = blogWidget{
 		listHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			ctx := c.Request.Context()
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 
 			pageNumber, start, end, filter := common.GetPagination(defaultPageSize, c)
 
@@ -133,13 +133,13 @@ func MakeBlogPage(blogName string, logger *slog.Logger, blogConfig config.BlogCo
 			data["Posts"] = posts
 			data[common.AllowedToCreateName] = blogService.CreateRight(ctx, userId)
 			data[common.AllowedToDeleteName] = blogService.DeleteRight(ctx, userId)
-			web.InitNoELementMsg(data, len(posts), c)
+			web.InitNoELementMsg(data, len(posts))
 			return listTmpl, ""
 		}),
 		viewHandler: web.CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
 			ctx := c.Request.Context()
 			logger := web.GetLogger(c)
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 
 			pageNumber, start, end, _ := common.GetPagination(defaultPageSize, c)
 

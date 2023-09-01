@@ -73,7 +73,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 				return "", common.DefaultErrorRedirect(GetLogger(c), common.ErrorTechnicalKey)
 			}
 
-			currentUserId, _ := data[common.IdName].(uint64)
+			currentUserId, _ := data[common.UserIdName].(uint64)
 			updateRight := viewedUserId == currentUserId
 			if !updateRight {
 				if err := profileService.ViewRight(ctx, currentUserId); err != nil {
@@ -100,7 +100,7 @@ func newProfilePage(globalConfig *config.GlobalServiceConfig) Page {
 			return "profile/view", ""
 		}),
 		editHandler: CreateTemplate(func(data gin.H, c *gin.Context) (string, string) {
-			userId, _ := data[common.IdName].(uint64)
+			userId, _ := data[common.UserIdName].(uint64)
 			if userId == 0 {
 				return "", common.DefaultErrorRedirect(GetLogger(c), unknownUserKey)
 			}

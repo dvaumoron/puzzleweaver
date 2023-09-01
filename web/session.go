@@ -31,7 +31,6 @@ import (
 )
 
 const cookieName = "pw_session_id"
-const SessionName = "Session"
 
 var errDecodeTooShort = errors.New("the result from base64 decoding is too short")
 
@@ -163,7 +162,7 @@ func (m sessionManager) manage(c *gin.Context) {
 		session = map[string]string{}
 	}
 
-	c.Set(SessionName, &Session{session: session}) // change is false (default bool)
+	c.Set(common.SessionName, &Session{session: session}) // change is false (default bool)
 	c.Next()
 
 	if s := GetSession(c); s.change {
@@ -179,12 +178,12 @@ func logSessionError(msg string, sessionId uint64, c *gin.Context) {
 }
 
 func GetSession(c *gin.Context) *Session {
-	untyped, _ := c.Get(SessionName)
+	untyped, _ := c.Get(common.SessionName)
 	typed, ok := untyped.(*Session)
 	if !ok {
 		GetLogger(c).Error("There is no session in context")
 		typed = &Session{session: map[string]string{}, change: true}
-		c.Set(SessionName, typed)
+		c.Set(common.SessionName, typed)
 	}
 	return typed
 }

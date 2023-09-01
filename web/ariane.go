@@ -68,7 +68,7 @@ func GetLocalesManager(c *gin.Context) locale.Manager {
 	return getSite(c).localesManager
 }
 
-func InitNoELementMsg(data gin.H, size int, c *gin.Context) {
+func InitNoELementMsg(data gin.H, size int) {
 	if size == 0 {
 		data[errorMsgName] = "NoElement"
 	}
@@ -120,7 +120,7 @@ func initData(c *gin.Context) gin.H {
 	data := gin.H{
 		locale.LangName: localesManager.GetLang(site.loggerGetter.Logger(ctx), c),
 		"PageTitle":     getPageTitleKey(page.name),
-		"CurrentUrl":    currentUrl,
+		common.UrlName:  currentUrl,
 		"Ariane":        buildAriane(path),
 		"SubPages":      page.extractSubPageNames(currentUrl, c),
 		errorMsgName:    c.Query("error"),
@@ -137,7 +137,7 @@ func initData(c *gin.Context) gin.H {
 	} else {
 		currentUserId = GetSessionUserId(c)
 		data[loginName] = login
-		data[common.IdName] = currentUserId
+		data[common.UserIdName] = currentUserId
 		data[loginUrlName] = "/login/logout?Redirect=" + escapedUrl
 	}
 	data[viewAdminName] = site.authService.AuthQuery(

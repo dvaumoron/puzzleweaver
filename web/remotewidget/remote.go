@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
@@ -32,9 +33,11 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-const formKey = "formData"
-const pathKeySlash = "pathData/"
-const queryKeySlash = "queryData/"
+const (
+	pathKeySlash  = "pathData/"
+	queryKeySlash = "queryData/"
+)
+
 const initMsg = "Failed to init remote widget"
 
 type handlerDesc struct {
@@ -76,7 +79,7 @@ func MakeRemotePage(pageName string, ctx context.Context, logger *slog.Logger, w
 			handler = createHandler(actionName, dataAdder, widgetService)
 		case http.MethodPost, http.MethodPut, http.MethodPatch:
 			dataAdder := func(data gin.H, c *gin.Context) {
-				data[formKey] = c.PostFormMap(formKey)
+				data[remoteservice.FormKey] = c.PostFormMap(remoteservice.FormKey)
 				retrieveContextData(pathKeys, queryKeys, data, c)
 			}
 			handler = createHandler(actionName, dataAdder, widgetService)
@@ -134,7 +137,7 @@ func retrieveContextData(pathKeys [][2]string, queryKeys [][2]string, data gin.H
 	for _, key := range queryKeys {
 		data[key[0]] = c.Query(key[1])
 	}
-	data[web.SessionName] = web.GetSession(c).AsMap()
+	data[common.SessionName] = web.GetSession(c).AsMap()
 }
 
 func readFiles(c *gin.Context) (map[string][]byte, error) {
@@ -192,23 +195,23 @@ func createHandler(actionName string, dataAdder common.DataAdder, widgetService 
 			return "", redirect
 		}
 
-		if updateDataAndSession(data, resData, c) {
-			return templateName, ""
+		if err = updateDataAndSession(data, resData, c); err != nil {
+			logger.Error("Failed to unmarshal json from remote widget", common.ErrorKey, err)
+			return "", common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
 		}
-		logger.Error("Failed to unmarshal json from remote widget", common.ErrorKey, err)
-		return "", common.DefaultErrorRedirect(logger, common.ErrorTechnicalKey)
+		return templateName, ""
 	})
 }
 
-func updateDataAndSession(data gin.H, resData []byte, c *gin.Context) bool {
+func updateDataAndSession(data gin.H, resData []byte, c *gin.Context) error {
 	var newData gin.H
 	if err := json.Unmarshal(resData, &newData); err != nil {
-		return false
+		return err
 	}
 	for key, value := range newData {
 		data[key] = value
 	}
-	sessionMap, sessionUpdate := newData[web.SessionName]
+	sessionMap, sessionUpdate := newData[common.SessionName]
 	if sessionUpdate {
 		casted, ok := sessionMap.(map[string]string)
 		if ok {
@@ -218,5 +221,5 @@ func updateDataAndSession(data gin.H, resData []byte, c *gin.Context) bool {
 			}
 		}
 	}
-	return true
+	return nil
 }

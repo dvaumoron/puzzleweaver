@@ -27,14 +27,20 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const RedirectName = "Redirect"
-const BaseUrlName = "BaseUrl"
-const AllowedToCreateName = "AllowedToCreate"
-const AllowedToUpdateName = "AllowedToUpdate"
-const AllowedToDeleteName = "AllowedToDelete"
+const (
+	BaseUrlName         = "BaseUrl"
+	RedirectName        = "Redirect"
+	AllowedToCreateName = "AllowedToCreate"
+	AllowedToUpdateName = "AllowedToUpdate"
+	AllowedToDeleteName = "AllowedToDelete"
+)
 
-const IdName = "Id" // current connected user id
-const ViewedUserName = "ViewedUser"
+const (
+	UserIdName     = "Id" // current connected user id
+	ViewedUserName = "ViewedUser"
+	UrlName        = "CurrentUrl"
+	SessionName    = "Session"
+)
 
 var htmlVoidElement = MakeSet([]string{"area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"})
 
