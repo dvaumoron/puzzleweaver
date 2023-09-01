@@ -39,8 +39,7 @@ type adminConf struct {
 	PermissionGroups []permissionGroup
 	DatabaseKind     string
 	DatabaseAddress  string
-	FsKind           string
-	FsConf           map[string]string
+	FsConf           fsclient.FsConf
 	OpaModulePath    string
 }
 
@@ -53,7 +52,7 @@ type initializedAdminConf struct {
 }
 
 func initAdminConf(ctx context.Context, conf *adminConf) (initializedAdminConf, error) {
-	fileSystem, err := fsclient.New(conf.FsKind, conf.FsConf)
+	fileSystem, err := fsclient.New(conf.FsConf)
 	if err != nil {
 		return initializedAdminConf{}, err
 	}

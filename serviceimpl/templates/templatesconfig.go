@@ -31,8 +31,7 @@ import (
 
 type templateConf struct {
 	AllLang      []string
-	FsKind       string
-	FsConf       map[string]string
+	FsConf       fsclient.FsConf
 	TemplatePath string
 	LocalesPath  string
 }
@@ -43,7 +42,7 @@ type initializedTemplateConf struct {
 }
 
 func initTemplateConf(conf *templateConf) (initializedTemplateConf, error) {
-	fileSystem, err := fsclient.New(conf.FsKind, conf.FsConf)
+	fileSystem, err := fsclient.New(conf.FsConf)
 	if err != nil {
 		return initializedTemplateConf{}, err
 	}

@@ -26,9 +26,14 @@ import (
 
 var errUnknonwKind = errors.New("unknown file system kind")
 
-func New(kind string, fsConf map[string]string) (afero.Fs, error) {
+type FsConf struct {
+	Kind   string
+	Params map[string]string
+}
+
+func New(conf FsConf) (afero.Fs, error) {
 	// TODO add other kind
-	switch kind {
+	switch conf.Kind {
 	case "local":
 		return afero.NewOsFs(), nil
 	default:

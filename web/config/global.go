@@ -58,8 +58,7 @@ type GlobalConfig struct {
 	FeedFormat         string
 	FeedSize           uint64
 
-	FsKind      string
-	FsConf      map[string]string
+	FsConf      fsclient.FsConf
 	StaticPath  string
 	FaviconPath string
 	Page404Url  string
@@ -114,7 +113,7 @@ type GlobalServiceConfig struct {
 }
 
 func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) (*GlobalServiceConfig, error) {
-	baseFS, err := fsclient.New(conf.FsKind, conf.FsConf)
+	baseFS, err := fsclient.New(conf.FsConf)
 	if err != nil {
 		return nil, err
 	}
