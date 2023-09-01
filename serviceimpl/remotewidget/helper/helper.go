@@ -51,7 +51,7 @@ func AsMap(value any) (gin.H, error) {
 	if value == nil {
 		return nil, nil
 	}
-	m, ok := value.(gin.H)
+	m, ok := value.(map[string]any)
 	if !ok {
 		return nil, errNotMap
 	}
