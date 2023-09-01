@@ -18,11 +18,20 @@
 
 package fsclient
 
-import "github.com/spf13/afero"
+import (
+	"errors"
 
-func New() afero.Fs {
-	// TODO manage switch to network FS
-	fileSystem := afero.NewOsFs()
+	"github.com/spf13/afero"
+)
 
-	return fileSystem
+var errUnknonwKind = errors.New("unknown file system kind")
+
+func New(kind string, fsConf map[string]string) (afero.Fs, error) {
+	// TODO add other kind
+	switch kind {
+	case "local":
+		return afero.NewOsFs(), nil
+	default:
+		return nil, errUnknonwKind
+	}
 }

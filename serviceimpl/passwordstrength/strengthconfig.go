@@ -31,6 +31,8 @@ import (
 type strengthConf struct {
 	DefaultPassword string
 	AllLang         []string
+	FsKind          string
+	FsConf          map[string]string
 }
 
 type initializedStrengthConf struct {
@@ -39,7 +41,10 @@ type initializedStrengthConf struct {
 }
 
 func initStrengthConf(logger *slog.Logger, conf *strengthConf) (initializedStrengthConf, error) {
-	fileSystem := fsclient.New()
+	fileSystem, err := fsclient.New(conf.FsKind, conf.FsConf)
+	if err != nil {
+		return initializedStrengthConf{}, err
+	}
 
 	localizedRules, err := readRulesConfig(logger, fileSystem, conf)
 	if err != nil {

@@ -39,7 +39,9 @@ type adminConf struct {
 	PermissionGroups []permissionGroup
 	DatabaseKind     string
 	DatabaseAddress  string
-	OPAModulePath    string
+	FsKind           string
+	FsConf           map[string]string
+	OpaModulePath    string
 }
 
 type initializedAdminConf struct {
@@ -51,7 +53,10 @@ type initializedAdminConf struct {
 }
 
 func initAdminConf(ctx context.Context, conf *adminConf) (initializedAdminConf, error) {
-	fileSystem := fsclient.New()
+	fileSystem, err := fsclient.New(conf.FsKind, conf.FsConf)
+	if err != nil {
+		return initializedAdminConf{}, err
+	}
 
 	db, err := dbclient.New(conf.DatabaseKind, conf.DatabaseAddress)
 	if err == nil {
@@ -61,7 +66,7 @@ func initAdminConf(ctx context.Context, conf *adminConf) (initializedAdminConf, 
 		return initializedAdminConf{}, err
 	}
 
-	query, err := readRule(ctx, fileSystem, conf.OPAModulePath)
+	query, err := readRule(ctx, fileSystem, conf.OpaModulePath)
 	if err != nil {
 		return initializedAdminConf{}, err
 	}

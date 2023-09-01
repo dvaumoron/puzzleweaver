@@ -58,6 +58,8 @@ type GlobalConfig struct {
 	FeedFormat         string
 	FeedSize           uint64
 
+	FsKind      string
+	FsConf      map[string]string
 	StaticPath  string
 	FaviconPath string
 	Page404Url  string
@@ -111,13 +113,16 @@ type GlobalServiceConfig struct {
 	WidgetService           remoteservice.RemoteWidgetService
 }
 
-func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) *GlobalServiceConfig {
-	baseFS := fsclient.New()
+func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) (*GlobalServiceConfig, error) {
+	baseFS, err := fsclient.New(conf.FsKind, conf.FsConf)
+	if err != nil {
+		return nil, err
+	}
 
 	// read default picture file
-	defaultPicturePath := globalConfig.ProfileDefaultPicturePath
+	defaultPicturePath := conf.ProfileDefaultPicturePath
 	if defaultPicturePath == "" {
-		defaultPicturePath = globalConfig.StaticPath + "/images/unknownuser.png"
+		defaultPicturePath = conf.StaticPath + "/images/unknownuser.png"
 	}
 	defaultPicture, err := afero.ReadFile(baseFS, defaultPicturePath)
 	if err != nil {
@@ -125,17 +130,17 @@ func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, logger *s
 	}
 
 	loginServiceWrapper := loginclient.MakeLoginServiceWrapper(
-		loginService, saltService, passwordStrengthService, globalConfig.DateFormat,
+		loginService, saltService, passwordStrengthService, conf.DateFormat,
 	)
 	profileServiceWrapper := profileclient.MakeProfileServiceWrapper(
-		profileService, loginServiceWrapper, adminService, loggerGetter, globalConfig.ProfileGroupId, defaultPicture,
+		profileService, loginServiceWrapper, adminService, loggerGetter, conf.ProfileGroupId, defaultPicture,
 	)
 
 	return &GlobalServiceConfig{
-		GlobalConfig:            globalConfig,
+		GlobalConfig:            conf,
 		LoggerGetter:            loggerGetter,
 		FileSystem:              afero.NewHttpFs(baseFS),
-		StaticFileSystem:        afero.NewHttpFs(afero.NewBasePathFs(baseFS, globalConfig.StaticPath)),
+		StaticFileSystem:        afero.NewHttpFs(afero.NewBasePathFs(baseFS, conf.StaticPath)),
 		SessionService:          sessionService,
 		TemplateService:         templateService,
 		SettingsService:         settingsService,
@@ -149,7 +154,7 @@ func New(globalConfig *GlobalConfig, loggerGetter common.LoggerGetter, logger *s
 		BlogService:             blogService,
 		WikiService:             wikiService,
 		WidgetService:           widgetService,
-	}
+	}, nil
 }
 
 func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
