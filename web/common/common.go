@@ -19,12 +19,14 @@
 package common
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"unicode"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/slices"
+	"golang.org/x/exp/slog"
 )
 
 const (
@@ -47,6 +49,10 @@ var htmlVoidElement = MakeSet([]string{"area", "base", "br", "col", "embed", "hr
 type DataAdder func(gin.H, *gin.Context)
 type Redirecter func(*gin.Context) string
 type TemplateRedirecter func(gin.H, *gin.Context) (string, string)
+
+type LoggerGetter interface {
+	Logger(context.Context) *slog.Logger
+}
 
 func GetCurrentUrl(c *gin.Context) string {
 	path := c.Request.URL.Path

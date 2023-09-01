@@ -30,9 +30,12 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-const imageName = "Image"
+const (
+	imageKey   = "Image"
+	imageIdKey = "pathData/ImageId"
+)
 
-func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service galleryservice.GalleryService, defaultPageSize uint64, args ...string) {
+func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service galleryservice.GalleryService, defaultPageSize uint64, args ...string) {
 	viewTmpl := "gallery/view"
 	editTmpl := "gallery/edit"
 	switch len(args) {
@@ -51,11 +54,11 @@ func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service ga
 	case 0:
 	}
 
-	w := conf.CreateWidget("gallery")
+	w := manager.CreateWidget("gallery")
 	w.AddActionWithQuery("list", remoteservice.KIND_GET, "/", widgethelper.GetPaginationNames(), func(ctx context.Context, data gin.H) (string, string, []byte, error) {
 		pageNumber, start, end, _ := widgethelper.GetPagination(defaultPageSize, data)
 
-		galleryId, err := widgethelper.AsUint64(data["objectId"])
+		galleryId, err := widgethelper.AsUint64(data[remoteservice.ObjectIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -75,7 +78,7 @@ func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service ga
 		return "", viewTmpl, resData, nil
 	})
 	w.AddAction("retrieve", remoteservice.KIND_RAW, "/retrieve/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		imageId, err := widgethelper.AsUint64(data["pathData/ImageId"])
+		imageId, err := widgethelper.AsUint64(data[imageIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -93,7 +96,7 @@ func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service ga
 		}
 
 		newData := gin.H{}
-		newData[imageName] = galleryservice.GalleryImage{Title: "new"}
+		newData[imageKey] = galleryservice.GalleryImage{Title: "new"}
 		newData[common.BaseUrlName] = baseUrl
 		resData, err := json.Marshal(newData)
 		if err != nil {
@@ -102,7 +105,7 @@ func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service ga
 		return "", editTmpl, resData, nil
 	})
 	w.AddAction("edit", remoteservice.KIND_GET, "/edit/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		imageId, err := widgethelper.AsUint64(data["pathData/ImageId"])
+		imageId, err := widgethelper.AsUint64(data[imageIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -118,7 +121,7 @@ func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service ga
 		}
 
 		newData := gin.H{}
-		newData[imageName] = image
+		newData[imageKey] = image
 		newData[common.BaseUrlName] = baseUrl
 		resData, err := json.Marshal(newData)
 		if err != nil {
@@ -182,7 +185,7 @@ func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service ga
 		return listUrl, "", nil, nil
 	})
 	w.AddAction("delete", remoteservice.KIND_POST, "/delete/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		imageId, err := widgethelper.AsUint64(data["pathData/ImageId"])
+		imageId, err := widgethelper.AsUint64(data[imageIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
