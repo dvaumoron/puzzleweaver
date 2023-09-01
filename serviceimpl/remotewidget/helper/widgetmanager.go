@@ -57,22 +57,17 @@ func (w Widget) AddActionWithQuery(actionName string, kind uint8, path string, q
 	w[actionName] = Action{Kind: kind, Path: path, QueryNames: queryNames, Handler: handler}
 }
 
-type WidgetConf struct {
+type WidgetManager map[string]Widget
+
+func NewManager() WidgetManager {
+	return WidgetManager{}
 }
 
-type InitializedWidgetConf struct {
-	Widgets map[string]Widget
-}
-
-func InitWidgetConf(conf *WidgetConf) InitializedWidgetConf {
-	return InitializedWidgetConf{Widgets: map[string]Widget{}}
-}
-
-func (conf InitializedWidgetConf) CreateWidget(widgetName string) Widget {
-	widget, ok := conf.Widgets[widgetName]
+func (manager WidgetManager) CreateWidget(widgetName string) Widget {
+	widget, ok := manager[widgetName]
 	if !ok {
 		widget = Widget{}
-		conf.Widgets[widgetName] = widget
+		manager[widgetName] = widget
 	}
 	return widget
 }

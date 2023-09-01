@@ -32,7 +32,7 @@ import (
 
 const imageName = "Image"
 
-func InitWidget(conf widgethelper.InitializedWidgetConf, logger *slog.Logger, service galleryservice.GalleryService, defaultPageSize uint64, args ...string) {
+func InitWidget(conf widgethelper.WidgetManager, logger *slog.Logger, service galleryservice.GalleryService, defaultPageSize uint64, args ...string) {
 	viewTmpl := "gallery/view"
 	editTmpl := "gallery/edit"
 	switch len(args) {

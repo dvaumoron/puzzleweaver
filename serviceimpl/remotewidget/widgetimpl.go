@@ -37,17 +37,17 @@ type RemoteWidgetService remoteservice.RemoteWidgetService
 
 type remoteWidgetImpl struct {
 	weaver.Implements[RemoteWidgetService]
-	weaver.WithConfig[widgethelper.WidgetConf]
-	initializedConf widgethelper.InitializedWidgetConf
+	weaver.WithConfig[widgetConf]
+	initializedConf initializedWidgetConf
 }
 
 func (impl *remoteWidgetImpl) Init(ctx context.Context) error {
-	impl.initializedConf = widgethelper.InitWidgetConf(impl.Config())
+	impl.initializedConf = initWidgetConf(impl, impl.Logger(ctx), impl.Config())
 	return nil
 }
 
 func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, widgetName string) ([]remoteservice.RawWidgetAction, error) {
-	widget, ok := impl.initializedConf.Widgets[widgetName]
+	widget, ok := impl.initializedConf.widgets[widgetName]
 	if !ok {
 		impl.Logger(ctx).Error(widgetNotFoundErrorMsg, widgetNameKey, widgetName)
 		return nil, servicecommon.ErrInternal
@@ -56,7 +56,7 @@ func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, widgetName string) ([
 }
 
 func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, actionName string, files map[string][]byte) (string, string, []byte, error) {
-	widget, ok := impl.initializedConf.Widgets[widgetName]
+	widget, ok := impl.initializedConf.widgets[widgetName]
 	if !ok {
 		impl.Logger(ctx).Error(widgetNotFoundErrorMsg, widgetNameKey, widgetName)
 		return "", "", nil, servicecommon.ErrInternal
