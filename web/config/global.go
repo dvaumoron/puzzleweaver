@@ -125,7 +125,7 @@ func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logg
 	}
 	defaultPicture, err := afero.ReadFile(baseFS, defaultPicturePath)
 	if err != nil {
-		logger.Error("Can not read", "defaultPicturePath", defaultPicturePath, common.ErrorKey, err)
+		return nil, err
 	}
 
 	loginServiceWrapper := loginclient.MakeLoginServiceWrapper(
