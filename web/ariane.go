@@ -123,7 +123,7 @@ func initData(c *gin.Context) gin.H {
 		common.UrlName:  currentUrl,
 		"Ariane":        buildAriane(path),
 		"SubPages":      page.extractSubPageNames(currentUrl, c),
-		errorMsgName:    c.Query("error"),
+		errorMsgName:    c.Query(common.ErrorKey),
 	}
 	escapedUrl := url.QueryEscape(c.Request.URL.Path)
 	if localesManager.GetMultipleLang() {

@@ -33,11 +33,6 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-const (
-	pathKeySlash  = "pathData/"
-	queryKeySlash = "queryData/"
-)
-
 const initMsg = "Failed to init remote widget"
 
 type handlerDesc struct {
@@ -113,7 +108,7 @@ func extractKeysFromPath(path string) [][2]string {
 	for _, part := range splitted {
 		if len(part) != 0 && part[0] == ':' {
 			key := part[1:]
-			keys = append(keys, [2]string{pathKeySlash + key, key})
+			keys = append(keys, [2]string{remoteservice.PathKeySlash + key, key})
 		}
 	}
 	return keys
@@ -124,7 +119,7 @@ func extractQueryKeys(names []string) [][2]string {
 	for _, name := range names {
 		key := strings.TrimSpace(name)
 		if len(key) != 0 {
-			keys = append(keys, [2]string{queryKeySlash + key, key})
+			keys = append(keys, [2]string{remoteservice.QueryKeySlash + key, key})
 		}
 	}
 	return keys

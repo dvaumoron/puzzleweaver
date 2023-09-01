@@ -27,6 +27,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	pageNumberKey      = "pageNumber"
+	pageSizeKey        = "pageSize"
+	filterKey          = "filter"
+	queryPageNumberKey = remoteservice.QueryKeySlash + pageNumberKey
+	queryPageSizeKey   = remoteservice.QueryKeySlash + pageSizeKey
+	queryFilterKey     = remoteservice.QueryKeySlash + filterKey
+)
+
 var (
 	errNotInt    = errors.New("value can not be transformed to int")
 	errNotFloat  = errors.New("value can not be transformed to float")
@@ -196,19 +205,19 @@ func GetCurrentUserId(data gin.H) (uint64, error) {
 }
 
 func GetPaginationNames() []string {
-	return []string{"pageNumber", "pageSize", "filter"}
+	return []string{pageNumberKey, pageSizeKey, filterKey}
 }
 
 func GetPagination(defaultPageSize uint64, data gin.H) (uint64, uint64, uint64, string) {
-	pageNumber, _ := AsUint64(data["queryData/pageNumber"])
+	pageNumber, _ := AsUint64(data[queryPageNumberKey])
 	if pageNumber == 0 {
 		pageNumber = 1
 	}
-	pageSize, _ := AsUint64(data["queryData/pageSize"])
+	pageSize, _ := AsUint64(data[queryPageSizeKey])
 	if pageSize == 0 {
 		pageSize = defaultPageSize
 	}
-	filter, _ := AsString(data["queryData/filter"])
+	filter, _ := AsString(data[queryFilterKey])
 
 	start := (pageNumber - 1) * pageSize
 	end := start + pageSize

@@ -31,8 +31,9 @@ import (
 )
 
 const (
-	imageKey   = "Image"
-	imageIdKey = "pathData/ImageId"
+	imageKey       = "Image"
+	imageIdKey     = "ImageId"
+	pathImageIdKey = remoteservice.PathKeySlash + imageIdKey
 )
 
 func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service galleryservice.GalleryService, defaultPageSize uint64, args ...string) {
@@ -78,7 +79,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		return "", viewTmpl, resData, nil
 	})
 	w.AddAction("retrieve", remoteservice.KIND_RAW, "/retrieve/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		imageId, err := widgethelper.AsUint64(data[imageIdKey])
+		imageId, err := widgethelper.AsUint64(data[pathImageIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -105,7 +106,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		return "", editTmpl, resData, nil
 	})
 	w.AddAction("edit", remoteservice.KIND_GET, "/edit/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		imageId, err := widgethelper.AsUint64(data[imageIdKey])
+		imageId, err := widgethelper.AsUint64(data[pathImageIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -153,7 +154,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 			return "", "", nil, err
 		}
 
-		imageId, err := widgethelper.AsUint64(formData["ImageId"])
+		imageId, err := widgethelper.AsUint64(formData[imageIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -185,7 +186,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		return listUrl, "", nil, nil
 	})
 	w.AddAction("delete", remoteservice.KIND_POST, "/delete/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		imageId, err := widgethelper.AsUint64(data[imageIdKey])
+		imageId, err := widgethelper.AsUint64(data[pathImageIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
