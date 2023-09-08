@@ -42,9 +42,6 @@ const commentMsgName = "CommentMsg"
 
 const parsingPostIdErrorMsg = "Failed to parse postId"
 
-// TODO move with displayable error in common
-var errEmptyComment = errors.New("EmptyComment")
-
 var errFeedFormat = errors.New("unrecognized feed format")
 
 // TODO draft with modify until publish ?
@@ -186,7 +183,7 @@ func MakeBlogPage(blogName string, logger *slog.Logger, blogConfig config.BlogCo
 			}
 			comment := c.PostForm("comment")
 
-			err = errEmptyComment
+			err = common.ErrEmptyComment
 			if comment != "" {
 				var post blogservice.BlogPost
 				post, err = blogService.GetPost(ctx, userId, postId)
