@@ -1,0 +1,12 @@
+[serviceweaver]
+name   = "PuzzleWeaver"
+binary = "./puzzleweaver"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/session/SessionService"]
+SessionTimeout = "time.Duration"
+RetryNumber    = 100
+RedisAddress   = ""
+RedisUser      = ""
+RedisPassword  = ""
+RedisDBNum     = 0
+Debug          = false
