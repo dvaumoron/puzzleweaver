@@ -1,6 +1,6 @@
 [serviceweaver]
 name   = "PuzzleWeaver"
-binary = "./puzzleweaver"
+binary = "../../../../bin/puzzleweaver"
 
 [single]
 listeners.listener = { address = "localhost:8080" }
@@ -9,7 +9,7 @@ listeners.listener = { address = "localhost:8080" }
 listeners.listener = { address = "localhost:8080" }
 
 ["github.com/dvaumoron/puzzleweaver/Main"]
-Domain             = ""
+Domain             = "localhost"
 AllLang            = ["fr-FR", "en-US"]
 SessionTimeOut     = "1200s"
 ServiceTimeOut     = "5s"
@@ -21,13 +21,13 @@ FeedFormat         = "rss"
 FeedSize           = 100
 
 FsConf           = { Kind = "local" }
-StaticPath       = "static"
-FaviconPath      = "static/favicon.ico"
+StaticPath       = "../puzzletest/static"
+FaviconPath      = "../puzzletest/static/favicon.ico"
 Page404Url       = "/notFound"
-LangPicturePaths = { "fr-FR" = "static/images/Flag_of_France.webp", "en-US" = "static/images/Flag_of_the_United_Kingdom.png" }
+LangPicturePaths = { "fr-FR" = "../puzzletest/static/images/Flag_of_France.webp", "en-US" = "../puzzletest/static/images/Flag_of_the_United_Kingdom.png" }
 
 ProfileGroupId            = 0
-ProfileDefaultPicturePath = "static/images/unknownuser.png"
+ProfileDefaultPicturePath = "../puzzletest/static/images/unknownuser.png"
 
 PageGroups = [{ Id = 0, Pages = ["about/", "about/faq"] }]
 WidgetPages = [
@@ -78,8 +78,8 @@ Debug          = false
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/templates/TemplateService"]
 AllLang        = ["fr-FR", "en-US"]
 FsConf         = { Kind = "local" }
-TemplatePath   = "templates"
-LocaleFilePath = "locales/messages_{{lang}}.properties"
+TemplatePath   = "../puzzletest/templatedata/templates"
+LocaleFilePath = "../puzzletest/templatedata/locales/messages_{{lang}}.properties"
 
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/settings/SettingsService"]
 MongoAddress      = "mongodb://localhost:27017"
@@ -89,7 +89,7 @@ MongoDatabaseName = "settingsDB"
 DefaultPassword = "Password@1234"
 AllLang         = ["fr-FR", "en-US"]
 FsConf          = { Kind = "local" }
-RuleFilePath    = "rules/rules_{{lang}}.txt"
+RuleFilePath    = "../puzzlepassstrengthserver/rules/rules_{{lang}}.txt"
 
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/salt/SaltService"]
 RedisAddress  = "localhost:6379"
@@ -106,7 +106,7 @@ DatabaseAddress = "host=localhost user=postgres dbname=logindb port=5432 sslmode
 DatabaseKind    = "postgres"
 DatabaseAddress = "host=localhost user=postgres dbname=rightdb port=5432 sslmode=disable"
 FsConf          = { Kind = "local" }
-OpaModulePath   = "auth_rule.rego"
+OpaModulePath   = "../puzzlerightserver/auth_rule.rego"
 
 PermissionGroups = [
     { id = 2, name = "wikiGroup1" },
