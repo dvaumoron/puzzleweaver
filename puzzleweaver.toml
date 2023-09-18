@@ -2,11 +2,136 @@
 name   = "PuzzleWeaver"
 binary = "./puzzleweaver"
 
+[single]
+listeners.listener = { address = "localhost:8080" }
+
+[multi]
+listeners.listener = { address = "localhost:8080" }
+
+["github.com/dvaumoron/puzzleweaver/Main"]
+Domain             = ""
+AllLang            = ["fr-FR", "en-US"]
+SessionTimeOut     = "1200s"
+ServiceTimeOut     = "5s"
+MaxMultipartMemory = 0
+DateFormat         = "2/1/2006 15:04:05"
+PageSize           = 3
+ExtractSize        = 200
+FeedFormat         = "rss"
+FeedSize           = 100
+
+FsConf           = { Kind = "local" }
+StaticPath       = "static"
+FaviconPath      = "static/favicon.ico"
+Page404Url       = "/notFound"
+LangPicturePaths = { "fr-FR" = "static/images/Flag_of_France.webp", "en-US" = "static/images/Flag_of_the_United_Kingdom.png" }
+
+ProfileGroupId            = 0
+ProfileDefaultPicturePath = "static/images/unknownuser.png"
+
+PageGroups = [{ Id = 0, Pages = ["about/", "about/faq"] }]
+WidgetPages = [
+    { emplacement = "about", name = "wiki", widgetRef = "wiki1" },
+    { emplacement = "about/faq", name = "wiki2", widgetRef = "wiki2" },
+    { name = "wiki3", widgetRef = "wiki3" },
+    { name = "blog", widgetRef = "blog" },
+    { name = "forum", widgetRef = "forum" },
+    { name = "gallery", widgetRef = "gallery" },
+]
+
+["github.com/dvaumoron/puzzleweaver/Main.Widgets.wiki1"]
+Kind     = "wiki"
+ObjectId = 1
+GroupId  = 2
+["github.com/dvaumoron/puzzleweaver/Main.Widgets.wiki2"]
+Kind      = "wiki"
+ObjectId  = 2
+GroupId   = 2
+Templates = ["Welcome", "wiki2/view", "wiki2/edit", "wiki2/list"]
+["github.com/dvaumoron/puzzleweaver/Main.Widgets.wiki3"]
+Kind     = "wiki"
+ObjectId = 3
+GroupId  = 3
+["github.com/dvaumoron/puzzleweaver/Main.Widgets.blog"]
+Kind     = "blog"
+ObjectId = 4
+GroupId  = 4
+["github.com/dvaumoron/puzzleweaver/Main.Widgets.forum"]
+Kind     = "forum"
+ObjectId = 5
+GroupId  = 5
+["github.com/dvaumoron/puzzleweaver/Main.Widgets.gallery"]
+Kind       = "remote"
+WidgetName = "gallery"
+ObjectId   = 6
+GroupId    = 0
+
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/session/SessionService"]
-SessionTimeout = "time.Duration"
+SessionTimeout = "1260s"
 RetryNumber    = 100
-RedisAddress   = ""
+RedisAddress   = "localhost:6379"
 RedisUser      = ""
 RedisPassword  = ""
 RedisDBNum     = 0
 Debug          = false
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/templates/TemplateService"]
+AllLang        = ["fr-FR", "en-US"]
+FsConf         = { Kind = "local" }
+TemplatePath   = "templates"
+LocaleFilePath = "locales/messages_{{lang}}.properties"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/settings/SettingsService"]
+MongoAddress      = "mongodb://localhost:27017"
+MongoDatabaseName = "settingsDB"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength/PasswordStrengthService"]
+DefaultPassword = "Password@1234"
+AllLang         = ["fr-FR", "en-US"]
+FsConf          = { Kind = "local" }
+RuleFilePath    = "rules/rules_{{lang}}.txt"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/salt/SaltService"]
+RedisAddress  = "localhost:6379"
+RedisUser     = ""
+RedisPassword = ""
+RedisDBNum    = 2
+SaltLen       = 64
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/login/RemoteLoginService"]
+DatabaseKind    = "postgres"
+DatabaseAddress = "host=localhost user=postgres dbname=logindb port=5432 sslmode=disable"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/admin/AdminService"]
+DatabaseKind    = "postgres"
+DatabaseAddress = "host=localhost user=postgres dbname=rightdb port=5432 sslmode=disable"
+FsConf          = { Kind = "local" }
+OpaModulePath   = "auth_rule.rego"
+
+PermissionGroups = [
+    { id = 2, name = "wikiGroup1" },
+    { id = 3, name = "wikiGroup2" },
+    { id = 4, name = "blogGroup" },
+    { id = 5, name = "forumGroup" },
+]
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/profile/RemoteProfileService"]
+MongoAddress      = "mongodb://localhost:27017"
+MongoDatabaseName = "profilesDB"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/forum/RemoteForumService"]
+DatabaseKind    = "postgres"
+DatabaseAddress = "host=localhost user=postgres dbname=forumdb port=5432 sslmode=disable"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/blog/RemoteBlogService"]
+MongoAddress      = "mongodb://localhost:27017"
+MongoDatabaseName = "blogsDB"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/wiki/RemoteWikiService"]
+MongoAddress      = "mongodb://localhost:27017"
+MongoDatabaseName = "wikisDB"
+
+["github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/RemoteWidgetService"]
+GalleryMongoAddress      = "mongodb://localhost:27017"
+GalleryMongoDatabaseName = "galleriesDB"
+DefaultPageSize          = 2

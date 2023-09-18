@@ -39,10 +39,6 @@ import (
 
 const WebKey = "puzzleWeaver"
 
-const defaultName = "default"
-const defaultSessionTimeOut = 1200
-const defaultServiceTimeOut = 5 * time.Second
-
 const DefaultFavicon = "/favicon.ico"
 
 type GlobalConfig struct {
@@ -119,11 +115,7 @@ func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logg
 	}
 
 	// read default picture file
-	defaultPicturePath := conf.ProfileDefaultPicturePath
-	if defaultPicturePath == "" {
-		defaultPicturePath = conf.StaticPath + "/images/unknownuser.png"
-	}
-	defaultPicture, err := afero.ReadFile(baseFS, defaultPicturePath)
+	defaultPicture, err := afero.ReadFile(baseFS, conf.ProfileDefaultPicturePath)
 	if err != nil {
 		return nil, err
 	}

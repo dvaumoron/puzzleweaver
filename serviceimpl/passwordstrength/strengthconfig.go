@@ -32,6 +32,7 @@ type strengthConf struct {
 	DefaultPassword string
 	AllLang         []string
 	FsConf          fsclient.FsConf
+	RuleFilePath    string
 }
 
 type initializedStrengthConf struct {
@@ -62,13 +63,8 @@ func readRulesConfig(logger *slog.Logger, fileSystem afero.Fs, conf *strengthCon
 
 	localizedRules := make(map[string]string, len(conf.AllLang))
 	for _, lang := range conf.AllLang {
-		lang = strings.TrimSpace(lang)
-
-		var pathBuilder strings.Builder
-		pathBuilder.WriteString("rules/rules_")
-		pathBuilder.WriteString(lang)
-		pathBuilder.WriteString(".txt")
-		content, err := afero.ReadFile(fileSystem, pathBuilder.String())
+		path := strings.ReplaceAll(conf.RuleFilePath, servicecommon.LangPlaceHolder, lang)
+		content, err := afero.ReadFile(fileSystem, path)
 		if err == nil {
 			localizedRules[lang] = strings.TrimSpace(string(content))
 		} else {

@@ -20,10 +20,16 @@ package servicecommon
 
 import "errors"
 
-const DBAccessMsg = "Failed to access database"
-const MongoCallMsg = "Failed during MongoDB call"
-const RedisCallMsg = "Failed during Redis call"
+const (
+	DBAccessMsg  = "Failed to access database"
+	MongoCallMsg = "Failed during MongoDB call"
+	RedisCallMsg = "Failed during Redis call"
+)
 
-var ErrInternal = errors.New("internal service error")
-var ErrNolocales = errors.New("no locales declared")
-var ErrPictureNotFound = errors.New("picture not found")
+const LangPlaceHolder = "{{lang}}"
+
+var (
+	ErrInternal        = errors.New("internal service error")
+	ErrNolocales       = errors.New("no locales declared")
+	ErrPictureNotFound = errors.New("picture not found")
+)

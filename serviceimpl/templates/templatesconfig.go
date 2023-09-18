@@ -30,10 +30,10 @@ import (
 )
 
 type templateConf struct {
-	AllLang      []string
-	FsConf       fsclient.FsConf
-	TemplatePath string
-	LocalesPath  string
+	AllLang        []string
+	FsConf         fsclient.FsConf
+	TemplatePath   string
+	LocaleFilePath string
 }
 
 type initializedTemplateConf struct {
@@ -84,19 +84,13 @@ func loadLocales(fileSystem afero.Fs, conf *templateConf) (map[string]map[string
 		return nil, servicecommon.ErrNolocales
 	}
 
-	localesPath := cleanPath(conf.LocalesPath)
 	messages := make(map[string]map[string]string, len(conf.AllLang))
 	for _, lang := range conf.AllLang {
 		messagesLang := map[string]string{}
 		messages[lang] = messagesLang
 
-		var pathBuilder strings.Builder
-		pathBuilder.WriteString(localesPath)
-		pathBuilder.WriteString("/messages_")
-		pathBuilder.WriteString(lang)
-		pathBuilder.WriteString(".properties")
-
-		if err := parseFile(fileSystem, pathBuilder.String(), messagesLang); err != nil {
+		path := strings.ReplaceAll(conf.LocaleFilePath, servicecommon.LangPlaceHolder, lang)
+		if err := parseFile(fileSystem, path, messagesLang); err != nil {
 			return nil, err
 		}
 	}
