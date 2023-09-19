@@ -20,6 +20,7 @@ package mongoclient
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/dvaumoron/puzzleweaver/web/common"
@@ -28,7 +29,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
-	"golang.org/x/exp/slog"
 )
 
 func New(serverAddress string) *options.ClientOptions {

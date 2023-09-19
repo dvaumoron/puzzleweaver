@@ -16,24 +16,11 @@
  *
  */
 
-package redisclient
+package settingsimpl
 
-import (
-	"log/slog"
+import "context"
 
-	"github.com/redis/go-redis/extra/redisotel/v9"
-	"github.com/redis/go-redis/v9"
-)
-
-func New(logger *slog.Logger, options *redis.Options) (*redis.Client, error) {
-	rdb := redis.NewClient(options)
-
-	// Enable tracing instrumentation.
-	if err := redisotel.InstrumentTracing(rdb); err != nil {
-		return nil, err
-	}
-
-	// Enable metrics instrumentation.
-	err := redisotel.InstrumentMetrics(rdb)
-	return rdb, err
+type SettingsService interface {
+	Get(ctx context.Context, id uint64) (map[string]string, error)
+	Update(ctx context.Context, id uint64, info map[string]string) error
 }

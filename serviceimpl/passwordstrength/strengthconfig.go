@@ -19,13 +19,13 @@
 package passwordstrengthimpl
 
 import (
+	"log/slog"
 	"strings"
 
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/spf13/afero"
 	passwordvalidator "github.com/wagslane/go-password-validator"
-	"golang.org/x/exp/slog"
 )
 
 type strengthConf struct {

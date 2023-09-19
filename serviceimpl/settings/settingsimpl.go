@@ -25,7 +25,6 @@ import (
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -38,8 +37,6 @@ const settingsKey = collectionName // currently the same
 
 var optsOnlySettingsField = options.FindOne().SetProjection(bson.D{{Key: settingsKey, Value: true}})
 var optsCreateUnexisting = options.Replace().SetUpsert(true)
-
-type SettingsService service.SettingsService
 
 type settingsImpl struct {
 	weaver.Implements[SettingsService]

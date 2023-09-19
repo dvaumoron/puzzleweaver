@@ -24,7 +24,6 @@ import (
 	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	"github.com/dvaumoron/puzzleweaver/serviceimpl/admin/model"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/spf13/afero"
 	"gorm.io/gorm"
@@ -91,14 +90,14 @@ func readRule(ctx context.Context, fileSystem afero.Fs, modulePath string) (rego
 
 func initMapping(permissionGroups []permissionGroup) (map[uint64]string, map[string]uint64, []uint64) {
 	groupIdToName := map[uint64]string{
-		service.PublicGroupId: service.PublicName, service.AdminGroupId: service.AdminName,
+		PublicGroupId: PublicName, AdminGroupId: AdminName,
 	}
 	nameToGroupId := map[string]uint64{
-		service.PublicName: service.PublicGroupId, service.AdminName: service.AdminGroupId,
+		PublicName: PublicGroupId, AdminName: AdminGroupId,
 	}
 
 	groupIds := make([]uint64, 0, len(permissionGroups)+2)
-	groupIds = append(groupIds, service.PublicGroupId, service.AdminGroupId)
+	groupIds = append(groupIds, PublicGroupId, AdminGroupId)
 	for _, idName := range permissionGroups {
 		groupIdToName[idName.Id] = idName.Name
 		nameToGroupId[idName.Name] = idName.Id

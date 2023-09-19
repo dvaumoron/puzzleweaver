@@ -16,7 +16,7 @@
  *
  */
 
-package remoteservice
+package blogimpl
 
 import (
 	"context"
@@ -55,37 +55,6 @@ type RemoteForumService interface {
 	GetThreads(ctx context.Context, objectId uint64, start uint64, end uint64, filter string) (uint64, []RawForumContent, error)
 	DeleteThread(ctx context.Context, containerId uint64, id uint64) error
 	DeleteMessage(ctx context.Context, containerId uint64, id uint64) error
-}
-
-type RawUser struct {
-	weaver.AutoMarshal
-	Id          uint64
-	Login       string
-	RegistredAt int64
-}
-
-type RemoteLoginService interface {
-	GetUsers(ctx context.Context, userIds []uint64) (map[uint64]RawUser, error)
-	ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []RawUser, error)
-	Delete(ctx context.Context, userId uint64) error
-	Verify(ctx context.Context, login string, salted string) (uint64, error)
-	Register(ctx context.Context, login string, salted string) (uint64, error)
-	ChangeLogin(ctx context.Context, userId uint64, newLogin string, oldSalted string, newSalted string) error
-	ChangePassword(ctx context.Context, userId uint64, oldSalted string, newSalted string) error
-}
-
-type RawUserProfile struct {
-	weaver.AutoMarshal
-	Desc string
-	Info map[string]string
-}
-
-type RemoteProfileService interface {
-	GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]RawUserProfile, error)
-	GetPicture(ctx context.Context, userId uint64) ([]byte, error)
-	UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error
-	UpdatePicture(ctx context.Context, userId uint64, data []byte) error
-	Delete(ctx context.Context, userId uint64) error
 }
 
 type RawWikiContent struct {

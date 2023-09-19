@@ -16,24 +16,11 @@
  *
  */
 
-package redisclient
+package passwordstrengthimpl
 
-import (
-	"log/slog"
+import "context"
 
-	"github.com/redis/go-redis/extra/redisotel/v9"
-	"github.com/redis/go-redis/v9"
-)
-
-func New(logger *slog.Logger, options *redis.Options) (*redis.Client, error) {
-	rdb := redis.NewClient(options)
-
-	// Enable tracing instrumentation.
-	if err := redisotel.InstrumentTracing(rdb); err != nil {
-		return nil, err
-	}
-
-	// Enable metrics instrumentation.
-	err := redisotel.InstrumentMetrics(rdb)
-	return rdb, err
+type PasswordStrengthService interface {
+	Validate(ctx context.Context, password string) error
+	GetRules(ctx context.Context, lang string) (string, error)
 }

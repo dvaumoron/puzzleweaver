@@ -19,11 +19,11 @@
 package locale
 
 import (
+	"log/slog"
 	"unicode"
 
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 	"golang.org/x/text/language"
 )
 

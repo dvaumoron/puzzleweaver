@@ -22,6 +22,7 @@ import (
 	"context"
 	"sync"
 
+	markdownimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/markdown"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
@@ -33,7 +34,7 @@ type WikiContent struct {
 }
 
 // Lazy loading for markdown application on body.
-func (content *WikiContent) GetBody(ctx context.Context, markdownService service.MarkdownService) (string, error) {
+func (content *WikiContent) GetBody(ctx context.Context, markdownService markdownimpl.MarkdownService) (string, error) {
 	content.bodyMutex.RLock()
 	body := content.body
 	content.bodyMutex.RUnlock()

@@ -16,7 +16,7 @@
  *
  */
 
-package remoteservice
+package remotewidgetservice
 
 import (
 	"context"

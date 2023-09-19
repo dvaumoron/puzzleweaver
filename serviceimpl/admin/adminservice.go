@@ -16,7 +16,7 @@
  *
  */
 
-package service
+package adminimpl
 
 import (
 	"context"

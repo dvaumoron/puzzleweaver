@@ -21,19 +21,19 @@ package gallerywidget
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	galleryservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service"
 	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 )
 
 const (
 	imageKey       = "Image"
 	imageIdKey     = "ImageId"
-	pathImageIdKey = remoteservice.PathKeySlash + imageIdKey
+	pathImageIdKey = remotewidgetservice.PathKeySlash + imageIdKey
 )
 
 func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service galleryservice.GalleryService, defaultPageSize uint64, args ...string) {
@@ -56,10 +56,10 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 	}
 
 	w := manager.CreateWidget("gallery")
-	w.AddActionWithQuery("list", remoteservice.KIND_GET, "/", widgethelper.GetPaginationNames(), func(ctx context.Context, data gin.H) (string, string, []byte, error) {
+	w.AddActionWithQuery("list", remotewidgetservice.KIND_GET, "/", widgethelper.GetPaginationNames(), func(ctx context.Context, data gin.H) (string, string, []byte, error) {
 		pageNumber, start, end, _ := widgethelper.GetPagination(defaultPageSize, data)
 
-		galleryId, err := widgethelper.AsUint64(data[remoteservice.ObjectIdKey])
+		galleryId, err := widgethelper.AsUint64(data[remotewidgetservice.ObjectIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -78,7 +78,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		}
 		return "", viewTmpl, resData, nil
 	})
-	w.AddAction("retrieve", remoteservice.KIND_RAW, "/retrieve/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
+	w.AddAction("retrieve", remotewidgetservice.KIND_RAW, "/retrieve/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
 		imageId, err := widgethelper.AsUint64(data[pathImageIdKey])
 		if err != nil {
 			return "", "", nil, err
@@ -90,7 +90,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		}
 		return "", "", image, nil
 	})
-	w.AddAction("create", remoteservice.KIND_GET, "/create", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
+	w.AddAction("create", remotewidgetservice.KIND_GET, "/create", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
 		baseUrl, err := widgethelper.GetBaseUrl(1, data)
 		if err != nil {
 			return "", "", nil, err
@@ -105,7 +105,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		}
 		return "", editTmpl, resData, nil
 	})
-	w.AddAction("edit", remoteservice.KIND_GET, "/edit/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
+	w.AddAction("edit", remotewidgetservice.KIND_GET, "/edit/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
 		imageId, err := widgethelper.AsUint64(data[pathImageIdKey])
 		if err != nil {
 			return "", "", nil, err
@@ -130,8 +130,8 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		}
 		return "", editTmpl, resData, nil
 	})
-	w.AddAction("save", remoteservice.KIND_POST, "/save", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		galleryId, err := widgethelper.AsUint64(data[remoteservice.ObjectIdKey])
+	w.AddAction("save", remotewidgetservice.KIND_POST, "/save", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
+		galleryId, err := widgethelper.AsUint64(data[remotewidgetservice.ObjectIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -185,7 +185,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		}
 		return listUrl, "", nil, nil
 	})
-	w.AddAction("delete", remoteservice.KIND_POST, "/delete/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
+	w.AddAction("delete", remotewidgetservice.KIND_POST, "/delete/:ImageId", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
 		imageId, err := widgethelper.AsUint64(data[pathImageIdKey])
 		if err != nil {
 			return "", "", nil, err

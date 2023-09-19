@@ -16,24 +16,24 @@
  *
  */
 
-package redisclient
+package profileimpl
 
 import (
-	"log/slog"
+	"context"
 
-	"github.com/redis/go-redis/extra/redisotel/v9"
-	"github.com/redis/go-redis/v9"
+	"github.com/ServiceWeaver/weaver"
 )
 
-func New(logger *slog.Logger, options *redis.Options) (*redis.Client, error) {
-	rdb := redis.NewClient(options)
+type RawUserProfile struct {
+	weaver.AutoMarshal
+	Desc string
+	Info map[string]string
+}
 
-	// Enable tracing instrumentation.
-	if err := redisotel.InstrumentTracing(rdb); err != nil {
-		return nil, err
-	}
-
-	// Enable metrics instrumentation.
-	err := redisotel.InstrumentMetrics(rdb)
-	return rdb, err
+type RemoteProfileService interface {
+	GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]RawUserProfile, error)
+	GetPicture(ctx context.Context, userId uint64) ([]byte, error)
+	UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error
+	UpdatePicture(ctx context.Context, userId uint64, data []byte) error
+	Delete(ctx context.Context, userId uint64) error
 }

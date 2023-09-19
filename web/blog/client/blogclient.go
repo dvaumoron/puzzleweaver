@@ -24,15 +24,16 @@ import (
 	"slices"
 	"time"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
+	blogimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/blog"
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
 type blogServiceWrapper struct {
-	blogService    remoteservice.RemoteBlogService
-	authService    service.AuthService
+	blogService    blogimpl.RemoteBlogService
+	authService    adminimpl.AuthService
 	profileService service.ProfileService
 	loggerGetter   common.LoggerGetter
 	blogId         uint64
@@ -40,19 +41,19 @@ type blogServiceWrapper struct {
 	dateFormat     string
 }
 
-func MakeBlogServiceWrapper(blogService remoteservice.RemoteBlogService, authService service.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, blogId uint64, groupId uint64, dateFormat string) blogservice.BlogService {
+func MakeBlogServiceWrapper(blogService blogimpl.RemoteBlogService, authService adminimpl.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, blogId uint64, groupId uint64, dateFormat string) blogservice.BlogService {
 	return blogServiceWrapper{
 		blogService: blogService, authService: authService, profileService: profileService,
 		loggerGetter: loggerGetter, blogId: blogId, groupId: groupId, dateFormat: dateFormat,
 	}
 }
 
-func cmpDesc(a remoteservice.RawBlogPost, b remoteservice.RawBlogPost) int {
+func cmpDesc(a blogimpl.RawBlogPost, b blogimpl.RawBlogPost) int {
 	return -cmp.Compare(a.CreatedAt, b.CreatedAt)
 }
 
 func (client blogServiceWrapper) CreatePost(ctx context.Context, userId uint64, title string, content string) (uint64, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionCreate)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionCreate)
 	if err != nil {
 		return 0, err
 	}
@@ -60,7 +61,7 @@ func (client blogServiceWrapper) CreatePost(ctx context.Context, userId uint64, 
 }
 
 func (client blogServiceWrapper) GetPost(ctx context.Context, userId uint64, postId uint64) (blogservice.BlogPost, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return blogservice.BlogPost{}, err
 	}
@@ -79,7 +80,7 @@ func (client blogServiceWrapper) GetPost(ctx context.Context, userId uint64, pos
 }
 
 func (client blogServiceWrapper) GetPosts(ctx context.Context, userId uint64, start uint64, end uint64, filter string) (uint64, []blogservice.BlogPost, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -110,7 +111,7 @@ func (client blogServiceWrapper) GetPosts(ctx context.Context, userId uint64, st
 }
 
 func (client blogServiceWrapper) DeletePost(ctx context.Context, userId uint64, postId uint64) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionDelete)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete)
 	if err != nil {
 		return err
 	}
@@ -118,14 +119,14 @@ func (client blogServiceWrapper) DeletePost(ctx context.Context, userId uint64, 
 }
 
 func (client blogServiceWrapper) CreateRight(ctx context.Context, userId uint64) bool {
-	return client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionCreate) == nil
+	return client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionCreate) == nil
 }
 
 func (client blogServiceWrapper) DeleteRight(ctx context.Context, userId uint64) bool {
-	return client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionDelete) == nil
+	return client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete) == nil
 }
 
-func convertPost(post remoteservice.RawBlogPost, creator service.UserProfile, dateFormat string) blogservice.BlogPost {
+func convertPost(post blogimpl.RawBlogPost, creator service.UserProfile, dateFormat string) blogservice.BlogPost {
 	createdAt := time.Unix(post.CreatedAt, 0)
 	return blogservice.BlogPost{
 		PostId: post.Id, Creator: creator, Date: createdAt.Format(dateFormat), Title: post.Title, Content: post.Content,

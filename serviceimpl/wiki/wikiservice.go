@@ -16,24 +16,25 @@
  *
  */
 
-package redisclient
+package wikiimpl
 
 import (
-	"log/slog"
+	"context"
 
-	"github.com/redis/go-redis/extra/redisotel/v9"
-	"github.com/redis/go-redis/v9"
+	"github.com/ServiceWeaver/weaver"
 )
 
-func New(logger *slog.Logger, options *redis.Options) (*redis.Client, error) {
-	rdb := redis.NewClient(options)
+type RawWikiContent struct {
+	weaver.AutoMarshal
+	Version   uint64
+	CreatorId uint64
+	CreatedAt int64
+	Markdown  string
+}
 
-	// Enable tracing instrumentation.
-	if err := redisotel.InstrumentTracing(rdb); err != nil {
-		return nil, err
-	}
-
-	// Enable metrics instrumentation.
-	err := redisotel.InstrumentMetrics(rdb)
-	return rdb, err
+type RemoteWikiService interface {
+	Load(ctx context.Context, wikiId uint64, wikiRef string, version uint64) (RawWikiContent, error)
+	Store(ctx context.Context, wikiId uint64, userId uint64, wikiRef string, last uint64, markdown string) error
+	GetVersions(ctx context.Context, wikiId uint64, wikiRef string) ([]RawWikiContent, error)
+	Delete(ctx context.Context, wikiId uint64, wikiRef string, version uint64) error
 }

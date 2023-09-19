@@ -24,14 +24,11 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/serviceimpl/login/model"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"gorm.io/gorm"
 )
-
-type RemoteLoginService remoteservice.RemoteLoginService
 
 type loginImpl struct {
 	weaver.Implements[RemoteLoginService]
@@ -86,7 +83,7 @@ func (impl *loginImpl) Register(ctx context.Context, login string, salted string
 	return user.ID, nil
 }
 
-func (impl *loginImpl) GetUsers(ctx context.Context, userIds []uint64) (map[uint64]remoteservice.RawUser, error) {
+func (impl *loginImpl) GetUsers(ctx context.Context, userIds []uint64) (map[uint64]RawUser, error) {
 	var users []model.User
 	if err := impl.initializedConf.db.Find(&users, "id IN ?", userIds).Error; err != nil {
 		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
@@ -156,7 +153,7 @@ func (impl *loginImpl) ChangePassword(ctx context.Context, userId uint64, oldSal
 	return nil
 }
 
-func (impl *loginImpl) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []remoteservice.RawUser, error) {
+func (impl *loginImpl) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []RawUser, error) {
 	noFilter := filter == ""
 
 	userRequest := impl.initializedConf.db.Model(&model.User{})
@@ -197,18 +194,18 @@ func (impl *loginImpl) Delete(ctx context.Context, userId uint64) error {
 	return nil
 }
 
-func convertUsersFromModel(users []model.User) []remoteservice.RawUser {
-	resUsers := make([]remoteservice.RawUser, len(users))
+func convertUsersFromModel(users []model.User) []RawUser {
+	resUsers := make([]RawUser, len(users))
 	for _, user := range users {
-		resUsers = append(resUsers, remoteservice.RawUser{Id: user.ID, Login: user.Login, RegistredAt: user.CreatedAt.Unix()})
+		resUsers = append(resUsers, RawUser{Id: user.ID, Login: user.Login, RegistredAt: user.CreatedAt.Unix()})
 	}
 	return resUsers
 }
 
-func convertUsersMapFromModel(users []model.User) map[uint64]remoteservice.RawUser {
-	resUsers := make(map[uint64]remoteservice.RawUser, len(users))
+func convertUsersMapFromModel(users []model.User) map[uint64]RawUser {
+	resUsers := make(map[uint64]RawUser, len(users))
 	for _, user := range users {
-		resUsers[user.ID] = remoteservice.RawUser{Id: user.ID, Login: user.Login, RegistredAt: user.CreatedAt.Unix()}
+		resUsers[user.ID] = RawUser{Id: user.ID, Login: user.Login, RegistredAt: user.CreatedAt.Unix()}
 	}
 	return resUsers
 }

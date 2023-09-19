@@ -19,14 +19,14 @@
 package web
 
 import (
+	"log/slog"
 	"net/url"
 	"strings"
 
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 )
 
 const errorMsgName = "ErrorMsg"
@@ -141,7 +141,7 @@ func initData(c *gin.Context) gin.H {
 		data[loginUrlName] = "/login/logout?Redirect=" + escapedUrl
 	}
 	data[viewAdminName] = site.authService.AuthQuery(
-		ctx, currentUserId, service.AdminGroupId, service.ActionAccess,
+		ctx, currentUserId, adminimpl.AdminGroupId, adminimpl.ActionAccess,
 	) == nil
 	for _, adder := range site.adders {
 		adder(data, c)

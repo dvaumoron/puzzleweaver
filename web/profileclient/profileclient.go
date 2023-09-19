@@ -21,22 +21,23 @@ package profileclient
 import (
 	"context"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
+	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
 
 type profileServiceWrapper struct {
-	profileService remoteservice.RemoteProfileService
+	profileService profileimpl.RemoteProfileService
 	userService    service.UserService
-	authService    service.AuthService
+	authService    adminimpl.AuthService
 	loggerGetter   common.LoggerGetter
 	groupId        uint64
 	defaultPicture []byte
 }
 
-func MakeProfileServiceWrapper(profileService remoteservice.RemoteProfileService, userService service.UserService, authService service.AuthService, loggerGetter common.LoggerGetter, groupId uint64, defaultPicture []byte) service.ProfileService {
+func MakeProfileServiceWrapper(profileService profileimpl.RemoteProfileService, userService service.UserService, authService adminimpl.AuthService, loggerGetter common.LoggerGetter, groupId uint64, defaultPicture []byte) service.ProfileService {
 	return profileServiceWrapper{
 		profileService: profileService, userService: userService, authService: authService,
 		loggerGetter: loggerGetter, groupId: groupId, defaultPicture: defaultPicture,
@@ -92,5 +93,5 @@ func (client profileServiceWrapper) Delete(ctx context.Context, userId uint64) e
 }
 
 func (client profileServiceWrapper) ViewRight(ctx context.Context, userId uint64) error {
-	return client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	return client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 }

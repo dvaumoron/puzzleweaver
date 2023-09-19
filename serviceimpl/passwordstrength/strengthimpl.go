@@ -24,11 +24,8 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	passwordvalidator "github.com/wagslane/go-password-validator"
 )
-
-type PasswordStrengthService service.PasswordStrengthService
 
 type strengthImpl struct {
 	weaver.Implements[PasswordStrengthService]

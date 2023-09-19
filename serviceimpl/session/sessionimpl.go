@@ -21,6 +21,7 @@ package sessionimpl
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -29,9 +30,7 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/exp/slog"
 )
 
 // this key maintains the existence of the session when there is no other data,
@@ -39,8 +38,6 @@ import (
 const creationTimeName = "sessionCreationTime"
 
 var errGenerateRetry = errors.New("generate reached maximum number of retries")
-
-type SessionService service.SessionService
 
 type sessionImpl struct {
 	weaver.Implements[SessionService]

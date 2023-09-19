@@ -24,7 +24,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	loginimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/login"
+	passwordstrengthimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength"
+	saltimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/salt"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"golang.org/x/crypto/scrypt"
 )
@@ -38,13 +40,13 @@ const keyLen = 64
 var errNotEnoughValues = errors.New("not enough return values from saltService call")
 
 type loginServiceWrapper struct {
-	loginService    remoteservice.RemoteLoginService
-	saltService     service.SaltService
-	strengthService service.PasswordStrengthService
+	loginService    loginimpl.RemoteLoginService
+	saltService     saltimpl.SaltService
+	strengthService passwordstrengthimpl.PasswordStrengthService
 	dateFormat      string
 }
 
-func MakeLoginServiceWrapper(loginService remoteservice.RemoteLoginService, saltService service.SaltService, strengthService service.PasswordStrengthService, dateFormat string) service.LoginService {
+func MakeLoginServiceWrapper(loginService loginimpl.RemoteLoginService, saltService saltimpl.SaltService, strengthService passwordstrengthimpl.PasswordStrengthService, dateFormat string) service.LoginService {
 	return loginServiceWrapper{
 		loginService: loginService, saltService: saltService, strengthService: strengthService, dateFormat: dateFormat,
 	}
@@ -174,7 +176,7 @@ func (client loginServiceWrapper) salt(ctx context.Context, loginPasswords ...[2
 	return salteds, nil
 }
 
-func convertUser(user remoteservice.RawUser, dateFormat string) service.User {
+func convertUser(user loginimpl.RawUser, dateFormat string) service.User {
 	registredAt := time.Unix(user.RegistredAt, 0)
 	return service.User{Id: user.Id, Login: user.Login, RegistredAt: registredAt.Format(dateFormat)}
 }

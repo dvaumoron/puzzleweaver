@@ -21,20 +21,16 @@ package saltimpl
 import (
 	"context"
 	"crypto/rand"
+	"log/slog"
 
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/exp/slog"
 )
 
 const redisCallMsg = "Failed during Redis call"
 const generateMsg = "Failed to generate"
-
-// check matching with interface
-type SaltService service.SaltService
 
 type saltImpl struct {
 	weaver.Implements[SaltService]

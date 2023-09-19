@@ -20,13 +20,13 @@ package common
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"unicode"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slices"
-	"golang.org/x/exp/slog"
 )
 
 const (

@@ -111,8 +111,8 @@ github.com/PuerkitoBio/purell v1.0.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbt
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
-github.com/ServiceWeaver/weaver v0.19.0 h1:iGf4XkmohY8pTaQJv59N+YIoI+CSTnAWxls5gFwfiVQ=
-github.com/ServiceWeaver/weaver v0.19.0/go.mod h1:/tJzitb+h8nLeHa4Mk7iIGU5ZV4OGB4C9IvIfD8n/1I=
+github.com/ServiceWeaver/weaver v0.21.2 h1:HsVb5f5o3ZRIntW36sapObyxnE7Pr6fPRxjRrSu/cbI=
+github.com/ServiceWeaver/weaver v0.21.2/go.mod h1:/gQMZ/m0lS+2p75AVgHYSPuuxVMn0vOfbOMvDNtvovQ=
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d/go.mod h1:HI8ITrYtUY+O+ZhtlqUnD8+KwNPOyugEhfP9fdUIaEQ=
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/agnivade/levenshtein v1.1.1 h1:QY8M92nrzkmr798gCo3kmMyqXFzdQVpxLlGPRBij0P8=

@@ -19,10 +19,10 @@
 package wikiclient
 
 import (
+	"log/slog"
 	"sync"
 
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
-	"golang.org/x/exp/slog"
 )
 
 const wikiRefName = "wikiRef"

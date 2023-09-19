@@ -22,15 +22,15 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 )
 
 const initMsg = "Failed to init remote widget"
@@ -74,7 +74,7 @@ func MakeRemotePage(pageName string, ctx context.Context, logger *slog.Logger, w
 			handler = createHandler(actionName, dataAdder, widgetService)
 		case http.MethodPost, http.MethodPut, http.MethodPatch:
 			dataAdder := func(data gin.H, c *gin.Context) {
-				data[remoteservice.FormKey] = c.PostFormMap(remoteservice.FormKey)
+				data[remotewidgetservice.FormKey] = c.PostFormMap(remotewidgetservice.FormKey)
 				retrieveContextData(pathKeys, queryKeys, data, c)
 			}
 			handler = createHandler(actionName, dataAdder, widgetService)
@@ -108,7 +108,7 @@ func extractKeysFromPath(path string) [][2]string {
 	for _, part := range splitted {
 		if len(part) != 0 && part[0] == ':' {
 			key := part[1:]
-			keys = append(keys, [2]string{remoteservice.PathKeySlash + key, key})
+			keys = append(keys, [2]string{remotewidgetservice.PathKeySlash + key, key})
 		}
 	}
 	return keys
@@ -119,7 +119,7 @@ func extractQueryKeys(names []string) [][2]string {
 	for _, name := range names {
 		key := strings.TrimSpace(name)
 		if len(key) != 0 {
-			keys = append(keys, [2]string{remoteservice.QueryKeySlash + key, key})
+			keys = append(keys, [2]string{remotewidgetservice.QueryKeySlash + key, key})
 		}
 	}
 	return keys

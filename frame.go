@@ -22,17 +22,28 @@ import (
 	"context"
 	_ "embed"
 	"log"
+	"log/slog"
 
 	"github.com/ServiceWeaver/weaver"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
+	blogimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/blog"
+	forumimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/forum"
+	loginimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/login"
+	markdownimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/markdown"
+	passwordstrengthimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength"
+	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
+	saltimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/salt"
+	sessionimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/session"
+	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
+	templatesimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/templates"
+	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
 	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/blog"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/forum"
 	"github.com/dvaumoron/puzzleweaver/web/remotewidget"
 	"github.com/dvaumoron/puzzleweaver/web/wiki"
-	"golang.org/x/exp/slog"
 )
 
 const notFound = "notFound"
@@ -54,19 +65,19 @@ type frameApp struct {
 	weaver.Implements[weaver.Main]
 	weaver.WithConfig[config.GlobalConfig]
 	listener                weaver.Listener
-	sessionService          weaver.Ref[service.SessionService]
-	templateService         weaver.Ref[service.TemplateService]
-	settingsService         weaver.Ref[service.SettingsService]
-	passwordStrengthService weaver.Ref[service.PasswordStrengthService]
-	saltService             weaver.Ref[service.SaltService]
-	loginService            weaver.Ref[remoteservice.RemoteLoginService]
-	adminService            weaver.Ref[service.AdminService]
-	profileService          weaver.Ref[remoteservice.RemoteProfileService]
-	forumService            weaver.Ref[remoteservice.RemoteForumService]
-	markdownService         weaver.Ref[service.MarkdownService]
-	blogService             weaver.Ref[remoteservice.RemoteBlogService]
-	wikiService             weaver.Ref[remoteservice.RemoteWikiService]
-	widgetService           weaver.Ref[remoteservice.RemoteWidgetService]
+	sessionService          weaver.Ref[sessionimpl.SessionService]
+	templateService         weaver.Ref[templatesimpl.TemplateService]
+	settingsService         weaver.Ref[settingsimpl.SettingsService]
+	passwordStrengthService weaver.Ref[passwordstrengthimpl.PasswordStrengthService]
+	saltService             weaver.Ref[saltimpl.SaltService]
+	loginService            weaver.Ref[loginimpl.RemoteLoginService]
+	adminService            weaver.Ref[adminimpl.AdminService]
+	profileService          weaver.Ref[profileimpl.RemoteProfileService]
+	forumService            weaver.Ref[forumimpl.RemoteForumService]
+	markdownService         weaver.Ref[markdownimpl.MarkdownService]
+	blogService             weaver.Ref[blogimpl.RemoteBlogService]
+	wikiService             weaver.Ref[wikiimpl.RemoteWikiService]
+	widgetService           weaver.Ref[remotewidgetservice.RemoteWidgetService]
 }
 
 // frameServe is called by weaver.Run and contains the body of the application.
@@ -85,7 +96,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 
 	site := web.BuildDefaultSite(logger, globalConfig)
 
-	site.AddPage(web.MakeHiddenStaticPage(app, notFound, service.PublicGroupId, notFound))
+	site.AddPage(web.MakeHiddenStaticPage(app, notFound, adminimpl.PublicGroupId, notFound))
 
 	for _, pageGroup := range globalConfig.PageGroups {
 		site.AddStaticPages(app, pageGroup.Id, pageGroup.Pages)

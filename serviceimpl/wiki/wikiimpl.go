@@ -23,7 +23,6 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"go.mongodb.org/mongo-driver/bson"
@@ -50,8 +49,6 @@ var optsVersion = options.Find().SetProjection(
 	bson.D{{Key: versionKey, Value: true}, {Key: userIdKey, Value: true}},
 )
 
-type RemoteWikiService remoteservice.RemoteWikiService
-
 type remoteWikiImpl struct {
 	weaver.Implements[RemoteWikiService]
 	weaver.WithConfig[wikiConf]
@@ -63,12 +60,12 @@ func (impl *remoteWikiImpl) Init(ctx context.Context) error {
 	return nil
 }
 
-func (impl *remoteWikiImpl) Load(ctx context.Context, wikiId uint64, wikiRef string, version uint64) (remoteservice.RawWikiContent, error) {
+func (impl *remoteWikiImpl) Load(ctx context.Context, wikiId uint64, wikiRef string, version uint64) (RawWikiContent, error) {
 	logger := impl.Logger(ctx)
 	client, err := mongo.Connect(ctx, impl.initializedConf.clientOptions)
 	if err != nil {
 		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
-		return remoteservice.RawWikiContent{}, servicecommon.ErrInternal
+		return RawWikiContent{}, servicecommon.ErrInternal
 	}
 	defer mongoclient.Disconnect(client, ctx, logger)
 
@@ -89,11 +86,11 @@ func (impl *remoteWikiImpl) Load(ctx context.Context, wikiId uint64, wikiRef str
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			// an empty Content has Version 0, which is recognized by client
-			return remoteservice.RawWikiContent{}, nil
+			return RawWikiContent{}, nil
 		}
 
 		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
-		return remoteservice.RawWikiContent{}, servicecommon.ErrInternal
+		return RawWikiContent{}, servicecommon.ErrInternal
 	}
 	return convertToContent(result), nil
 }
@@ -126,7 +123,7 @@ func (impl *remoteWikiImpl) Store(ctx context.Context, wikiId uint64, userId uin
 	return nil
 }
 
-func (impl *remoteWikiImpl) GetVersions(ctx context.Context, wikiId uint64, wikiRef string) ([]remoteservice.RawWikiContent, error) {
+func (impl *remoteWikiImpl) GetVersions(ctx context.Context, wikiId uint64, wikiRef string) ([]RawWikiContent, error) {
 	logger := impl.Logger(ctx)
 	client, err := mongo.Connect(ctx, impl.initializedConf.clientOptions)
 	if err != nil {
@@ -175,17 +172,17 @@ func (impl *remoteWikiImpl) Delete(ctx context.Context, wikiId uint64, wikiRef s
 	return nil
 }
 
-func convertToContent(page bson.M) remoteservice.RawWikiContent {
+func convertToContent(page bson.M) RawWikiContent {
 	text, _ := page[textKey].(string)
-	return remoteservice.RawWikiContent{
+	return RawWikiContent{
 		Version:   mongoclient.ExtractUint64(page[versionKey]),
 		CreatedAt: mongoclient.ExtractCreateDate(page).Unix(),
 		Markdown:  text,
 	}
 }
 
-func convertToVersion(page bson.M) remoteservice.RawWikiContent {
-	return remoteservice.RawWikiContent{
+func convertToVersion(page bson.M) RawWikiContent {
+	return RawWikiContent{
 		Version:   mongoclient.ExtractUint64(page[versionKey]),
 		CreatorId: mongoclient.ExtractUint64(page[userIdKey]),
 		CreatedAt: mongoclient.ExtractCreateDate(page).Unix(),

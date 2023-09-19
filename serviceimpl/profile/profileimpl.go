@@ -23,7 +23,6 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,8 +42,6 @@ const pictureKey = "pictureData"
 var optsCreateUnexisting = options.Update().SetUpsert(true)
 var optsExcludePictureField = options.Find().SetProjection(bson.D{{Key: pictureKey, Value: false}})
 var optsOnlyPictureField = options.FindOne().SetProjection(bson.D{{Key: pictureKey, Value: true}})
-
-type RemoteProfileService remoteservice.RemoteProfileService
 
 type remoteProfileImpl struct {
 	weaver.Implements[RemoteProfileService]
@@ -134,7 +131,7 @@ func (impl *remoteProfileImpl) GetPicture(ctx context.Context, userId uint64) ([
 	return picture, nil
 }
 
-func (impl *remoteProfileImpl) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]remoteservice.RawUserProfile, error) {
+func (impl *remoteProfileImpl) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]RawUserProfile, error) {
 	logger := impl.Logger(ctx)
 	client, err := mongo.Connect(ctx, impl.initializedConf.clientOptions)
 	if err != nil {
@@ -157,11 +154,11 @@ func (impl *remoteProfileImpl) GetProfiles(ctx context.Context, userIds []uint64
 		return nil, servicecommon.ErrInternal
 	}
 
-	profiles := map[uint64]remoteservice.RawUserProfile{}
+	profiles := map[uint64]RawUserProfile{}
 	for _, profile := range results {
 		userId := mongoclient.ExtractUint64(profile[userIdKey])
 		desc, _ := profile[descKey].(string)
-		profiles[userId] = remoteservice.RawUserProfile{Desc: desc, Info: mongoclient.ExtractStringMap(profile[infoKey])}
+		profiles[userId] = RawUserProfile{Desc: desc, Info: mongoclient.ExtractStringMap(profile[infoKey])}
 	}
 	return profiles, nil
 }

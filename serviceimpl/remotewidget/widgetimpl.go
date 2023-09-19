@@ -23,9 +23,9 @@ import (
 	"encoding/json"
 
 	"github.com/ServiceWeaver/weaver"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +33,7 @@ import (
 const widgetNotFoundErrorMsg = "No widget found with requested name"
 const widgetNameKey = "widgetName"
 
-type RemoteWidgetService remoteservice.RemoteWidgetService
+type RemoteWidgetService remotewidgetservice.RemoteWidgetService
 
 type remoteWidgetImpl struct {
 	weaver.Implements[RemoteWidgetService]
@@ -46,7 +46,7 @@ func (impl *remoteWidgetImpl) Init(ctx context.Context) error {
 	return nil
 }
 
-func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, widgetName string) ([]remoteservice.RawWidgetAction, error) {
+func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, widgetName string) ([]remotewidgetservice.RawWidgetAction, error) {
 	widget, ok := impl.initializedConf.widgets[widgetName]
 	if !ok {
 		impl.Logger(ctx).Error(widgetNotFoundErrorMsg, widgetNameKey, widgetName)
@@ -67,7 +67,7 @@ func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, ac
 		return "", "", nil, servicecommon.ErrInternal
 	}
 
-	dataBytes := files[remoteservice.DataKey]
+	dataBytes := files[remotewidgetservice.DataKey]
 
 	var data gin.H
 	if err := json.Unmarshal(dataBytes, &data); err != nil {
@@ -76,7 +76,7 @@ func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, ac
 	}
 	// cleaning for GC
 	dataBytes = nil
-	delete(files, remoteservice.DataKey)
+	delete(files, remotewidgetservice.DataKey)
 
 	if len(files) != 0 {
 		data[widgethelper.FilesKey] = files
@@ -91,10 +91,10 @@ func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, ac
 
 }
 
-func convertActions(widget widgethelper.Widget) []remoteservice.RawWidgetAction {
-	actions := make([]remoteservice.RawWidgetAction, 0, len(widget))
+func convertActions(widget widgethelper.Widget) []remotewidgetservice.RawWidgetAction {
+	actions := make([]remotewidgetservice.RawWidgetAction, 0, len(widget))
 	for key, value := range widget {
-		actions = append(actions, remoteservice.RawWidgetAction{
+		actions = append(actions, remotewidgetservice.RawWidgetAction{
 			Kind: value.Kind, Name: key, Path: value.Path, QueryNames: value.QueryNames,
 		})
 	}

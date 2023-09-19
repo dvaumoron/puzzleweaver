@@ -20,11 +20,11 @@ package sessionimpl
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	redisclient "github.com/dvaumoron/puzzleweaver/client/redis"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/exp/slog"
 )
 
 type sessionConf struct {

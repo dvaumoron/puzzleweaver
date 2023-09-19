@@ -20,17 +20,17 @@ package web
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"time"
 
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/dvaumoron/puzzleweaver/web/templates"
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-	"golang.org/x/exp/slog"
 )
 
 const siteName = "Site"
@@ -39,7 +39,7 @@ const unknownUserKey = "ErrorUnknownUser"
 type Site struct {
 	loggerGetter   common.LoggerGetter
 	localesManager locale.Manager
-	authService    service.AuthService
+	authService    adminimpl.AuthService
 	timeOut        time.Duration
 	root           Page
 	adders         []common.DataAdder
@@ -47,7 +47,7 @@ type Site struct {
 
 func NewSite(globalConfig *config.GlobalServiceConfig, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
 	loggerGetter := globalConfig.LoggerGetter
-	root := MakeStaticPage(loggerGetter, "root", service.PublicGroupId, "index")
+	root := MakeStaticPage(loggerGetter, "root", adminimpl.PublicGroupId, "index")
 	root.AddSubPage(newLoginPage(globalConfig.LoginService, settingsManager))
 	root.AddSubPage(newAdminPage(globalConfig))
 	root.AddSubPage(newSettingsPage(settingsManager))

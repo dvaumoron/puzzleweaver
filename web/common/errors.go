@@ -20,9 +20,8 @@ package common
 
 import (
 	"errors"
+	"log/slog"
 	"strings"
-
-	"golang.org/x/exp/slog"
 )
 
 const ErrorKey = "error"

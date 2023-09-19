@@ -20,6 +20,7 @@ package forum
 
 import (
 	"errors"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -27,7 +28,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 )
 
 const emptyMessage = "EmptyForumMessage"

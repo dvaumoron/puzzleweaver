@@ -20,23 +20,24 @@ package wikiclient
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
+	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
-	"golang.org/x/exp/slog"
 )
 
 // check matching with interface
 var _ wikiservice.WikiService = wikiServiceWrapper{}
 
 type wikiServiceWrapper struct {
-	wikiService    remoteservice.RemoteWikiService
-	authService    service.AuthService
+	wikiService    wikiimpl.RemoteWikiService
+	authService    adminimpl.AuthService
 	profileService service.ProfileService
 	loggerGetter   common.LoggerGetter
 	wikiId         uint64
@@ -45,7 +46,7 @@ type wikiServiceWrapper struct {
 	cache          *wikiCache
 }
 
-func MakeWikiServiceWrapper(wikiService remoteservice.RemoteWikiService, authService service.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, wikiId uint64, groupId uint64, dateFormat string) wikiservice.WikiService {
+func MakeWikiServiceWrapper(wikiService wikiimpl.RemoteWikiService, authService adminimpl.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, wikiId uint64, groupId uint64, dateFormat string) wikiservice.WikiService {
 	return wikiServiceWrapper{
 		wikiService: wikiService, authService: authService, profileService: profileService, loggerGetter: loggerGetter,
 		wikiId: wikiId, groupId: groupId, dateFormat: dateFormat, cache: newCache(),
@@ -53,7 +54,7 @@ func MakeWikiServiceWrapper(wikiService remoteservice.RemoteWikiService, authSer
 }
 
 func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64, lang string, title string, versionStr string) (*wikiservice.WikiContent, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64,
 }
 
 func (client wikiServiceWrapper) StoreContent(ctx context.Context, userId uint64, lang string, title string, last string, markdown string) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionCreate)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionCreate)
 	if err != nil {
 		return err
 	}
@@ -109,7 +110,7 @@ func (client wikiServiceWrapper) StoreContent(ctx context.Context, userId uint64
 }
 
 func (client wikiServiceWrapper) GetVersions(ctx context.Context, userId uint64, lang string, title string) ([]wikiservice.Version, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +125,7 @@ func (client wikiServiceWrapper) GetVersions(ctx context.Context, userId uint64,
 		return nil, nil
 	}
 
-	valueSet := make([]*remoteservice.RawWikiContent, maxVersion(list)+1)
+	valueSet := make([]*wikiimpl.RawWikiContent, maxVersion(list)+1)
 	// no duplicate check, there is one in GetProfiles
 	userIds := make([]uint64, 0, size)
 	for _, value := range list {
@@ -150,7 +151,7 @@ func (client wikiServiceWrapper) GetVersions(ctx context.Context, userId uint64,
 }
 
 func (client wikiServiceWrapper) DeleteContent(ctx context.Context, userId uint64, lang string, title string, versionStr string) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionDelete)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete)
 	if err != nil {
 		return err
 	}
@@ -171,7 +172,7 @@ func (client wikiServiceWrapper) DeleteContent(ctx context.Context, userId uint6
 }
 
 func (impl wikiServiceWrapper) DeleteRight(ctx context.Context, userId uint64) bool {
-	return impl.authService.AuthQuery(ctx, userId, impl.groupId, service.ActionDelete) == nil
+	return impl.authService.AuthQuery(ctx, userId, impl.groupId, adminimpl.ActionDelete) == nil
 }
 
 func (client wikiServiceWrapper) innerLoadContent(ctx context.Context, logger *slog.Logger, wikiRef string, askedVersion uint64) (*wikiservice.WikiContent, error) {
@@ -195,7 +196,7 @@ func buildRef(lang string, title string) string {
 	return refBuilder.String()
 }
 
-func maxVersion(list []remoteservice.RawWikiContent) uint64 {
+func maxVersion(list []wikiimpl.RawWikiContent) uint64 {
 	res := list[0].Version
 	for _, current := range list[1:] {
 		if current.Version > res {

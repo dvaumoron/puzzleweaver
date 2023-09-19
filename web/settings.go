@@ -23,8 +23,8 @@ import (
 	"errors"
 	"strings"
 
+	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/gin-gonic/gin"
 )
@@ -34,12 +34,12 @@ const settingsName = "Settings"
 var errWrongLang = errors.New(common.ErrorWrongLangKey)
 
 type SettingsManager struct {
-	settingsService service.SettingsService
+	settingsService settingsimpl.SettingsService
 	InitSettings    func(*gin.Context) map[string]string
 	CheckSettings   func(map[string]string, *gin.Context) error
 }
 
-func NewSettingsManager(settingsService service.SettingsService) *SettingsManager {
+func NewSettingsManager(settingsService settingsimpl.SettingsService) *SettingsManager {
 	return &SettingsManager{settingsService: settingsService, InitSettings: initSettings, CheckSettings: checkSettings}
 }
 

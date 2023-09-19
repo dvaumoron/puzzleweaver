@@ -22,7 +22,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/gin-gonic/gin"
 )
@@ -31,9 +31,9 @@ const (
 	pageNumberKey      = "pageNumber"
 	pageSizeKey        = "pageSize"
 	filterKey          = "filter"
-	queryPageNumberKey = remoteservice.QueryKeySlash + pageNumberKey
-	queryPageSizeKey   = remoteservice.QueryKeySlash + pageSizeKey
-	queryFilterKey     = remoteservice.QueryKeySlash + filterKey
+	queryPageNumberKey = remotewidgetservice.QueryKeySlash + pageNumberKey
+	queryPageSizeKey   = remotewidgetservice.QueryKeySlash + pageSizeKey
+	queryFilterKey     = remotewidgetservice.QueryKeySlash + filterKey
 )
 
 var (
@@ -159,7 +159,7 @@ func AsFloat64(value any) (float64, error) {
 }
 
 func GetFormData(data gin.H) (gin.H, error) {
-	return AsMap(data[remoteservice.FormKey])
+	return AsMap(data[remotewidgetservice.FormKey])
 }
 
 func GetFiles(data gin.H) (map[string][]byte, error) {

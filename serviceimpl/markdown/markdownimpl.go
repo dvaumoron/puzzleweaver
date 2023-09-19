@@ -25,10 +25,7 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
-
-type MarkdownService service.MarkdownService
 
 type markdownImpl struct {
 	weaver.Implements[MarkdownService]

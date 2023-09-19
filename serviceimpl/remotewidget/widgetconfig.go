@@ -19,11 +19,12 @@
 package remotewidgetimpl
 
 import (
+	"log/slog"
+
 	gallerywidget "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery"
 	galleryimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service/impl"
 	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"golang.org/x/exp/slog"
 )
 
 type widgetConf struct {

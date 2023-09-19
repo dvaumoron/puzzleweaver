@@ -21,19 +21,20 @@ package forumclient
 import (
 	"cmp"
 	"context"
+	"log/slog"
 	"slices"
 	"time"
 
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
+	forumimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/forum"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
-	"golang.org/x/exp/slog"
 )
 
 type forumServiceWrapper struct {
-	forumService   remoteservice.RemoteForumService
-	authService    service.AuthService
+	forumService   forumimpl.RemoteForumService
+	authService    adminimpl.AuthService
 	profileService service.ProfileService
 	loggerGetter   common.LoggerGetter
 	forumId        uint64
@@ -41,25 +42,25 @@ type forumServiceWrapper struct {
 	dateFormat     string
 }
 
-func MakeForumServiceWrapper(forumService remoteservice.RemoteForumService, authService service.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, forumId uint64, groupId uint64, dateFormat string) forumservice.FullForumService {
+func MakeForumServiceWrapper(forumService forumimpl.RemoteForumService, authService adminimpl.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, forumId uint64, groupId uint64, dateFormat string) forumservice.FullForumService {
 	return forumServiceWrapper{
 		forumService: forumService, authService: authService, profileService: profileService,
 		loggerGetter: loggerGetter, forumId: forumId, groupId: groupId, dateFormat: dateFormat,
 	}
 }
 
-type deleteRequestKind func(remoteservice.RemoteForumService, context.Context, uint64, uint64) error
+type deleteRequestKind func(forumimpl.RemoteForumService, context.Context, uint64, uint64) error
 
-func cmpAsc(a remoteservice.RawForumContent, b remoteservice.RawForumContent) int {
+func cmpAsc(a forumimpl.RawForumContent, b forumimpl.RawForumContent) int {
 	return cmp.Compare(a.CreatedAt, b.CreatedAt)
 }
 
-func cmpDesc(a remoteservice.RawForumContent, b remoteservice.RawForumContent) int {
+func cmpDesc(a forumimpl.RawForumContent, b forumimpl.RawForumContent) int {
 	return -cmp.Compare(a.CreatedAt, b.CreatedAt)
 }
 
 func (client forumServiceWrapper) CreateThread(ctx context.Context, userId uint64, title string, message string) (uint64, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionCreate)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionCreate)
 	if err != nil {
 		return 0, err
 	}
@@ -67,7 +68,7 @@ func (client forumServiceWrapper) CreateThread(ctx context.Context, userId uint6
 }
 
 func (client forumServiceWrapper) CreateCommentThread(ctx context.Context, userId uint64, elemTitle string) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionCreate)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionCreate)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func (client forumServiceWrapper) CreateCommentThread(ctx context.Context, userI
 }
 
 func (client forumServiceWrapper) CreateMessage(ctx context.Context, userId uint64, threadId uint64, message string) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionUpdate)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionUpdate)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func (client forumServiceWrapper) CreateMessage(ctx context.Context, userId uint
 }
 
 func (client forumServiceWrapper) CreateComment(ctx context.Context, userId uint64, elemTitle string, comment string) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return err
 	}
@@ -106,7 +107,7 @@ func (client forumServiceWrapper) CreateComment(ctx context.Context, userId uint
 }
 
 func (client forumServiceWrapper) GetThread(ctx context.Context, userId uint64, threadId uint64, start uint64, end uint64, filter string) (uint64, forumservice.ForumContent, []forumservice.ForumContent, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return 0, forumservice.ForumContent{}, nil, err
 	}
@@ -132,7 +133,7 @@ func (client forumServiceWrapper) GetThread(ctx context.Context, userId uint64, 
 }
 
 func (client forumServiceWrapper) GetThreads(ctx context.Context, userId uint64, start uint64, end uint64, filter string) (uint64, []forumservice.ForumContent, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -154,7 +155,7 @@ func (client forumServiceWrapper) GetThreads(ctx context.Context, userId uint64,
 }
 
 func (client forumServiceWrapper) GetCommentThread(ctx context.Context, userId uint64, elemTitle string, start uint64, end uint64) (uint64, []forumservice.ForumContent, error) {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionAccess)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionAccess)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -184,11 +185,11 @@ func (client forumServiceWrapper) GetCommentThread(ctx context.Context, userId u
 }
 
 func (client forumServiceWrapper) DeleteThread(ctx context.Context, userId uint64, threadId uint64) error {
-	return client.deleteContent(ctx, userId, remoteservice.RemoteForumService.DeleteThread, client.forumId, threadId)
+	return client.deleteContent(ctx, userId, forumimpl.RemoteForumService.DeleteThread, client.forumId, threadId)
 }
 
 func (client forumServiceWrapper) DeleteCommentThread(ctx context.Context, userId uint64, elemTitle string) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionDelete)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete)
 	if err != nil {
 		return err
 	}
@@ -205,11 +206,11 @@ func (client forumServiceWrapper) DeleteCommentThread(ctx context.Context, userI
 }
 
 func (client forumServiceWrapper) DeleteMessage(ctx context.Context, userId uint64, threadId uint64, messageId uint64) error {
-	return client.deleteContent(ctx, userId, remoteservice.RemoteForumService.DeleteMessage, threadId, messageId)
+	return client.deleteContent(ctx, userId, forumimpl.RemoteForumService.DeleteMessage, threadId, messageId)
 }
 
 func (client forumServiceWrapper) DeleteComment(ctx context.Context, userId uint64, elemTitle string, commentId uint64) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionDelete)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete)
 	if err != nil {
 		return err
 	}
@@ -226,34 +227,34 @@ func (client forumServiceWrapper) DeleteComment(ctx context.Context, userId uint
 }
 
 func (client forumServiceWrapper) CreateThreadRight(ctx context.Context, userId uint64) bool {
-	return client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionCreate) == nil
+	return client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionCreate) == nil
 }
 
 func (client forumServiceWrapper) CreateMessageRight(ctx context.Context, userId uint64) bool {
-	return client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionUpdate) == nil
+	return client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionUpdate) == nil
 }
 
 func (client forumServiceWrapper) DeleteRight(ctx context.Context, userId uint64) bool {
-	return client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionDelete) == nil
+	return client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete) == nil
 }
 
 func (client forumServiceWrapper) deleteContent(ctx context.Context, userId uint64, kind deleteRequestKind, containerId uint64, id uint64) error {
-	err := client.authService.AuthQuery(ctx, userId, client.groupId, service.ActionDelete)
+	err := client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete)
 	if err != nil {
 		return err
 	}
 	return kind(client.forumService, ctx, containerId, id)
 }
 
-func deleteThread(forumService remoteservice.RemoteForumService, ctx context.Context, containerId uint64, id uint64) error {
+func deleteThread(forumService forumimpl.RemoteForumService, ctx context.Context, containerId uint64, id uint64) error {
 	return forumService.DeleteThread(ctx, containerId, id)
 }
 
-func deleteMessage(forumService remoteservice.RemoteForumService, ctx context.Context, containerId uint64, id uint64) error {
+func deleteMessage(forumService forumimpl.RemoteForumService, ctx context.Context, containerId uint64, id uint64) error {
 	return forumService.DeleteMessage(ctx, containerId, id)
 }
 
-func convertContents(list []remoteservice.RawForumContent, users map[uint64]service.UserProfile, dateFormat string) []forumservice.ForumContent {
+func convertContents(list []forumimpl.RawForumContent, users map[uint64]service.UserProfile, dateFormat string) []forumservice.ForumContent {
 	contents := make([]forumservice.ForumContent, 0, len(list))
 	for _, content := range list {
 		contents = append(contents, convertContent(content, users[content.CreatorId], dateFormat))
@@ -261,7 +262,7 @@ func convertContents(list []remoteservice.RawForumContent, users map[uint64]serv
 	return contents
 }
 
-func convertContent(content remoteservice.RawForumContent, creator service.UserProfile, dateFormat string) forumservice.ForumContent {
+func convertContent(content forumimpl.RawForumContent, creator service.UserProfile, dateFormat string) forumservice.ForumContent {
 	createdAt := time.Unix(content.CreatedAt, 0)
 	return forumservice.ForumContent{
 		Id: content.Id, Creator: creator, Date: createdAt.Format(dateFormat), Text: content.Text,
@@ -273,7 +274,7 @@ func logCommentThreadNotFound(logger *slog.Logger, objectId uint64, elemTitle st
 }
 
 // no duplicate check, there is one in GetProfiles
-func extractUserIds(list []remoteservice.RawForumContent) []uint64 {
+func extractUserIds(list []forumimpl.RawForumContent) []uint64 {
 	userIds := make([]uint64, 0, len(list))
 	for _, content := range list {
 		userIds = append(userIds, content.CreatorId)

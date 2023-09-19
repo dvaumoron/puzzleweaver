@@ -24,7 +24,6 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,8 +40,6 @@ const titleKey = "title"
 const textKey = "text"
 
 var optsMaxPostId = options.FindOne().SetSort(bson.D{{Key: postIdKey, Value: -1}}).SetProjection(bson.D{{Key: postIdKey, Value: true}})
-
-type RemoteBlogService remoteservice.RemoteBlogService
 
 type remoteBlogImpl struct {
 	weaver.Implements[RemoteBlogService]
@@ -103,12 +100,12 @@ CreatePostStep:
 	return newPostId, nil
 }
 
-func (impl *remoteBlogImpl) GetPost(ctx context.Context, blogId uint64, postId uint64) (remoteservice.RawBlogPost, error) {
+func (impl *remoteBlogImpl) GetPost(ctx context.Context, blogId uint64, postId uint64) (RawBlogPost, error) {
 	logger := impl.Logger(ctx)
 	client, err := mongo.Connect(ctx, impl.initializedConf.clientOptions)
 	if err != nil {
 		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
-		return remoteservice.RawBlogPost{}, servicecommon.ErrInternal
+		return RawBlogPost{}, servicecommon.ErrInternal
 	}
 	defer mongoclient.Disconnect(client, ctx, logger)
 
@@ -124,12 +121,12 @@ func (impl *remoteBlogImpl) GetPost(ctx context.Context, blogId uint64, postId u
 		} else {
 			logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
 		}
-		return remoteservice.RawBlogPost{}, servicecommon.ErrInternal
+		return RawBlogPost{}, servicecommon.ErrInternal
 	}
 	return convertToPost(result), nil
 }
 
-func (impl *remoteBlogImpl) GetPosts(ctx context.Context, blogId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawBlogPost, error) {
+func (impl *remoteBlogImpl) GetPosts(ctx context.Context, blogId uint64, start uint64, end uint64, filter string) (uint64, []RawBlogPost, error) {
 	logger := impl.Logger(ctx)
 	client, err := mongo.Connect(ctx, impl.initializedConf.clientOptions)
 	if err != nil {
@@ -189,10 +186,10 @@ func (impl *remoteBlogImpl) Delete(ctx context.Context, blogId uint64, postId ui
 	return nil
 }
 
-func convertToPost(post bson.M) remoteservice.RawBlogPost {
+func convertToPost(post bson.M) RawBlogPost {
 	title, _ := post[titleKey].(string)
 	text, _ := post[textKey].(string)
-	return remoteservice.RawBlogPost{
+	return RawBlogPost{
 		Id: mongoclient.ExtractUint64(post[postIdKey]), CreatorId: mongoclient.ExtractUint64(post[userIdKey]),
 		CreatedAt: mongoclient.ExtractCreateDate(post).Unix(), Title: title, Content: text,
 	}

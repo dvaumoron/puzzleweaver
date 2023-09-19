@@ -24,8 +24,8 @@ import (
 	"net/http"
 	"strconv"
 
+	sessionimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/session"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
 )
@@ -35,7 +35,7 @@ const cookieName = "pw_session_id"
 var errDecodeTooShort = errors.New("the result from base64 decoding is too short")
 
 type sessionManager struct {
-	sessionService service.SessionService
+	sessionService sessionimpl.SessionService
 	timeOut        int
 	domain         string
 }

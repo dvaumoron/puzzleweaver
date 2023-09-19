@@ -20,6 +20,7 @@ package blog
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,7 +32,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
-	"golang.org/x/exp/slog"
 )
 
 const emptyTitle = "EmptyPostTitle"

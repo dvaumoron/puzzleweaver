@@ -19,9 +19,10 @@
 package saltimpl
 
 import (
+	"log/slog"
+
 	redisclient "github.com/dvaumoron/puzzleweaver/client/redis"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/exp/slog"
 )
 
 type saltConf struct {

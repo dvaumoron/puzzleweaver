@@ -26,10 +26,7 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 )
-
-type TemplateService service.TemplateService
 
 type templateImpl struct {
 	weaver.Implements[TemplateService]

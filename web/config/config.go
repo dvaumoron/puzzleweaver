@@ -19,8 +19,8 @@
 package config
 
 import (
+	markdownimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/markdown"
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
 	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
 )
@@ -28,7 +28,7 @@ import (
 type BlogConfig struct {
 	BlogService     blogservice.BlogService
 	CommentService  forumservice.CommentService
-	MarkdownService service.MarkdownService
+	MarkdownService markdownimpl.MarkdownService
 	Domain          string
 	Port            string
 	DateFormat      string
@@ -47,6 +47,6 @@ type ForumConfig struct {
 
 type WikiConfig struct {
 	WikiService     wikiservice.WikiService
-	MarkdownService service.MarkdownService
+	MarkdownService markdownimpl.MarkdownService
 	Args            []string
 }

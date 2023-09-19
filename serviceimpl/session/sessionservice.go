@@ -16,29 +16,15 @@
  *
  */
 
-package service
+package sessionimpl
 
-import "context"
+import (
+	"context"
+
+	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
+)
 
 type SessionService interface {
-	SettingsService
+	settingsimpl.SettingsService
 	Generate(ctx context.Context) (uint64, error)
-}
-
-type TemplateService interface {
-	Render(ctx context.Context, templateName string, data []byte) ([]byte, error)
-}
-
-type SettingsService interface {
-	Get(ctx context.Context, id uint64) (map[string]string, error)
-	Update(ctx context.Context, id uint64, info map[string]string) error
-}
-
-type PasswordStrengthService interface {
-	Validate(ctx context.Context, password string) error
-	GetRules(ctx context.Context, lang string) (string, error)
-}
-
-type MarkdownService interface {
-	Apply(ctx context.Context, text string) (string, error)
 }

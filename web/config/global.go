@@ -19,11 +19,24 @@
 package config
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
+	blogimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/blog"
+	forumimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/forum"
+	loginimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/login"
+	markdownimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/markdown"
+	passwordstrengthimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength"
+	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
+	remotewidgetimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget"
+	saltimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/salt"
+	sessionimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/session"
+	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
+	templatesimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/templates"
+	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
 	blogclient "github.com/dvaumoron/puzzleweaver/web/blog/client"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/common/service"
@@ -34,7 +47,6 @@ import (
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
 	"github.com/spf13/afero"
-	"golang.org/x/exp/slog"
 )
 
 const WebKey = "puzzleWeaver"
@@ -93,22 +105,22 @@ type GlobalServiceConfig struct {
 	LoggerGetter            common.LoggerGetter
 	FileSystem              http.FileSystem
 	StaticFileSystem        http.FileSystem
-	SessionService          service.SessionService
-	TemplateService         service.TemplateService
-	SettingsService         service.SettingsService
-	PasswordStrengthService service.PasswordStrengthService
-	SaltService             service.SaltService
+	SessionService          sessionimpl.SessionService
+	TemplateService         templatesimpl.TemplateService
+	SettingsService         settingsimpl.SettingsService
+	PasswordStrengthService passwordstrengthimpl.PasswordStrengthService
+	SaltService             saltimpl.SaltService
 	LoginService            service.LoginService
-	AdminService            service.AdminService
+	AdminService            adminimpl.AdminService
 	ProfileService          service.ProfileService
-	ForumService            remoteservice.RemoteForumService
-	MarkdownService         service.MarkdownService
-	BlogService             remoteservice.RemoteBlogService
-	WikiService             remoteservice.RemoteWikiService
-	WidgetService           remoteservice.RemoteWidgetService
+	ForumService            forumimpl.RemoteForumService
+	MarkdownService         markdownimpl.MarkdownService
+	BlogService             blogimpl.RemoteBlogService
+	WikiService             wikiimpl.RemoteWikiService
+	WidgetService           remotewidgetimpl.RemoteWidgetService
 }
 
-func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService service.SessionService, templateService service.TemplateService, settingsService service.SettingsService, passwordStrengthService service.PasswordStrengthService, saltService service.SaltService, loginService remoteservice.RemoteLoginService, adminService service.AdminService, profileService remoteservice.RemoteProfileService, forumService remoteservice.RemoteForumService, markdownService service.MarkdownService, blogService remoteservice.RemoteBlogService, wikiService remoteservice.RemoteWikiService, widgetService remoteservice.RemoteWidgetService) (*GlobalServiceConfig, error) {
+func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalServiceConfig, error) {
 	baseFS, err := fsclient.New(conf.FsConf)
 	if err != nil {
 		return nil, err

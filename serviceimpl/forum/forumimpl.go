@@ -23,14 +23,11 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
-	"github.com/dvaumoron/puzzleweaver/remoteservice"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/dvaumoron/puzzleweaver/serviceimpl/forum/model"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"gorm.io/gorm"
 )
-
-type RemoteForumService remoteservice.RemoteForumService
 
 type remoteForumImpl struct {
 	weaver.Implements[RemoteForumService]
@@ -68,7 +65,7 @@ func (impl *remoteForumImpl) CreateMessage(ctx context.Context, objectId uint64,
 	return nil
 }
 
-func (impl *remoteForumImpl) GetThread(ctx context.Context, objectId uint64, threadId uint64, start uint64, end uint64, filter string) (uint64, remoteservice.RawForumContent, []remoteservice.RawForumContent, error) {
+func (impl *remoteForumImpl) GetThread(ctx context.Context, objectId uint64, threadId uint64, start uint64, end uint64, filter string) (uint64, RawForumContent, []RawForumContent, error) {
 	db := impl.initializedConf.db.WithContext(ctx)
 
 	paginate := func(tx *gorm.DB) *gorm.DB {
@@ -92,18 +89,18 @@ func (impl *remoteForumImpl) GetThread(ctx context.Context, objectId uint64, thr
 	err := messageRequest.Count(&total).Error
 	if err != nil {
 		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
-		return 0, remoteservice.RawForumContent{}, nil, servicecommon.ErrInternal
+		return 0, RawForumContent{}, nil, servicecommon.ErrInternal
 	}
 
 	var thread model.Thread
 	if err := db.Preload("Messages", preloadFilter).First(&thread, threadId).Error; err != nil {
 		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
-		return 0, remoteservice.RawForumContent{}, nil, servicecommon.ErrInternal
+		return 0, RawForumContent{}, nil, servicecommon.ErrInternal
 	}
 	return uint64(total), convertThreadFromModel(thread), convertMessagesFromModel(thread.Messages), nil
 }
 
-func (impl *remoteForumImpl) GetThreads(ctx context.Context, objectId uint64, start uint64, end uint64, filter string) (uint64, []remoteservice.RawForumContent, error) {
+func (impl *remoteForumImpl) GetThreads(ctx context.Context, objectId uint64, start uint64, end uint64, filter string) (uint64, []RawForumContent, error) {
 	db := impl.initializedConf.db.WithContext(ctx)
 	noFilter := filter == ""
 
@@ -158,24 +155,24 @@ func (impl *remoteForumImpl) DeleteMessage(ctx context.Context, containerId uint
 	return nil
 }
 
-func convertThreadFromModel(thread model.Thread) remoteservice.RawForumContent {
-	return remoteservice.RawForumContent{
+func convertThreadFromModel(thread model.Thread) RawForumContent {
+	return RawForumContent{
 		Id: thread.ID, CreatedAt: thread.CreatedAt.Unix(), CreatorId: thread.UserId, Text: thread.Title,
 	}
 }
 
-func convertThreadsFromModel(threads []model.Thread) []remoteservice.RawForumContent {
-	resThreads := make([]remoteservice.RawForumContent, 0, len(threads))
+func convertThreadsFromModel(threads []model.Thread) []RawForumContent {
+	resThreads := make([]RawForumContent, 0, len(threads))
 	for _, thread := range threads {
 		resThreads = append(resThreads, convertThreadFromModel(thread))
 	}
 	return resThreads
 }
 
-func convertMessagesFromModel(messages []model.Message) []remoteservice.RawForumContent {
-	resMessages := make([]remoteservice.RawForumContent, 0, len(messages))
+func convertMessagesFromModel(messages []model.Message) []RawForumContent {
+	resMessages := make([]RawForumContent, 0, len(messages))
 	for _, message := range messages {
-		resMessages = append(resMessages, remoteservice.RawForumContent{
+		resMessages = append(resMessages, RawForumContent{
 			Id: message.ID, CreatedAt: message.CreatedAt.Unix(), CreatorId: message.UserId, Text: message.Text,
 		})
 	}

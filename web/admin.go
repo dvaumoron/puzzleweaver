@@ -23,8 +23,8 @@ import (
 	"slices"
 	"strings"
 
+	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/gin-gonic/gin"
@@ -59,7 +59,7 @@ type RoleDisplay struct {
 	Actions []string
 }
 
-func MakeRoleDisplay(role service.Role) RoleDisplay {
+func MakeRoleDisplay(role adminimpl.Role) RoleDisplay {
 	return RoleDisplay{Name: role.Name, Actions: displayActions(role.Actions)}
 }
 
@@ -180,16 +180,16 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 			err := common.ErrTechnical
 			if userId != 0 {
 				rolesStr := c.PostFormArray("roles")
-				nameToGroup := make(map[string]service.Group, len(rolesStr))
+				nameToGroup := make(map[string]adminimpl.Group, len(rolesStr))
 				for _, roleStr := range rolesStr {
 					splitted := strings.Split(roleStr, "/")
 					if len(splitted) > 1 {
 						groupName := splitted[1]
 						group, ok := nameToGroup[groupName]
 						if !ok {
-							group = service.Group{Name: groupName}
+							group = adminimpl.Group{Name: groupName}
 						}
-						group.Roles = append(group.Roles, service.Role{Name: splitted[0]})
+						group.Roles = append(group.Roles, adminimpl.Role{Name: splitted[0]})
 						nameToGroup[groupName] = group
 					}
 				}
@@ -249,10 +249,10 @@ func newAdminPage(globalConfig *config.GlobalServiceConfig) Page {
 				}
 
 				actionSet := common.MakeSet(actions)
-				setActionChecked(data, actionSet, service.ActionAccess, "Access")
-				setActionChecked(data, actionSet, service.ActionCreate, "Create")
-				setActionChecked(data, actionSet, service.ActionUpdate, "Update")
-				setActionChecked(data, actionSet, service.ActionDelete, "Delete")
+				setActionChecked(data, actionSet, adminimpl.ActionAccess, "Access")
+				setActionChecked(data, actionSet, adminimpl.ActionCreate, "Create")
+				setActionChecked(data, actionSet, adminimpl.ActionUpdate, "Update")
+				setActionChecked(data, actionSet, adminimpl.ActionDelete, "Delete")
 			}
 
 			return "admin/role/edit", ""
@@ -281,13 +281,13 @@ func getGroupDisplayNameKey(name string) string {
 	return "GroupLabel" + locale.CamelCase(name)
 }
 
-func displayGroups(groups []service.Group) []*GroupDisplay {
+func displayGroups(groups []adminimpl.Group) []*GroupDisplay {
 	nameToGroup := map[string]*GroupDisplay{}
 	populateGroup(nameToGroup, groups, rolesAppender)
 	return sortGroups(nameToGroup)
 }
 
-func populateGroup(nameToGroup map[string]*GroupDisplay, groups []service.Group, appender func(*GroupDisplay, service.Role)) {
+func populateGroup(nameToGroup map[string]*GroupDisplay, groups []adminimpl.Group, appender func(*GroupDisplay, adminimpl.Role)) {
 	for _, group := range groups {
 		groupDisplay := nameToGroup[group.Name]
 		if groupDisplay == nil {
@@ -300,7 +300,7 @@ func populateGroup(nameToGroup map[string]*GroupDisplay, groups []service.Group,
 	}
 }
 
-func rolesAppender(group *GroupDisplay, role service.Role) {
+func rolesAppender(group *GroupDisplay, role adminimpl.Role) {
 	group.Roles = append(group.Roles, MakeRoleDisplay(role))
 }
 
@@ -309,16 +309,16 @@ func rolesAppender(group *GroupDisplay, role service.Role) {
 func displayActions(actions []string) []string {
 	actionSet := common.MakeSet(actions)
 	res := make([]string, len(actions))
-	if actionSet.Contains(service.ActionAccess) {
+	if actionSet.Contains(adminimpl.ActionAccess) {
 		res = append(res, accessKey)
 	}
-	if actionSet.Contains(service.ActionCreate) {
+	if actionSet.Contains(adminimpl.ActionCreate) {
 		res = append(res, createKey)
 	}
-	if actionSet.Contains(service.ActionUpdate) {
+	if actionSet.Contains(adminimpl.ActionUpdate) {
 		res = append(res, updateKey)
 	}
-	if actionSet.Contains(service.ActionDelete) {
+	if actionSet.Contains(adminimpl.ActionDelete) {
 		res = append(res, deleteKey)
 	}
 	return res
@@ -334,14 +334,14 @@ func sortGroups(nameToGroup map[string]*GroupDisplay) []*GroupDisplay {
 	return groupRoles
 }
 
-func displayEditGroups(userRoles []service.Group, allRoles []service.Group) []*GroupDisplay {
+func displayEditGroups(userRoles []adminimpl.Group, allRoles []adminimpl.Group) []*GroupDisplay {
 	nameToGroup := map[string]*GroupDisplay{}
 	populateGroup(nameToGroup, userRoles, rolesAppender)
 	populateGroup(nameToGroup, allRoles, addableRolesAppender)
 	return sortGroups(nameToGroup)
 }
 
-func addableRolesAppender(group *GroupDisplay, role service.Role) {
+func addableRolesAppender(group *GroupDisplay, role adminimpl.Role) {
 	// check if the user already have this role
 	contains := slices.ContainsFunc(group.Roles, func(roleDisplay RoleDisplay) bool {
 		return roleDisplay.Name == role.Name

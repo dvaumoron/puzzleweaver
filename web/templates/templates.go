@@ -23,8 +23,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	templatesimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/templates"
 	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 )
@@ -72,7 +72,7 @@ func (r remoteHTML) WriteContentType(w http.ResponseWriter) {
 
 // match HTMLRender interface from gin.
 type remoteHTMLRender struct {
-	templateService service.TemplateService
+	templateService templatesimpl.TemplateService
 	loggerGetter    common.LoggerGetter
 }
 
@@ -81,6 +81,6 @@ func (r remoteHTMLRender) Instance(name string, dataWithCtx any) render.Render {
 	return remoteHTML{remoteHTMLRender: r, dataWithCtx: casted, templateName: name}
 }
 
-func NewServiceRender(templateService service.TemplateService, loggerGetter common.LoggerGetter) render.HTMLRender {
+func NewServiceRender(templateService templatesimpl.TemplateService, loggerGetter common.LoggerGetter) render.HTMLRender {
 	return remoteHTMLRender{templateService: templateService, loggerGetter: loggerGetter}
 }

@@ -19,6 +19,7 @@
 package wiki
 
 import (
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -27,7 +28,6 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/exp/slog"
 )
 
 const versionName = "version"
