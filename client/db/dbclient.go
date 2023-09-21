@@ -22,7 +22,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/glebarez/sqlite" // driver without cgo
 	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
@@ -37,8 +36,6 @@ func New(kind string, address string) (*gorm.DB, error) {
 	kind = strings.ToLower(kind)
 	var dialector gorm.Dialector
 	switch kind {
-	case "sqlite":
-		dialector = sqlite.Open(address)
 	case "postgres":
 		dialector = postgres.Open(address)
 	case "mysql":

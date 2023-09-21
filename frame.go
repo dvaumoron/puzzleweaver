@@ -32,7 +32,7 @@ import (
 	markdownimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/markdown"
 	passwordstrengthimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength"
 	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
+	remotewidgetimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget"
 	saltimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/salt"
 	sessionimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/session"
 	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
@@ -64,7 +64,7 @@ func main() {
 type frameApp struct {
 	weaver.Implements[weaver.Main]
 	weaver.WithConfig[config.GlobalConfig]
-	listener                weaver.Listener
+	web                     weaver.Listener
 	sessionService          weaver.Ref[sessionimpl.SessionService]
 	templateService         weaver.Ref[templatesimpl.TemplateService]
 	settingsService         weaver.Ref[settingsimpl.SettingsService]
@@ -77,7 +77,7 @@ type frameApp struct {
 	markdownService         weaver.Ref[markdownimpl.MarkdownService]
 	blogService             weaver.Ref[blogimpl.RemoteBlogService]
 	wikiService             weaver.Ref[wikiimpl.RemoteWikiService]
-	widgetService           weaver.Ref[remotewidgetservice.RemoteWidgetService]
+	widgetService           weaver.Ref[remotewidgetimpl.RemoteWidgetService]
 }
 
 // frameServe is called by weaver.Run and contains the body of the application.
@@ -122,7 +122,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 			}
 		}
 	}
-	return site.Run(globalConfig, app.listener.Listener)
+	return site.Run(globalConfig, app.web)
 }
 
 func makeWidgetPage(app *frameApp, pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, logger *slog.Logger, widgetConfig config.WidgetConfig) (web.Page, bool) {

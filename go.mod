@@ -6,7 +6,6 @@ require (
 	github.com/ServiceWeaver/weaver v0.21.2
 	github.com/dvaumoron/puzzlemarkdownextension v1.0.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/glebarez/sqlite v1.9.0
 	github.com/gorilla/feeds v1.1.1
 	github.com/open-policy-agent/opa v0.55.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
@@ -49,7 +48,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.6.1 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
