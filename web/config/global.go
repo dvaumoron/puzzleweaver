@@ -80,6 +80,8 @@ type GlobalConfig struct {
 	PageGroups  []PageGroup
 	Widgets     map[string]WidgetConfig
 	WidgetPages []WidgetPageConfig
+
+	GinReleaseMode bool
 }
 
 type PageGroup struct {

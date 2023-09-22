@@ -46,6 +46,10 @@ type Site struct {
 }
 
 func NewSite(globalConfig *config.GlobalServiceConfig, localesManager locale.Manager, settingsManager *SettingsManager) *Site {
+	if globalConfig.GinReleaseMode {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	loggerGetter := globalConfig.LoggerGetter
 	root := MakeStaticPage(loggerGetter, "root", adminimpl.PublicGroupId, "index")
 	root.AddSubPage(newLoginPage(globalConfig.LoginService, settingsManager))

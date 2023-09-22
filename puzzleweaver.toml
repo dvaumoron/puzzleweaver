@@ -40,6 +40,8 @@ widgetpages = [
     { name = "gallery", widgetref = "gallery" },
 ]
 
+ginreleasemode = true
+
 ["github.com/ServiceWeaver/weaver/Main".widgets.wiki1]
 kind     = "wiki"
 objectid = 1
