@@ -82,7 +82,7 @@ func readRule(ctx context.Context, fileSystem afero.Fs, modulePath string) (rego
 	}
 
 	rule := rego.New(
-		rego.Query("x = data.auth.allow"),
+		rego.Query("data.auth.allow"),
 		rego.Module("auth.rego", string(data)),
 	)
 	return rule.PrepareForEval(ctx)
