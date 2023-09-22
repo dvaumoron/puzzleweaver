@@ -124,6 +124,9 @@ mongodatabasename = "profilesDB"
 databasekind    = "postgres"
 databaseaddress = "host=localhost user=postgres dbname=forumdb port=5432 sslmode=disable"
 
+["github.com/dvaumoron/puzzleweaver/serviceimpl/markdown/MarkdownService"]
+# no configuration needed for markdown
+
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/blog/RemoteBlogService"]
 mongoaddress      = "mongodb://localhost:27017"
 mongodatabasename = "blogsDB"

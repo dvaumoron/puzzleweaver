@@ -190,5 +190,5 @@ func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, ar
 	wikiService := wikiclient.MakeWikiServiceWrapper(
 		c.WikiService, c.AdminService, c.ProfileService, c.LoggerGetter, wikiId, groupId, c.DateFormat,
 	)
-	return WikiConfig{WikiService: wikiService, Args: args}
+	return WikiConfig{WikiService: wikiService, MarkdownService: c.MarkdownService, Args: args}
 }
