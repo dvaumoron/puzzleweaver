@@ -58,7 +58,7 @@ var (
 	ErrUpdate        = errors.New(ErrorUpdateKey)
 	ErrWeakPassword  = errors.New(ErrorWeakPasswordKey)
 	ErrWrongConfirm  = errors.New(ErrorWrongConfirmPasswordKey)
-	ErrWrongLogin    = errors.New(ErrorWrongLangKey)
+	ErrWrongLogin    = errors.New(ErrorWrongLoginKey)
 )
 
 func LogOriginalError(logger *slog.Logger, err error) {
