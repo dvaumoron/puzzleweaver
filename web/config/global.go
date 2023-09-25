@@ -57,7 +57,6 @@ type GlobalConfig struct {
 	Domain string
 	Port   string
 
-	AllLang            []string
 	SessionTimeOut     int
 	ServiceTimeOut     time.Duration
 	MaxMultipartMemory int64
@@ -106,6 +105,7 @@ type WidgetPageConfig struct {
 type GlobalServiceConfig struct {
 	*GlobalConfig
 	LoggerGetter            common.LoggerGetter
+	AllLang                 []string
 	StaticFileSystem        http.FileSystem
 	SessionService          sessionimpl.SessionService
 	TemplateService         templatesimpl.TemplateService
@@ -123,6 +123,11 @@ type GlobalServiceConfig struct {
 }
 
 func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalServiceConfig, error) {
+	allLang := make([]string, 0, len(conf.LangPicturePaths))
+	for lang := range conf.LangPicturePaths {
+		allLang = append(allLang, lang)
+	}
+
 	baseFS, err := fsclient.New(conf.FsConf)
 	if err != nil {
 		return nil, err
@@ -144,6 +149,7 @@ func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logg
 	return &GlobalServiceConfig{
 		GlobalConfig:            conf,
 		LoggerGetter:            loggerGetter,
+		AllLang:                 allLang,
 		StaticFileSystem:        afero.NewHttpFs(afero.NewBasePathFs(baseFS, conf.StaticPath)),
 		SessionService:          sessionService,
 		TemplateService:         templateService,
