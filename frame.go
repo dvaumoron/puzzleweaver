@@ -85,7 +85,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 	logger := app.Logger(ctx)
 
 	globalConfig, err := config.New(
-		app.Config(), app, logger, app.sessionService.Get(), app.templateService.Get(), app.settingsService.Get(),
+		app.Config(), app, logger, version, app.sessionService.Get(), app.templateService.Get(), app.settingsService.Get(),
 		app.passwordStrengthService.Get(), app.saltService.Get(), app.loginService.Get(), app.adminService.Get(),
 		app.profileService.Get(), app.forumService.Get(), app.markdownService.Get(), app.blogService.Get(),
 		app.wikiService.Get(), app.widgetService.Get(),

@@ -49,10 +49,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-const WebKey = "puzzleWeaver"
-
-const DefaultFavicon = "/favicon.ico"
-
 type GlobalConfig struct {
 	Domain string
 	Port   string
@@ -106,6 +102,7 @@ type WidgetPageConfig struct {
 type GlobalServiceConfig struct {
 	*GlobalConfig
 	LoggerGetter            common.LoggerGetter
+	VersionName             string
 	AllLang                 []string
 	StaticFileSystem        http.FileSystem
 	SessionService          sessionimpl.SessionService
@@ -123,7 +120,7 @@ type GlobalServiceConfig struct {
 	WidgetService           remotewidgetimpl.RemoteWidgetService
 }
 
-func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalServiceConfig, error) {
+func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, version string, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalServiceConfig, error) {
 	allLang := make([]string, 0, len(conf.LangPicturePaths))
 	for lang := range conf.LangPicturePaths {
 		allLang = append(allLang, lang)
@@ -150,6 +147,7 @@ func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logg
 	return &GlobalServiceConfig{
 		GlobalConfig:            conf,
 		LoggerGetter:            loggerGetter,
+		VersionName:             "PuzzleWeaver" + version,
 		AllLang:                 allLang,
 		StaticFileSystem:        afero.NewHttpFs(afero.NewBasePathFs(baseFS, conf.StaticPath)),
 		SessionService:          sessionService,

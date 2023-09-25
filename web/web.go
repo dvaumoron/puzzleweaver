@@ -93,7 +93,7 @@ func (site *Site) manageTimeOut(c *gin.Context) {
 
 func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Listener) error {
 	engine := gin.New()
-	engine.Use(site.manageTimeOut, otelgin.Middleware(config.WebKey), gin.Recovery())
+	engine.Use(site.manageTimeOut, otelgin.Middleware(globalConfig.VersionName), gin.Recovery())
 
 	if memorySize := globalConfig.MaxMultipartMemory; memorySize != 0 {
 		engine.MaxMultipartMemory = memorySize
@@ -102,7 +102,7 @@ func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Lis
 	engine.HTMLRender = templates.NewServiceRender(globalConfig.TemplateService, globalConfig.LoggerGetter)
 
 	engine.StaticFS("/static", globalConfig.StaticFileSystem)
-	engine.StaticFileFS(config.DefaultFavicon, globalConfig.FaviconPath, globalConfig.StaticFileSystem)
+	engine.StaticFileFS("/favicon.ico", globalConfig.FaviconPath, globalConfig.StaticFileSystem)
 
 	engine.Use(func(c *gin.Context) {
 		c.Set(siteName, site)
