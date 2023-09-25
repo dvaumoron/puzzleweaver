@@ -11,7 +11,7 @@ listeners.web = { address = "localhost:8080" }
 ["github.com/ServiceWeaver/weaver/Main"]
 domain             = "localhost"
 port               = "8080"
-defaultlang            = "fr-FR"
+defaultlang        = "fr-FR"
 sessiontimeout     = 1200
 servicetimeout     = "5s"
 maxmultipartmemory = 0
