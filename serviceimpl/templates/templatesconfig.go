@@ -20,9 +20,9 @@ package templatesimpl
 
 import (
 	"bufio"
-	"html/template"
 	"io/fs"
 	"strings"
+	"text/template"
 
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
