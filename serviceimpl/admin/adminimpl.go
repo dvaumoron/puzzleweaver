@@ -243,7 +243,7 @@ func (impl *adminImpl) getUserRoles(ctx context.Context, db *gorm.DB, userId uin
 		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
-	return impl.convertRolesFromModel(ctx, db, roles)
+	return impl.convertRolesFromModel(ctx, db, map[uint64]Group{}, roles)
 }
 
 func (impl *adminImpl) getAllRoles(ctx context.Context, db *gorm.DB, adminId uint64) ([]Group, error) {
@@ -257,7 +257,11 @@ func (impl *adminImpl) getAllRoles(ctx context.Context, db *gorm.DB, adminId uin
 		impl.Logger(ctx).Error(servicecommon.DBAccessMsg, common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
-	return impl.convertRolesFromModel(ctx, db, roles)
+	groups := map[uint64]Group{}
+	for _, groupId := range impl.initializedConf.groupIds {
+		groups[groupId] = impl.getGroup(groups, groupId)
+	}
+	return impl.convertRolesFromModel(ctx, db, groups, roles)
 }
 
 func (impl *adminImpl) innerAuthQuery(ctx context.Context, db *gorm.DB, userId uint64, groupId uint64, actionFlag uint8) error {
@@ -317,9 +321,8 @@ func (impl *adminImpl) loadRoles(ctx context.Context, db *gorm.DB, groups []Grou
 	return resRoles, nil
 }
 
-func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, roles []model.Role) ([]Group, error) {
+func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, groups map[uint64]Group, roles []model.Role) ([]Group, error) {
 	allThere := true
-	groups := map[uint64]Group{}
 	impl.idToNameMutex.RLock()
 	for _, role := range roles {
 		var name string
@@ -371,14 +374,19 @@ func (impl *adminImpl) convertRolesFromModel(ctx context.Context, db *gorm.DB, r
 }
 
 func (impl *adminImpl) addRoleToGroups(groups map[uint64]Group, name string, role model.Role) {
-	group, ok := groups[role.ObjectId]
-	if !ok {
-		group = Group{Id: role.ObjectId, Name: impl.initializedConf.groupIdToName[role.ObjectId]}
-	}
+	group := impl.getGroup(groups, role.ObjectId)
 	group.Roles = append(group.Roles, Role{
 		Name: name, Actions: convertActionsFromFlags(role.ActionFlags),
 	})
 	groups[role.ObjectId] = group
+}
+
+func (impl *adminImpl) getGroup(groups map[uint64]Group, objectId uint64) Group {
+	group, ok := groups[objectId]
+	if !ok {
+		group = Group{Id: objectId, Name: impl.initializedConf.groupIdToName[objectId]}
+	}
+	return group
 }
 
 func (impl *adminImpl) extractNamesToObjectIdSet(groups []Group) map[string]common.Set[uint64] {
