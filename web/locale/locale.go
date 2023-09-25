@@ -65,7 +65,7 @@ func NewManager(logger *slog.Logger, globalConfig *config.GlobalServiceConfig) M
 
 	return &localesManager{
 		SessionTimeOut: sessionTimeOut, Domain: domain, AllLang: allLang,
-		DefaultLang: allLang[0], MultipleLang: size > 1, matcher: language.NewMatcher(tags),
+		DefaultLang: globalConfig.DefaultLang, MultipleLang: size > 1, matcher: language.NewMatcher(tags),
 	}
 }
 

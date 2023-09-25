@@ -57,6 +57,7 @@ type GlobalConfig struct {
 	Domain string
 	Port   string
 
+	DefaultLang        string
 	SessionTimeOut     int
 	ServiceTimeOut     time.Duration
 	MaxMultipartMemory int64
