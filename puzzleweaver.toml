@@ -22,13 +22,13 @@ feedformat         = "rss"
 feedsize           = 100
 
 fsconf           = { kind = "local" }
-staticpath       = "../puzzletest/static"
-faviconpath      = "../puzzletest/static/favicon.ico"
+staticpath       = "static"
+faviconpath      = "favicon.ico"
 page404url       = "/notFound"
-langpicturepaths = { "fr-FR" = "../puzzletest/static/images/Flag_of_France.webp", "en-US" = "../puzzletest/static/images/Flag_of_the_United_Kingdom.png" }
+langpicturepaths = { "fr-FR" = "images/Flag_of_France.webp", "en-US" = "images/Flag_of_the_United_Kingdom.png" }
 
 profilegroupid            = 0
-profiledefaultpicturepath = "../puzzletest/static/images/unknownuser.png"
+profiledefaultpicturepath = "static/images/unknownuser.png"
 
 pagegroups = [{ id = 0, pages = ["about/", "about/faq"] }]
 widgetpages = [
@@ -40,7 +40,7 @@ widgetpages = [
     { name = "gallery", widgetref = "gallery" },
 ]
 
-ginreleasemode = true
+ginreleasemode = false
 
 ["github.com/ServiceWeaver/weaver/Main".widgets.wiki1]
 kind     = "wiki"
@@ -81,8 +81,8 @@ debug          = false
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/templates/TemplateService"]
 alllang        = ["fr-FR", "en-US"]
 fsconf         = { kind = "local" }
-templatepath   = "../puzzletest/templatedata/templates"
-localefilepath = "../puzzletest/templatedata/locales/messages_{{lang}}.properties"
+templatepath   = "templatedata/templates"
+localefilepath = "templatedata/locales/messages_{{lang}}.properties"
 
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/settings/SettingsService"]
 mongoaddress      = "mongodb://localhost:27017"

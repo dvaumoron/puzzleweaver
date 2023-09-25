@@ -106,7 +106,6 @@ type WidgetPageConfig struct {
 type GlobalServiceConfig struct {
 	*GlobalConfig
 	LoggerGetter            common.LoggerGetter
-	FileSystem              http.FileSystem
 	StaticFileSystem        http.FileSystem
 	SessionService          sessionimpl.SessionService
 	TemplateService         templatesimpl.TemplateService
@@ -145,7 +144,6 @@ func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logg
 	return &GlobalServiceConfig{
 		GlobalConfig:            conf,
 		LoggerGetter:            loggerGetter,
-		FileSystem:              afero.NewHttpFs(baseFS),
 		StaticFileSystem:        afero.NewHttpFs(afero.NewBasePathFs(baseFS, conf.StaticPath)),
 		SessionService:          sessionService,
 		TemplateService:         templateService,

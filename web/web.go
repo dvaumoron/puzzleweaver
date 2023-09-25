@@ -102,7 +102,7 @@ func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Lis
 	engine.HTMLRender = templates.NewServiceRender(globalConfig.TemplateService, globalConfig.LoggerGetter)
 
 	engine.StaticFS("/static", globalConfig.StaticFileSystem)
-	engine.StaticFileFS(config.DefaultFavicon, globalConfig.FaviconPath, globalConfig.FileSystem)
+	engine.StaticFileFS(config.DefaultFavicon, globalConfig.FaviconPath, globalConfig.StaticFileSystem)
 
 	engine.Use(func(c *gin.Context) {
 		c.Set(siteName, site)
@@ -115,7 +115,7 @@ func (site *Site) Run(globalConfig *config.GlobalServiceConfig, listener net.Lis
 		for _, lang := range localesManager.GetAllLang() {
 			if langPicturePath, ok := langPicturePaths[lang]; ok {
 				// allow modified time check (instead of always sending same data)
-				engine.StaticFileFS("/langPicture/"+lang, langPicturePath, globalConfig.FileSystem)
+				engine.StaticFileFS("/langPicture/"+lang, langPicturePath, globalConfig.StaticFileSystem)
 			}
 		}
 	}
