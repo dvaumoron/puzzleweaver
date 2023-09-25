@@ -308,7 +308,7 @@ func rolesAppender(group *GroupDisplay, role adminimpl.Role) {
 // always in the same order : access, create, update, delete
 func displayActions(actions []string) []string {
 	actionSet := common.MakeSet(actions)
-	res := make([]string, len(actions))
+	res := make([]string, 0, len(actions))
 	if actionSet.Contains(adminimpl.ActionAccess) {
 		res = append(res, accessKey)
 	}

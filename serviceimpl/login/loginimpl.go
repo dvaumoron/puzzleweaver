@@ -195,7 +195,7 @@ func (impl *loginImpl) Delete(ctx context.Context, userId uint64) error {
 }
 
 func convertUsersFromModel(users []model.User) []RawUser {
-	resUsers := make([]RawUser, len(users))
+	resUsers := make([]RawUser, 0, len(users))
 	for _, user := range users {
 		resUsers = append(resUsers, RawUser{Id: user.ID, Login: user.Login, RegistredAt: user.CreatedAt.Unix()})
 	}
