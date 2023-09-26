@@ -47,6 +47,7 @@ import (
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
 	"github.com/spf13/afero"
+	"golang.org/x/exp/slices"
 )
 
 type GlobalConfig struct {
@@ -125,6 +126,7 @@ func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logg
 	for lang := range conf.LangPicturePaths {
 		allLang = append(allLang, lang)
 	}
+	slices.Sort(allLang)
 
 	baseFS, err := fsclient.New(conf.FsConf)
 	if err != nil {
