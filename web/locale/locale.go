@@ -59,8 +59,13 @@ func NewManager(logger *slog.Logger, globalConfig *config.GlobalServiceConfig) M
 	}
 
 	tags := make([]language.Tag, 0, size)
+	// matcher consider the first item as default
+	tags = append(tags, language.MustParse(globalConfig.DefaultLang))
 	for _, lang := range allLang {
-		tags = append(tags, language.MustParse(lang))
+		// avoid default duplicate
+		if lang != globalConfig.DefaultLang {
+			tags = append(tags, language.MustParse(lang))
+		}
 	}
 
 	return &localesManager{
