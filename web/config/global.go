@@ -21,6 +21,7 @@ package config
 import (
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
@@ -47,7 +48,6 @@ import (
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
 	"github.com/spf13/afero"
-	"golang.org/x/exp/slices"
 )
 
 type GlobalConfig struct {
