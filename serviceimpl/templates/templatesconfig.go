@@ -23,6 +23,7 @@ import (
 	"io/fs"
 	"strings"
 	"text/template"
+	"time"
 
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
@@ -34,6 +35,7 @@ type templateConf struct {
 	FsConf         fsclient.FsConf
 	TemplatePath   string
 	LocaleFilePath string
+	DateFormat     string
 }
 
 type initializedTemplateConf struct {
@@ -61,8 +63,20 @@ func initTemplateConf(conf *templateConf) (initializedTemplateConf, error) {
 
 func loadTemplates(fileSystem afero.Fs, conf *templateConf) (*template.Template, error) {
 	templatesPath := cleanPath(conf.TemplatePath)
+	sourceFormat := conf.DateFormat
 
 	tmpl := template.New("")
+	tmpl.Funcs(template.FuncMap{"date": func(value string, targetFormat string) string {
+		if sourceFormat == targetFormat {
+			return value
+		}
+		date, err := time.Parse(sourceFormat, value)
+		if err != nil {
+			return value
+		}
+		return date.Format(targetFormat)
+	}})
+
 	inSize := len(templatesPath)
 	err := afero.Walk(fileSystem, templatesPath, func(path string, fi fs.FileInfo, err error) error {
 		if err == nil && !fi.IsDir() {

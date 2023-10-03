@@ -83,6 +83,7 @@ alllang        = ["fr-FR", "en-US"]
 fsconf         = { kind = "local" }
 templatepath   = "templatedata/templates"
 localefilepath = "templatedata/locales/messages_{{lang}}.properties"
+dateformat     = "2/1/2006 15:04:05"
 
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/settings/SettingsService"]
 mongoaddress      = "mongodb://localhost:27017"
