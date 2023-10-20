@@ -162,8 +162,7 @@ func (p Page) extractSubPageAndNameFromPath(path string) (Page, string) {
 func CreateTemplate(redirecter common.TemplateRedirecter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		data := initData(c)
-		tmpl, redirect := redirecter(data, c)
-		if redirect == "" {
+		if tmpl, redirect := redirecter(data, c); redirect == "" {
 			if pagePart := c.Query("pagePart"); pagePart != "" {
 				var tmplBuilder strings.Builder
 				tmplBuilder.WriteString(tmpl)
