@@ -81,7 +81,8 @@ debug          = false
 ["github.com/dvaumoron/puzzleweaver/serviceimpl/templates/TemplateService"]
 alllang        = ["fr-FR", "en-US"]
 fsconf         = { kind = "local" }
-templatepath   = "templatedata/templates"
+componentspath = "templatedata/templates/components"
+viewspath      = "templatedata/templates/views"
 localefilepath = "templatedata/locales/messages_{{lang}}.properties"
 dateformat     = "2/1/2006 15:04:05"
 
