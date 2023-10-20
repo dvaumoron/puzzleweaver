@@ -1,16 +1,17 @@
 module github.com/dvaumoron/puzzleweaver
 
-go 1.21.0
+go 1.21.3
 
 require (
 	github.com/ServiceWeaver/weaver v0.21.2
+	github.com/dvaumoron/partrenderer v0.2.0
 	github.com/dvaumoron/puzzlemarkdownextension v1.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/feeds v1.1.1
 	github.com/open-policy-agent/opa v0.56.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
 	github.com/redis/go-redis/v9 v9.1.0
-	github.com/spf13/afero v1.9.5
+	github.com/spf13/afero v1.10.0
 	github.com/uptrace/opentelemetry-go-extra/otelgorm v0.2.2
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.5.5

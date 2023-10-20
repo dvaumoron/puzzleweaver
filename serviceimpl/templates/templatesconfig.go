@@ -20,11 +20,11 @@ package templatesimpl
 
 import (
 	"bufio"
-	"io/fs"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/dvaumoron/partrenderer"
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/spf13/afero"
@@ -33,13 +33,14 @@ import (
 type templateConf struct {
 	AllLang        []string
 	FsConf         fsclient.FsConf
-	TemplatePath   string
+	ComponentsPath string
+	ViewsPath      string
 	LocaleFilePath string
 	DateFormat     string
 }
 
 type initializedTemplateConf struct {
-	templates *template.Template
+	templates partrenderer.PartRenderer
 	messages  map[string]map[string]string
 }
 
@@ -61,12 +62,9 @@ func initTemplateConf(conf *templateConf) (initializedTemplateConf, error) {
 	return initializedTemplateConf{templates: templates, messages: messages}, nil
 }
 
-func loadTemplates(fileSystem afero.Fs, conf *templateConf) (*template.Template, error) {
-	templatesPath := cleanPath(conf.TemplatePath)
+func loadTemplates(fileSystem afero.Fs, conf *templateConf) (partrenderer.PartRenderer, error) {
 	sourceFormat := conf.DateFormat
-
-	tmpl := template.New("")
-	tmpl.Funcs(template.FuncMap{"date": func(value string, targetFormat string) string {
+	customFuncs := template.FuncMap{"date": func(value string, targetFormat string) string {
 		if sourceFormat == targetFormat {
 			return value
 		}
@@ -75,22 +73,8 @@ func loadTemplates(fileSystem afero.Fs, conf *templateConf) (*template.Template,
 			return value
 		}
 		return date.Format(targetFormat)
-	}})
-
-	inSize := len(templatesPath)
-	err := afero.Walk(fileSystem, templatesPath, func(path string, fi fs.FileInfo, err error) error {
-		if err == nil && !fi.IsDir() {
-			name := path[inSize:]
-			if end := len(name) - 5; name[end:] == ".html" {
-				var data []byte
-				if data, err = afero.ReadFile(fileSystem, path); err == nil {
-					_, err = tmpl.New(name[:end]).Parse(string(data))
-				}
-			}
-		}
-		return err
-	})
-	return tmpl, err
+	}}
+	return partrenderer.MakePartRenderer(conf.ComponentsPath, conf.ViewsPath, partrenderer.WithFs(fileSystem), partrenderer.WithFuncs(customFuncs))
 }
 
 func loadLocales(fileSystem afero.Fs, conf *templateConf) (map[string]map[string]string, error) {
@@ -147,11 +131,4 @@ func parseFile(fileSystem afero.Fs, path string, messagesLang map[string]string)
 		}
 	}
 	return scanner.Err()
-}
-
-func cleanPath(path string) string {
-	if last := len(path) - 1; last == -1 || path[last] != '/' {
-		path += "/"
-	}
-	return path
 }
