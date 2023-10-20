@@ -77,6 +77,7 @@ func loadTemplates(fileSystem afero.Fs, conf *templateConf) (partrenderer.PartRe
 	return partrenderer.MakePartRenderer(conf.ComponentsPath, conf.ViewsPath, partrenderer.WithFs(fileSystem), partrenderer.WithFuncs(customFuncs))
 }
 
+// TODO merge with puzzlelocaleloader to call a shared library
 func loadLocales(fileSystem afero.Fs, conf *templateConf) (map[string]map[string]string, error) {
 	if len(conf.AllLang) == 0 {
 		return nil, servicecommon.ErrNolocales
