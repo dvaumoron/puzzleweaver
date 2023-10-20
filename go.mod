@@ -5,7 +5,10 @@ go 1.21.3
 require (
 	github.com/ServiceWeaver/weaver v0.21.2
 	github.com/dvaumoron/partrenderer v0.2.0
+	github.com/dvaumoron/puzzleforumserver v1.7.0
+	github.com/dvaumoron/puzzleloginserver v1.7.0
 	github.com/dvaumoron/puzzlemarkdownextension v1.0.0
+	github.com/dvaumoron/puzzlerightserver v1.8.6
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gorilla/feeds v1.1.1
 	github.com/open-policy-agent/opa v0.56.0
@@ -81,7 +84,7 @@ require (
 	github.com/lightstep/varopt v1.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/microsoft/go-mssqldb v1.1.0 // indirect
+	github.com/microsoft/go-mssqldb v1.4.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.0 // indirect

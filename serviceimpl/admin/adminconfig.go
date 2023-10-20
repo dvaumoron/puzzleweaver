@@ -21,9 +21,9 @@ package adminimpl
 import (
 	"context"
 
+	"github.com/dvaumoron/puzzlerightserver/model"
 	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
-	"github.com/dvaumoron/puzzleweaver/serviceimpl/admin/model"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/spf13/afero"
 	"gorm.io/gorm"
