@@ -129,7 +129,8 @@ func (client wikiServiceWrapper) GetVersions(ctx context.Context, userId uint64,
 	// no duplicate check, there is one in GetProfiles
 	userIds := make([]uint64, 0, size)
 	for _, value := range list {
-		valueSet[value.Version] = &value
+		valueCopy := value
+		valueSet[value.Version] = &valueCopy
 		userIds = append(userIds, value.CreatorId)
 	}
 
