@@ -24,9 +24,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/config"
+	web "github.com/dvaumoron/puzzleweaver/web/main"
 	"github.com/gin-gonic/gin"
 )
 

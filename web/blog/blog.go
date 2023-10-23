@@ -26,10 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dvaumoron/puzzleweaver/web"
 	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/config"
+	web "github.com/dvaumoron/puzzleweaver/web/main"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/feeds"
 )

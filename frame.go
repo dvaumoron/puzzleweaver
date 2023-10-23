@@ -38,10 +38,10 @@ import (
 	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
 	templatesimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/templates"
 	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
-	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/blog"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/forum"
+	web "github.com/dvaumoron/puzzleweaver/web/main"
 	"github.com/dvaumoron/puzzleweaver/web/remotewidget"
 	"github.com/dvaumoron/puzzleweaver/web/wiki"
 )

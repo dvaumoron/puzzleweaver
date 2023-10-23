@@ -27,8 +27,8 @@ import (
 	"strings"
 
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
-	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
+	web "github.com/dvaumoron/puzzleweaver/web/main"
 	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	"github.com/gin-gonic/gin"
 )

@@ -23,10 +23,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dvaumoron/puzzleweaver/web"
 	"github.com/dvaumoron/puzzleweaver/web/common"
 	"github.com/dvaumoron/puzzleweaver/web/config"
 	"github.com/dvaumoron/puzzleweaver/web/locale"
+	web "github.com/dvaumoron/puzzleweaver/web/main"
 	"github.com/gin-gonic/gin"
 )
 
