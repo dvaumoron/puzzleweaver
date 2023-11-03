@@ -46,6 +46,8 @@ import (
 	"github.com/dvaumoron/puzzleweaver/web/wiki"
 )
 
+// TODO global improvement of code sharing with puzzleweb
+
 const notFound = "notFound"
 const castMsg = "Failed to cast value"
 const valueName = "valueName"
