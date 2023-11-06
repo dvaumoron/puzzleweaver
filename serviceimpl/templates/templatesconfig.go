@@ -74,7 +74,10 @@ func loadTemplates(fileSystem afero.Fs, conf *templateConf) (part.PartRenderer, 
 		}
 		return date.Format(targetFormat)
 	}}
-	return part.MakePartRenderer(conf.ComponentsPath, conf.ViewsPath, part.WithFs(fileSystem), part.WithFuncs(customFuncs))
+	return part.MakePartRenderer(
+		conf.ComponentsPath, conf.ViewsPath, part.WithFs(fileSystem), part.WithFuncs(customFuncs),
+		part.WithReloadRule(part.AlwaysReload),
+	)
 }
 
 // TODO merge with puzzlelocaleloader to call a shared library
