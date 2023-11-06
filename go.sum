@@ -390,8 +390,8 @@ github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkp
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724 h1:1/c0u68+2LRI+XSpduQpV9BnKx1k1P6GTb3MVxCE3w4=
 github.com/dustin/randbo v0.0.0-20140428231429-7f1b564ca724/go.mod h1:pTiKQhUCcxt2eQMAnv48oc5nAsmelPm573z44h6PSXc=
-github.com/dvaumoron/partrenderer v0.2.0 h1:OsWS8K3eHpAj2GoeEY4bz8C8K6nU7sx4I4nqlhHFrD0=
-github.com/dvaumoron/partrenderer v0.2.0/go.mod h1:9YsPCGGvT0yHRWPkPGfygyu3uEjo6f9VAhSLTSQDyZQ=
+github.com/dvaumoron/partrenderer v0.3.0 h1:+9JFG1pw2fXjzbgPDeRhNbpvgSMEi6g0ZbB79/X4IUU=
+github.com/dvaumoron/partrenderer v0.3.0/go.mod h1:9YsPCGGvT0yHRWPkPGfygyu3uEjo6f9VAhSLTSQDyZQ=
 github.com/dvaumoron/puzzleforumserver v1.7.0 h1:/dNT9GMzBDozyNqoUWaworCHsXSE+Z7HTskIwH9zkF4=
 github.com/dvaumoron/puzzleforumserver v1.7.0/go.mod h1:QwPHOx25FM8GQUcLFmrEw6sLNqzqQbnjB/msqubLxi8=
 github.com/dvaumoron/puzzleloginserver v1.7.0 h1:n5rWx5ty0jvtPHkpjK6dk1qQPDDvLhJ6+SYWiCeNmNg=

@@ -24,7 +24,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/dvaumoron/partrenderer"
+	part "github.com/dvaumoron/partrenderer"
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	"github.com/spf13/afero"
@@ -40,7 +40,7 @@ type templateConf struct {
 }
 
 type initializedTemplateConf struct {
-	templates partrenderer.PartRenderer
+	templates part.PartRenderer
 	messages  map[string]map[string]string
 }
 
@@ -62,7 +62,7 @@ func initTemplateConf(conf *templateConf) (initializedTemplateConf, error) {
 	return initializedTemplateConf{templates: templates, messages: messages}, nil
 }
 
-func loadTemplates(fileSystem afero.Fs, conf *templateConf) (partrenderer.PartRenderer, error) {
+func loadTemplates(fileSystem afero.Fs, conf *templateConf) (part.PartRenderer, error) {
 	sourceFormat := conf.DateFormat
 	customFuncs := template.FuncMap{"date": func(value string, targetFormat string) string {
 		if sourceFormat == targetFormat {
@@ -74,7 +74,7 @@ func loadTemplates(fileSystem afero.Fs, conf *templateConf) (partrenderer.PartRe
 		}
 		return date.Format(targetFormat)
 	}}
-	return partrenderer.MakePartRenderer(conf.ComponentsPath, conf.ViewsPath, partrenderer.WithFs(fileSystem), partrenderer.WithFuncs(customFuncs))
+	return part.MakePartRenderer(conf.ComponentsPath, conf.ViewsPath, part.WithFs(fileSystem), part.WithFuncs(customFuncs))
 }
 
 // TODO merge with puzzlelocaleloader to call a shared library

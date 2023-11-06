@@ -4,7 +4,7 @@ go 1.21.3
 
 require (
 	github.com/ServiceWeaver/weaver v0.22.0
-	github.com/dvaumoron/partrenderer v0.2.0
+	github.com/dvaumoron/partrenderer v0.3.0
 	github.com/dvaumoron/puzzleforumserver v1.7.0
 	github.com/dvaumoron/puzzleloginserver v1.7.0
 	github.com/dvaumoron/puzzlemarkdownextension v1.0.0
