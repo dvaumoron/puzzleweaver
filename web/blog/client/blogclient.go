@@ -49,7 +49,7 @@ func MakeBlogServiceWrapper(blogService blogimpl.RemoteBlogService, authService 
 }
 
 func cmpDesc(a blogimpl.RawBlogPost, b blogimpl.RawBlogPost) int {
-	return -cmp.Compare(a.CreatedAt, b.CreatedAt)
+	return cmp.Compare(b.CreatedAt, a.CreatedAt)
 }
 
 func (client blogServiceWrapper) CreatePost(ctx context.Context, userId uint64, title string, content string) (uint64, error) {

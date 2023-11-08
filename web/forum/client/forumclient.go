@@ -56,7 +56,7 @@ func cmpAsc(a forumimpl.RawForumContent, b forumimpl.RawForumContent) int {
 }
 
 func cmpDesc(a forumimpl.RawForumContent, b forumimpl.RawForumContent) int {
-	return -cmp.Compare(a.CreatedAt, b.CreatedAt)
+	return cmp.Compare(b.CreatedAt, a.CreatedAt)
 }
 
 func (client forumServiceWrapper) CreateThread(ctx context.Context, userId uint64, title string, message string) (uint64, error) {

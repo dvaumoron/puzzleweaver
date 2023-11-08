@@ -24,10 +24,12 @@ import (
 	"github.com/ServiceWeaver/weaver"
 )
 
-const AdminName = "admin"
-const PublicName = "public"
-const PublicGroupId = 0 // groupId for content always allowed to access
-const AdminGroupId = 1  // groupId corresponding to role administration
+const (
+	AdminName     = "admin"
+	PublicName    = "public"
+	PublicGroupId = 0 // groupId for content always allowed to access
+	AdminGroupId  = 1 // groupId corresponding to role administration
+)
 
 const (
 	ActionAccess = "access"

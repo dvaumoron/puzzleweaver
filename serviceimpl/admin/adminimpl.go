@@ -207,8 +207,8 @@ func (impl *adminImpl) ViewUserRoles(ctx context.Context, adminId uint64, userId
 		return false, nil, err
 	}
 
+	updateRight := impl.evalOPA(ctx, userId, AdminGroupId, updateFlag, adminRoles) == nil
 	if adminId == userId {
-		updateRight := impl.evalOPA(ctx, userId, AdminGroupId, updateFlag, adminRoles) == nil
 		userRoles, err := impl.getUserRoles(ctx, db, userId)
 		return updateRight, userRoles, err
 	}
@@ -218,7 +218,6 @@ func (impl *adminImpl) ViewUserRoles(ctx context.Context, adminId uint64, userId
 		return false, nil, err
 	}
 
-	updateRight := impl.evalOPA(ctx, userId, AdminGroupId, updateFlag, adminRoles) == nil
 	userRoles, err := impl.getUserRoles(ctx, db, userId)
 	return updateRight, userRoles, err
 }
