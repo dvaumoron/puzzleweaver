@@ -26,7 +26,7 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	"github.com/dvaumoron/puzzlerightserver/model"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
 	"github.com/open-policy-agent/opa/rego"
 	"gorm.io/gorm"
 )

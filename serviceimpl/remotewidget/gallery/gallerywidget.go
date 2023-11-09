@@ -26,14 +26,15 @@ import (
 	galleryservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service"
 	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
+	widgetservice "github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
 )
 
 const (
 	imageKey       = "Image"
 	imageIdKey     = "ImageId"
-	pathImageIdKey = remotewidgetservice.PathKeySlash + imageIdKey
+	pathImageIdKey = widgetservice.PathKeySlash + imageIdKey
 )
 
 func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service galleryservice.GalleryService, defaultPageSize uint64, args ...string) {
@@ -59,7 +60,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 	w.AddActionWithQuery("list", remotewidgetservice.KIND_GET, "/", widgethelper.GetPaginationNames(), func(ctx context.Context, data gin.H) (string, string, []byte, error) {
 		pageNumber, start, end, _ := widgethelper.GetPagination(defaultPageSize, data)
 
-		galleryId, err := widgethelper.AsUint64(data[remotewidgetservice.ObjectIdKey])
+		galleryId, err := widgethelper.AsUint64(data[widgetservice.ObjectIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -131,7 +132,7 @@ func InitWidget(manager widgethelper.WidgetManager, logger *slog.Logger, service
 		return "", editTmpl, resData, nil
 	})
 	w.AddAction("save", remotewidgetservice.KIND_POST, "/save", func(ctx context.Context, data gin.H) (string, string, []byte, error) {
-		galleryId, err := widgethelper.AsUint64(data[remotewidgetservice.ObjectIdKey])
+		galleryId, err := widgethelper.AsUint64(data[widgetservice.ObjectIdKey])
 		if err != nil {
 			return "", "", nil, err
 		}

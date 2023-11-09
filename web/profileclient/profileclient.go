@@ -24,20 +24,22 @@ import (
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
-	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	"github.com/dvaumoron/puzzleweb/common"
+	"github.com/dvaumoron/puzzleweb/common/log"
+	loginservice "github.com/dvaumoron/puzzleweb/login/service"
+	profileservice "github.com/dvaumoron/puzzleweb/profile/service"
 )
 
 type profileServiceWrapper struct {
 	profileService profileimpl.RemoteProfileService
-	userService    service.UserService
+	userService    loginservice.UserService
 	authService    adminimpl.AuthService
-	loggerGetter   common.LoggerGetter
+	loggerGetter   log.LoggerGetter
 	groupId        uint64
 	defaultPicture []byte
 }
 
-func MakeProfileServiceWrapper(profileService profileimpl.RemoteProfileService, userService service.UserService, authService adminimpl.AuthService, loggerGetter common.LoggerGetter, groupId uint64, defaultPicture []byte) service.ProfileService {
+func MakeProfileServiceWrapper(profileService profileimpl.RemoteProfileService, userService loginservice.UserService, authService adminimpl.AuthService, loggerGetter log.LoggerGetter, groupId uint64, defaultPicture []byte) profileservice.ProfileService {
 	return profileServiceWrapper{
 		profileService: profileService, userService: userService, authService: authService,
 		loggerGetter: loggerGetter, groupId: groupId, defaultPicture: defaultPicture,
@@ -63,7 +65,7 @@ func (client profileServiceWrapper) GetPicture(ctx context.Context, userId uint6
 	return picture
 }
 
-func (client profileServiceWrapper) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]service.UserProfile, error) {
+func (client profileServiceWrapper) GetProfiles(ctx context.Context, userIds []uint64) (map[uint64]profileservice.UserProfile, error) {
 	// duplicate removal
 	userIds = common.MakeSet(userIds).Slice()
 
@@ -73,15 +75,15 @@ func (client profileServiceWrapper) GetProfiles(ctx context.Context, userIds []u
 	}
 
 	idToRaw, err := client.profileService.GetProfiles(ctx, userIds)
-	profiles := map[uint64]service.UserProfile{}
+	profiles := map[uint64]profileservice.UserProfile{}
 	for id, raw := range idToRaw {
-		profiles[id] = service.UserProfile{User: users[id], Desc: raw.Desc, Info: raw.Info}
+		profiles[id] = profileservice.UserProfile{User: users[id], Desc: raw.Desc, Info: raw.Info}
 	}
 
 	// add users who doesn't have profile data yet
 	for userId, user := range users {
 		if _, ok := profiles[userId]; !ok {
-			profiles[userId] = service.UserProfile{User: user}
+			profiles[userId] = profileservice.UserProfile{User: user}
 		}
 	}
 	return profiles, nil

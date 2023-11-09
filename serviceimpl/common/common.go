@@ -18,7 +18,11 @@
 
 package servicecommon
 
-import "errors"
+import (
+	"context"
+	"errors"
+	"log/slog"
+)
 
 const (
 	DBAccessMsg  = "Failed to access database"
@@ -33,3 +37,7 @@ var (
 	ErrNolocales       = errors.New("no locales declared")
 	ErrPictureNotFound = errors.New("picture not found")
 )
+
+type LoggerGetter interface {
+	Logger(context.Context) *slog.Logger
+}

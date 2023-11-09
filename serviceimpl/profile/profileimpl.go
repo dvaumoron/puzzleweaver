@@ -24,7 +24,7 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

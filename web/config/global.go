@@ -22,6 +22,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"strings"
 	"time"
 
 	fsclient "github.com/dvaumoron/puzzleweaver/client/fs"
@@ -39,14 +40,17 @@ import (
 	templatesimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/templates"
 	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
 	blogclient "github.com/dvaumoron/puzzleweaver/web/blog/client"
-	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
 	forumclient "github.com/dvaumoron/puzzleweaver/web/forum/client"
 	"github.com/dvaumoron/puzzleweaver/web/loginclient"
 	"github.com/dvaumoron/puzzleweaver/web/profileclient"
 	remotewidgetclient "github.com/dvaumoron/puzzleweaver/web/remotewidget/client"
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wiki/client"
+	"github.com/dvaumoron/puzzleweb/common/config"
+	"github.com/dvaumoron/puzzleweb/common/config/parser"
+	"github.com/dvaumoron/puzzleweb/common/log"
+	forumservice "github.com/dvaumoron/puzzleweb/forum/service"
+	loginservice "github.com/dvaumoron/puzzleweb/login/service"
+	profileservice "github.com/dvaumoron/puzzleweb/profile/service"
 	"github.com/spf13/afero"
 )
 
@@ -74,35 +78,16 @@ type GlobalConfig struct {
 	ProfileGroupId            uint64
 	ProfileDefaultPicturePath string
 
-	PageGroups  []PageGroup
-	Widgets     map[string]WidgetConfig
-	WidgetPages []WidgetPageConfig
+	StaticPages []parser.StaticPagesConfig
+	Widgets     map[string]parser.WidgetConfig
+	WidgetPages []parser.WidgetPageConfig
 
 	GinReleaseMode bool
 }
 
-type PageGroup struct {
-	Id    uint64
-	Pages []string
-}
-
-type WidgetConfig struct {
-	Kind       string
-	WidgetName string
-	ObjectId   uint64
-	GroupId    uint64
-	Templates  []string
-}
-
-type WidgetPageConfig struct {
-	Emplacement string
-	Name        string
-	WidgetRef   string
-}
-
 type GlobalServiceConfig struct {
 	*GlobalConfig
-	LoggerGetter            common.LoggerGetter
+	LoggerGetter            log.LoggerGetter
 	VersionName             string
 	AllLang                 []string
 	StaticFileSystem        http.FileSystem
@@ -111,9 +96,9 @@ type GlobalServiceConfig struct {
 	SettingsService         settingsimpl.SettingsService
 	PasswordStrengthService passwordstrengthimpl.PasswordStrengthService
 	SaltService             saltimpl.SaltService
-	LoginService            service.LoginService
+	LoginService            loginservice.FullLoginService
 	AdminService            adminimpl.AdminService
-	ProfileService          service.ProfileService
+	ProfileService          profileservice.ProfileService
 	ForumService            forumimpl.RemoteForumService
 	MarkdownService         markdownimpl.MarkdownService
 	BlogService             blogimpl.RemoteBlogService
@@ -121,7 +106,7 @@ type GlobalServiceConfig struct {
 	WidgetService           remotewidgetimpl.RemoteWidgetService
 }
 
-func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logger, version string, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalServiceConfig, error) {
+func New(conf *GlobalConfig, loggerGetter log.LoggerGetter, logger *slog.Logger, version string, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalServiceConfig, error) {
 	allLang := make([]string, 0, len(conf.LangPicturePaths))
 	for lang := range conf.LangPicturePaths {
 		allLang = append(allLang, lang)
@@ -168,34 +153,48 @@ func New(conf *GlobalConfig, loggerGetter common.LoggerGetter, logger *slog.Logg
 	}, nil
 }
 
-func (c *GlobalServiceConfig) CreateBlogConfig(blogId uint64, groupId uint64, args ...string) BlogConfig {
+func (c *GlobalServiceConfig) GetLogger() log.Logger {
+	// TODO
+	return nil
+}
+
+func (c *GlobalServiceConfig) CreateBlogConfig(widgetConfig parser.WidgetConfig) (config.BlogConfig, bool) {
 	blogService := blogclient.MakeBlogServiceWrapper(
-		c.BlogService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
+		c.BlogService, c.AdminService, c.ProfileService, widgetConfig.ObjectId, widgetConfig.GroupId, c.DateFormat,
 	)
 	commentService := forumclient.MakeForumServiceWrapper(
-		c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, blogId, groupId, c.DateFormat,
+		c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, widgetConfig.ObjectId, widgetConfig.GroupId, c.DateFormat,
 	)
-	return BlogConfig{
-		BlogService: blogService, CommentService: commentService, MarkdownService: c.MarkdownService,
+	return config.BlogConfig{
+		ServiceConfig: config.MakeServiceConfig(c, blogService), CommentService: commentService, MarkdownService: c.MarkdownService,
 		Domain: c.Domain, Port: c.Port, DateFormat: c.DateFormat, PageSize: c.PageSize, ExtractSize: c.ExtractSize,
-		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: args,
-	}
+		FeedFormat: c.FeedFormat, FeedSize: c.FeedSize, Args: widgetConfig.Templates,
+	}, true
 }
 
-func (c *GlobalServiceConfig) CreateForumConfig(forumId uint64, groupId uint64, args ...string) ForumConfig {
+func (c *GlobalServiceConfig) CreateForumConfig(widgetConfig parser.WidgetConfig) (config.ForumConfig, bool) {
 	forumService := forumclient.MakeForumServiceWrapper(
-		c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, forumId, groupId, c.DateFormat,
+		c.ForumService, c.AdminService, c.ProfileService, c.LoggerGetter, widgetConfig.ObjectId, widgetConfig.GroupId, c.DateFormat,
 	)
-	return ForumConfig{ForumService: forumService, PageSize: c.PageSize, Args: args}
+	return config.ForumConfig{
+		ServiceConfig: config.MakeServiceConfig[forumservice.ForumService](c, forumService),
+		PageSize:      c.PageSize, Args: widgetConfig.Templates,
+	}, true
 }
 
-func (c *GlobalServiceConfig) CreateWidgetConfig(widgetName string, objectId uint64, groupId uint64) remotewidgetservice.WidgetService {
-	return remotewidgetclient.MakeWidgetServiceWrapper(c.WidgetService, c.LoggerGetter, widgetName, objectId, groupId)
+func (c *GlobalServiceConfig) CreateWidgetConfig(widgetConfig parser.WidgetConfig) (config.RemoteWidgetConfig, bool) {
+	widgetName, remoteKind := strings.CutPrefix(widgetConfig.Kind, "remote/")
+	return config.MakeServiceConfig(c, remotewidgetclient.MakeWidgetServiceWrapper(
+		c.WidgetService, c.LoggerGetter, widgetName, widgetConfig.ObjectId, widgetConfig.GroupId,
+	)), remoteKind
 }
 
-func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) WikiConfig {
+func (c *GlobalServiceConfig) CreateWikiConfig(wikiId uint64, groupId uint64, args ...string) (config.WikiConfig, bool) {
 	wikiService := wikiclient.MakeWikiServiceWrapper(
 		c.WikiService, c.AdminService, c.ProfileService, c.LoggerGetter, wikiId, groupId, c.DateFormat,
 	)
-	return WikiConfig{WikiService: wikiService, MarkdownService: c.MarkdownService, Args: args}
+	return config.WikiConfig{
+		ServiceConfig:   config.MakeServiceConfig(c, wikiService),
+		MarkdownService: c.MarkdownService, Args: args,
+	}, true
 }

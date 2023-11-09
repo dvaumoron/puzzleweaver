@@ -26,7 +26,8 @@ import (
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
+	widgetservice "github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -67,7 +68,7 @@ func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, ac
 		return "", "", nil, servicecommon.ErrInternal
 	}
 
-	dataBytes := files[remotewidgetservice.DataKey]
+	dataBytes := files[widgetservice.DataKey]
 
 	var data gin.H
 	if err := json.Unmarshal(dataBytes, &data); err != nil {
@@ -76,7 +77,7 @@ func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, ac
 	}
 	// cleaning for GC
 	dataBytes = nil
-	delete(files, remotewidgetservice.DataKey)
+	delete(files, widgetservice.DataKey)
 
 	if len(files) != 0 {
 		data[widgethelper.FilesKey] = files

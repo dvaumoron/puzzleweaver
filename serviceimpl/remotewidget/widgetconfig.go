@@ -21,10 +21,10 @@ package remotewidgetimpl
 import (
 	"log/slog"
 
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	gallerywidget "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery"
 	galleryimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service/impl"
 	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
-	"github.com/dvaumoron/puzzleweaver/web/common"
 )
 
 type widgetConf struct {
@@ -37,7 +37,7 @@ type initializedWidgetConf struct {
 	widgets widgethelper.WidgetManager
 }
 
-func initWidgetConf(loggerGetter common.LoggerGetter, logger *slog.Logger, conf *widgetConf) initializedWidgetConf {
+func initWidgetConf(loggerGetter servicecommon.LoggerGetter, logger *slog.Logger, conf *widgetConf) initializedWidgetConf {
 	galleryService := galleryimpl.New(conf.GalleryMongoAddress, conf.GalleryMongoDatabaseName, loggerGetter)
 
 	widgets := widgethelper.NewManager()

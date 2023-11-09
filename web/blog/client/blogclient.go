@@ -26,25 +26,23 @@ import (
 
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	blogimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/blog"
-	blogservice "github.com/dvaumoron/puzzleweaver/web/blog/service"
-	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	blogservice "github.com/dvaumoron/puzzleweb/blog/service"
+	profileservice "github.com/dvaumoron/puzzleweb/profile/service"
 )
 
 type blogServiceWrapper struct {
 	blogService    blogimpl.RemoteBlogService
 	authService    adminimpl.AuthService
-	profileService service.ProfileService
-	loggerGetter   common.LoggerGetter
+	profileService profileservice.ProfileService
 	blogId         uint64
 	groupId        uint64
 	dateFormat     string
 }
 
-func MakeBlogServiceWrapper(blogService blogimpl.RemoteBlogService, authService adminimpl.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, blogId uint64, groupId uint64, dateFormat string) blogservice.BlogService {
+func MakeBlogServiceWrapper(blogService blogimpl.RemoteBlogService, authService adminimpl.AuthService, profileService profileservice.ProfileService, blogId uint64, groupId uint64, dateFormat string) blogservice.BlogService {
 	return blogServiceWrapper{
 		blogService: blogService, authService: authService, profileService: profileService,
-		loggerGetter: loggerGetter, blogId: blogId, groupId: groupId, dateFormat: dateFormat,
+		blogId: blogId, groupId: groupId, dateFormat: dateFormat,
 	}
 }
 
@@ -126,7 +124,7 @@ func (client blogServiceWrapper) DeleteRight(ctx context.Context, userId uint64)
 	return client.authService.AuthQuery(ctx, userId, client.groupId, adminimpl.ActionDelete) == nil
 }
 
-func convertPost(post blogimpl.RawBlogPost, creator service.UserProfile, dateFormat string) blogservice.BlogPost {
+func convertPost(post blogimpl.RawBlogPost, creator profileservice.UserProfile, dateFormat string) blogservice.BlogPost {
 	createdAt := time.Unix(post.CreatedAt, 0)
 	return blogservice.BlogPost{
 		PostId: post.Id, Creator: creator, Date: createdAt.Format(dateFormat), Title: post.Title, Content: post.Content,

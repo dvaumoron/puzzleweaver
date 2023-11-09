@@ -21,28 +21,29 @@ package forumclient
 import (
 	"cmp"
 	"context"
-	"log/slog"
 	"slices"
 	"time"
 
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	forumimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/forum"
-	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
-	forumservice "github.com/dvaumoron/puzzleweaver/web/forum/service"
+	"github.com/dvaumoron/puzzleweb/common"
+	"github.com/dvaumoron/puzzleweb/common/log"
+	forumservice "github.com/dvaumoron/puzzleweb/forum/service"
+	profileservice "github.com/dvaumoron/puzzleweb/profile/service"
+	"go.uber.org/zap"
 )
 
 type forumServiceWrapper struct {
 	forumService   forumimpl.RemoteForumService
 	authService    adminimpl.AuthService
-	profileService service.ProfileService
-	loggerGetter   common.LoggerGetter
+	profileService profileservice.ProfileService
+	loggerGetter   log.LoggerGetter
 	forumId        uint64
 	groupId        uint64
 	dateFormat     string
 }
 
-func MakeForumServiceWrapper(forumService forumimpl.RemoteForumService, authService adminimpl.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, forumId uint64, groupId uint64, dateFormat string) forumservice.FullForumService {
+func MakeForumServiceWrapper(forumService forumimpl.RemoteForumService, authService adminimpl.AuthService, profileService profileservice.ProfileService, loggerGetter log.LoggerGetter, forumId uint64, groupId uint64, dateFormat string) forumservice.FullForumService {
 	return forumServiceWrapper{
 		forumService: forumService, authService: authService, profileService: profileService,
 		loggerGetter: loggerGetter, forumId: forumId, groupId: groupId, dateFormat: dateFormat,
@@ -254,7 +255,7 @@ func deleteMessage(forumService forumimpl.RemoteForumService, ctx context.Contex
 	return forumService.DeleteMessage(ctx, containerId, id)
 }
 
-func convertContents(list []forumimpl.RawForumContent, users map[uint64]service.UserProfile, dateFormat string) []forumservice.ForumContent {
+func convertContents(list []forumimpl.RawForumContent, users map[uint64]profileservice.UserProfile, dateFormat string) []forumservice.ForumContent {
 	contents := make([]forumservice.ForumContent, 0, len(list))
 	for _, content := range list {
 		contents = append(contents, convertContent(content, users[content.CreatorId], dateFormat))
@@ -262,15 +263,15 @@ func convertContents(list []forumimpl.RawForumContent, users map[uint64]service.
 	return contents
 }
 
-func convertContent(content forumimpl.RawForumContent, creator service.UserProfile, dateFormat string) forumservice.ForumContent {
+func convertContent(content forumimpl.RawForumContent, creator profileservice.UserProfile, dateFormat string) forumservice.ForumContent {
 	createdAt := time.Unix(content.CreatedAt, 0)
 	return forumservice.ForumContent{
 		Id: content.Id, Creator: creator, Date: createdAt.Format(dateFormat), Text: content.Text,
 	}
 }
 
-func logCommentThreadNotFound(logger *slog.Logger, objectId uint64, elemTitle string) {
-	logger.Warn("comment thread not found", "objectId", objectId, "elemTitle", elemTitle)
+func logCommentThreadNotFound(logger log.Logger, objectId uint64, elemTitle string) {
+	logger.Warn("comment thread not found", zap.Uint64("objectId", objectId), zap.String("elemTitle", elemTitle))
 }
 
 // no duplicate check, there is one in GetProfiles

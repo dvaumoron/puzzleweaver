@@ -23,7 +23,7 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
 	passwordvalidator "github.com/wagslane/go-password-validator"
 )
 

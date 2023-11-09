@@ -24,19 +24,23 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const collectionName = "settings"
+const (
+	collectionName = "settings"
 
-const userIdKey = "userId"
-const settingsKey = collectionName // currently the same
+	userIdKey   = "userId"
+	settingsKey = collectionName // currently the same
+)
 
-var optsOnlySettingsField = options.FindOne().SetProjection(bson.D{{Key: settingsKey, Value: true}})
-var optsCreateUnexisting = options.Replace().SetUpsert(true)
+var (
+	optsOnlySettingsField = options.FindOne().SetProjection(bson.D{{Key: settingsKey, Value: true}})
+	optsCreateUnexisting  = options.Replace().SetUpsert(true)
+)
 
 type settingsImpl struct {
 	weaver.Implements[SettingsService]

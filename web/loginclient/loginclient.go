@@ -27,15 +27,17 @@ import (
 	loginimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/login"
 	passwordstrengthimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength"
 	saltimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/salt"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
+	loginservice "github.com/dvaumoron/puzzleweb/login/service"
 	"golang.org/x/crypto/scrypt"
 )
 
 // those values are not configurable because a change imply a migration of user database.
-const n = 1 << 16
-const r = 8
-const p = 1
-const keyLen = 64
+const (
+	n      = 1 << 16
+	r      = 8
+	p      = 1
+	keyLen = 64
+)
 
 var errNotEnoughValues = errors.New("not enough return values from saltService call")
 
@@ -46,7 +48,7 @@ type loginServiceWrapper struct {
 	dateFormat      string
 }
 
-func MakeLoginServiceWrapper(loginService loginimpl.RemoteLoginService, saltService saltimpl.SaltService, strengthService passwordstrengthimpl.PasswordStrengthService, dateFormat string) service.LoginService {
+func MakeLoginServiceWrapper(loginService loginimpl.RemoteLoginService, saltService saltimpl.SaltService, strengthService passwordstrengthimpl.PasswordStrengthService, dateFormat string) loginservice.FullLoginService {
 	return loginServiceWrapper{
 		loginService: loginService, saltService: saltService, strengthService: strengthService, dateFormat: dateFormat,
 	}
@@ -80,13 +82,13 @@ func (client loginServiceWrapper) Register(ctx context.Context, login string, pa
 }
 
 // You should remove duplicate id in list
-func (client loginServiceWrapper) GetUsers(ctx context.Context, userIds []uint64) (map[uint64]service.User, error) {
+func (client loginServiceWrapper) GetUsers(ctx context.Context, userIds []uint64) (map[uint64]loginservice.User, error) {
 	rawUsers, err := client.loginService.GetUsers(ctx, userIds)
 	if err != nil {
 		return nil, err
 	}
 
-	users := map[uint64]service.User{}
+	users := map[uint64]loginservice.User{}
 	for _, value := range rawUsers {
 		users[value.Id] = convertUser(value, client.dateFormat)
 	}
@@ -135,13 +137,13 @@ func (client loginServiceWrapper) ChangePassword(ctx context.Context, userId uin
 	return client.loginService.ChangePassword(ctx, userId, salteds[0], salteds[1])
 }
 
-func (client loginServiceWrapper) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []service.User, error) {
+func (client loginServiceWrapper) ListUsers(ctx context.Context, start uint64, end uint64, filter string) (uint64, []loginservice.User, error) {
 	total, list, err := client.loginService.ListUsers(ctx, start, end, filter)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	users := make([]service.User, 0, len(list))
+	users := make([]loginservice.User, 0, len(list))
 	for _, user := range list {
 		users = append(users, convertUser(user, client.dateFormat))
 	}
@@ -176,7 +178,7 @@ func (client loginServiceWrapper) salt(ctx context.Context, loginPasswords ...[2
 	return salteds, nil
 }
 
-func convertUser(user loginimpl.RawUser, dateFormat string) service.User {
+func convertUser(user loginimpl.RawUser, dateFormat string) loginservice.User {
 	registredAt := time.Unix(user.RegistredAt, 0)
-	return service.User{Id: user.Id, Login: user.Login, RegistredAt: registredAt.Format(dateFormat)}
+	return loginservice.User{Id: user.Id, Login: user.Login, RegistredAt: registredAt.Format(dateFormat)}
 }

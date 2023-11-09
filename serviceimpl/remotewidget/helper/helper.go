@@ -22,18 +22,20 @@ import (
 	"errors"
 	"strconv"
 
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
+	widgetservice "github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
 )
 
 const (
+	urlName = "CurrentUrl"
+
 	pageNumberKey      = "pageNumber"
 	pageSizeKey        = "pageSize"
 	filterKey          = "filter"
-	queryPageNumberKey = remotewidgetservice.QueryKeySlash + pageNumberKey
-	queryPageSizeKey   = remotewidgetservice.QueryKeySlash + pageSizeKey
-	queryFilterKey     = remotewidgetservice.QueryKeySlash + filterKey
+	queryPageNumberKey = widgetservice.QueryKeySlash + pageNumberKey
+	queryPageSizeKey   = widgetservice.QueryKeySlash + pageSizeKey
+	queryFilterKey     = widgetservice.QueryKeySlash + filterKey
 )
 
 var (
@@ -159,7 +161,7 @@ func AsFloat64(value any) (float64, error) {
 }
 
 func GetFormData(data gin.H) (gin.H, error) {
-	return AsMap(data[remotewidgetservice.FormKey])
+	return AsMap(data[widgetservice.FormKey])
 }
 
 func GetFiles(data gin.H) (map[string][]byte, error) {
@@ -175,7 +177,7 @@ func GetFiles(data gin.H) (map[string][]byte, error) {
 }
 
 func GetBaseUrl(levelToErase uint8, data gin.H) (string, error) {
-	res, err := AsString(data[common.UrlName])
+	res, err := AsString(data[urlName])
 	if err != nil {
 		return "", err
 	}

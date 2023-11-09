@@ -20,16 +20,18 @@ package wikiclient
 
 import (
 	"context"
-	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
-	"github.com/dvaumoron/puzzleweaver/web/common"
-	"github.com/dvaumoron/puzzleweaver/web/common/service"
-	wikiservice "github.com/dvaumoron/puzzleweaver/web/wiki/service"
+	"github.com/dvaumoron/puzzleweb/common"
+	"github.com/dvaumoron/puzzleweb/common/log"
+	profileservice "github.com/dvaumoron/puzzleweb/profile/service"
+	wikicache "github.com/dvaumoron/puzzleweb/wiki/client/cache"
+	wikiservice "github.com/dvaumoron/puzzleweb/wiki/service"
+	"go.uber.org/zap"
 )
 
 // check matching with interface
@@ -38,18 +40,18 @@ var _ wikiservice.WikiService = wikiServiceWrapper{}
 type wikiServiceWrapper struct {
 	wikiService    wikiimpl.RemoteWikiService
 	authService    adminimpl.AuthService
-	profileService service.ProfileService
-	loggerGetter   common.LoggerGetter
+	profileService profileservice.ProfileService
+	loggerGetter   log.LoggerGetter
 	wikiId         uint64
 	groupId        uint64
 	dateFormat     string
-	cache          *wikiCache
+	cache          *wikicache.WikiCache
 }
 
-func MakeWikiServiceWrapper(wikiService wikiimpl.RemoteWikiService, authService adminimpl.AuthService, profileService service.ProfileService, loggerGetter common.LoggerGetter, wikiId uint64, groupId uint64, dateFormat string) wikiservice.WikiService {
+func MakeWikiServiceWrapper(wikiService wikiimpl.RemoteWikiService, authService adminimpl.AuthService, profileService profileservice.ProfileService, loggerGetter log.LoggerGetter, wikiId uint64, groupId uint64, dateFormat string) wikiservice.WikiService {
 	return wikiServiceWrapper{
 		wikiService: wikiService, authService: authService, profileService: profileService, loggerGetter: loggerGetter,
-		wikiId: wikiId, groupId: groupId, dateFormat: dateFormat, cache: newCache(),
+		wikiId: wikiId, groupId: groupId, dateFormat: dateFormat, cache: wikicache.NewCache(),
 	}
 }
 
@@ -65,7 +67,7 @@ func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64,
 	if versionStr != "" {
 		version, err = strconv.ParseUint(versionStr, 10, 64)
 		if err != nil {
-			logger.Info("Failed to parse wiki version, falling to last", common.ErrorKey, err)
+			logger.Info("Failed to parse wiki version, falling to last", zap.Error(err))
 		}
 	}
 	wikiRef := buildRef(lang, title)
@@ -78,7 +80,7 @@ func (client wikiServiceWrapper) LoadContent(ctx context.Context, userId uint64,
 		return nil, err
 	}
 	if len(list) != 0 {
-		content := client.cache.load(logger, wikiRef)
+		content := client.cache.Load(logger, wikiRef)
 		if content != nil && maxVersion(list) == content.Version {
 			return content, nil
 		}
@@ -94,7 +96,7 @@ func (client wikiServiceWrapper) StoreContent(ctx context.Context, userId uint64
 
 	version, err := strconv.ParseUint(last, 10, 64)
 	if err != nil {
-		client.loggerGetter.Logger(ctx).Warn("Failed to parse wiki last version", common.ErrorKey, err)
+		client.loggerGetter.Logger(ctx).Warn("Failed to parse wiki last version", zap.Error(err))
 		return common.ErrTechnical
 	}
 
@@ -103,7 +105,7 @@ func (client wikiServiceWrapper) StoreContent(ctx context.Context, userId uint64
 	if err != nil {
 		return err
 	}
-	client.cache.store(client.loggerGetter.Logger(ctx), wikiRef, &wikiservice.WikiContent{
+	client.cache.Store(client.loggerGetter.Logger(ctx), wikiRef, &wikiservice.WikiContent{
 		Version: version, Markdown: markdown,
 	})
 	return nil
@@ -160,14 +162,14 @@ func (client wikiServiceWrapper) DeleteContent(ctx context.Context, userId uint6
 	logger := client.loggerGetter.Logger(ctx)
 	version, err := strconv.ParseUint(versionStr, 10, 64)
 	if err != nil {
-		logger.Warn("Failed to parse wiki version to delete", common.ErrorKey, err)
+		logger.Warn("Failed to parse wiki version to delete", zap.Error(err))
 		return common.ErrTechnical
 	}
 
 	wikiRef := buildRef(lang, title)
-	content := client.cache.load(logger, wikiRef)
+	content := client.cache.Load(logger, wikiRef)
 	if content != nil && version == content.Version {
-		client.cache.delete(logger, wikiRef)
+		client.cache.Delete(logger, wikiRef)
 	}
 	return nil
 }
@@ -176,7 +178,7 @@ func (impl wikiServiceWrapper) DeleteRight(ctx context.Context, userId uint64) b
 	return impl.authService.AuthQuery(ctx, userId, impl.groupId, adminimpl.ActionDelete) == nil
 }
 
-func (client wikiServiceWrapper) innerLoadContent(ctx context.Context, logger *slog.Logger, wikiRef string, askedVersion uint64) (*wikiservice.WikiContent, error) {
+func (client wikiServiceWrapper) innerLoadContent(ctx context.Context, logger log.Logger, wikiRef string, askedVersion uint64) (*wikiservice.WikiContent, error) {
 	res, err := client.wikiService.Load(ctx, client.wikiId, wikiRef, askedVersion)
 	if err != nil || res.Version == 0 { // no stored wiki page
 		return nil, err
@@ -184,7 +186,7 @@ func (client wikiServiceWrapper) innerLoadContent(ctx context.Context, logger *s
 
 	content := &wikiservice.WikiContent{Version: res.Version, Markdown: res.Markdown}
 	if askedVersion == 0 {
-		client.cache.store(logger, wikiRef, content)
+		client.cache.Store(logger, wikiRef, content)
 	}
 	return content, nil
 }

@@ -21,18 +21,19 @@ import (
 	"context"
 
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
+	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	galleryservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const collectionName = "images"
-
-const setOperator = "$set"
-
 const (
+	collectionName = "images"
+
+	setOperator = "$set"
+
 	galleryIdKey = "galleryId"
 	imageIdKey   = "imageId"
 	userIdKey    = "userId"
@@ -51,10 +52,10 @@ var (
 type galleryImpl struct {
 	clientOptions *options.ClientOptions
 	databaseName  string
-	loggerGetter  common.LoggerGetter
+	loggerGetter  servicecommon.LoggerGetter
 }
 
-func New(serverAddress string, databaseName string, loggerGetter common.LoggerGetter) galleryservice.GalleryService {
+func New(serverAddress string, databaseName string, loggerGetter servicecommon.LoggerGetter) galleryservice.GalleryService {
 	clientOptions := mongoclient.New(serverAddress)
 	return galleryImpl{clientOptions: clientOptions, databaseName: databaseName, loggerGetter: loggerGetter}
 }

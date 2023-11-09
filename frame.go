@@ -21,8 +21,9 @@ package main
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"log"
-	"log/slog"
+	"strings"
 
 	"github.com/ServiceWeaver/weaver"
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
@@ -38,19 +39,11 @@ import (
 	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
 	templatesimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/templates"
 	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
-	"github.com/dvaumoron/puzzleweaver/web/blog"
 	"github.com/dvaumoron/puzzleweaver/web/config"
-	"github.com/dvaumoron/puzzleweaver/web/forum"
-	web "github.com/dvaumoron/puzzleweaver/web/main"
-	"github.com/dvaumoron/puzzleweaver/web/remotewidget"
-	"github.com/dvaumoron/puzzleweaver/web/wiki"
+	"github.com/dvaumoron/puzzleweb/common/build"
+	web "github.com/dvaumoron/puzzleweb/core"
+	"go.uber.org/zap"
 )
-
-// TODO global improvement of code sharing with puzzleweb
-
-const notFound = "notFound"
-const castMsg = "Failed to cast value"
-const valueName = "valueName"
 
 //go:embed version.txt
 var version string
@@ -84,6 +77,7 @@ type frameApp struct {
 
 // frameServe is called by weaver.Run and contains the body of the application.
 func frameServe(ctx context.Context, app *frameApp) error {
+	// TODO wrapper
 	logger := app.Logger(ctx)
 
 	globalConfig, err := config.New(
@@ -96,57 +90,38 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		return err
 	}
 
-	site := web.BuildDefaultSite(logger, globalConfig)
+	site, ok := web.BuildDefaultSite(globalConfig)
+	if !ok {
+		return errors.New("TODO")
+	}
 
-	site.AddPage(web.MakeHiddenStaticPage(app, notFound, adminimpl.PublicGroupId, notFound))
-
-	for _, pageGroup := range globalConfig.PageGroups {
-		site.AddStaticPages(app, pageGroup.Id, pageGroup.Pages)
+	for _, pageGroup := range globalConfig.StaticPages {
+		site.AddStaticPages(pageGroup)
 	}
 
 	widgets := globalConfig.Widgets
 	for _, widgetPageConfig := range globalConfig.WidgetPages {
-		ok := false
+		name := widgetPageConfig.Path
+		nested := false
 		var parentPage web.Page
-		if emplacement := widgetPageConfig.Emplacement; emplacement != "" {
-			parentPage, ok = site.GetPageWithPath(emplacement)
-			if !ok {
-				logger.Error("Failed to retrive parentPage", "emplacement", emplacement)
+		if index := strings.LastIndex(name, "/"); index != -1 {
+			emplacement := name[:index]
+			name = name[index+1:]
+			parentPage, nested = site.GetPageWithPath(emplacement)
+			if !nested {
+				logger.Error("Failed to retrieve parentPage", zap.String("emplacement", emplacement))
+				continue
 			}
 		}
 
-		widgetPage, add := makeWidgetPage(widgetPageConfig.Name, globalConfig, ctx, logger, widgets[widgetPageConfig.WidgetRef])
+		widgetPage, add := build.MakeWidgetPage(name, ctx, globalConfig, widgets[widgetPageConfig.WidgetRef])
 		if add {
-			if ok {
+			if nested {
 				parentPage.AddSubPage(widgetPage)
 			} else {
 				site.AddPage(widgetPage)
 			}
 		}
 	}
-	return site.Run(globalConfig, app.web)
-}
-
-func makeWidgetPage(pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, logger *slog.Logger, widgetConfig config.WidgetConfig) (web.Page, bool) {
-	switch widgetConfig.Kind {
-	case "forum":
-		return forum.MakeForumPage(pageName, logger, globalConfig.CreateForumConfig(
-			widgetConfig.ObjectId, widgetConfig.GroupId, widgetConfig.Templates...,
-		)), true
-	case "blog":
-		return blog.MakeBlogPage(pageName, logger, globalConfig.CreateBlogConfig(
-			widgetConfig.ObjectId, widgetConfig.GroupId, widgetConfig.Templates...,
-		)), true
-	case "wiki":
-		return wiki.MakeWikiPage(pageName, logger, globalConfig.CreateWikiConfig(
-			widgetConfig.ObjectId, widgetConfig.GroupId, widgetConfig.Templates...,
-		)), true
-	case "remote":
-		return remotewidget.MakeRemotePage(pageName, ctx, logger, globalConfig.CreateWidgetConfig(
-			widgetConfig.WidgetName, widgetConfig.ObjectId, widgetConfig.GroupId,
-		))
-	default:
-		logger.Error("Widget kind unknown", "kind", widgetConfig.Kind)
-		return web.Page{}, false
-	}
+	return site.RunListener(globalConfig, app.web)
 }

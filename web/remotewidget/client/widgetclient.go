@@ -24,26 +24,28 @@ import (
 	"net/http"
 
 	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
-	"github.com/dvaumoron/puzzleweaver/web/common"
-	widgetservice "github.com/dvaumoron/puzzleweaver/web/remotewidget/service"
+	"github.com/dvaumoron/puzzleweb/common"
+	"github.com/dvaumoron/puzzleweb/common/log"
+	widgetservice "github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type widgetServiceWrapper struct {
 	widgetService remotewidgetservice.RemoteWidgetService
-	loggerGetter  common.LoggerGetter
+	loggerGetter  log.LoggerGetter
 	widgetName    string
 	objectId      uint64
 	groupId       uint64
 }
 
-func MakeWidgetServiceWrapper(widgetService remotewidgetservice.RemoteWidgetService, loggerGetter common.LoggerGetter, widgetName string, objectId uint64, groupId uint64) widgetservice.WidgetService {
+func MakeWidgetServiceWrapper(widgetService remotewidgetservice.RemoteWidgetService, loggerGetter log.LoggerGetter, widgetName string, objectId uint64, groupId uint64) widgetservice.WidgetService {
 	return widgetServiceWrapper{
 		widgetService: widgetService, loggerGetter: loggerGetter, widgetName: widgetName, objectId: objectId, groupId: groupId,
 	}
 }
 
-func (client widgetServiceWrapper) GetDesc(ctx context.Context) ([]widgetservice.WidgetAction, error) {
+func (client widgetServiceWrapper) GetDesc(ctx context.Context) ([]widgetservice.Action, error) {
 	actions, err := client.widgetService.GetDesc(ctx, client.widgetName)
 	if err != nil {
 		return nil, err
@@ -52,22 +54,22 @@ func (client widgetServiceWrapper) GetDesc(ctx context.Context) ([]widgetservice
 }
 
 func (client widgetServiceWrapper) Process(ctx context.Context, actionName string, data gin.H, files map[string][]byte) (string, string, []byte, error) {
-	data[remotewidgetservice.ObjectIdKey] = client.objectId
-	data[remotewidgetservice.GroupIdKey] = client.groupId
+	data[widgetservice.ObjectIdKey] = client.objectId
+	data[widgetservice.GroupIdKey] = client.groupId
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
-		client.loggerGetter.Logger(ctx).Error("Failed to marshal data", common.ErrorKey, err)
+		client.loggerGetter.Logger(ctx).Error("Failed to marshal data", zap.Error(err))
 		return "", "", nil, common.ErrTechnical
 	}
 
-	files[remotewidgetservice.DataKey] = dataBytes
+	files[widgetservice.DataKey] = dataBytes
 	return client.widgetService.Process(ctx, client.widgetName, actionName, files)
 }
 
-func convertActions(actions []remotewidgetservice.RawWidgetAction) []widgetservice.WidgetAction {
-	res := make([]widgetservice.WidgetAction, 0, len(actions))
+func convertActions(actions []remotewidgetservice.RawWidgetAction) []widgetservice.Action {
+	res := make([]widgetservice.Action, 0, len(actions))
 	for _, action := range actions {
-		res = append(res, widgetservice.WidgetAction{
+		res = append(res, widgetservice.Action{
 			Kind: converKind(action.Kind), Name: action.Name, Path: action.Path, QueryNames: action.QueryNames},
 		)
 	}

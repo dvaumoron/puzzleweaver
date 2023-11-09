@@ -25,7 +25,7 @@ import (
 	"github.com/dvaumoron/puzzleforumserver/model"
 	dbclient "github.com/dvaumoron/puzzleweaver/client/db"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	"github.com/dvaumoron/puzzleweaver/web/common"
+	"github.com/dvaumoron/puzzleweb/common"
 	"gorm.io/gorm"
 )
 

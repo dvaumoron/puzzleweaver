@@ -29,9 +29,7 @@ const (
 	PublicName    = "public"
 	PublicGroupId = 0 // groupId for content always allowed to access
 	AdminGroupId  = 1 // groupId corresponding to role administration
-)
 
-const (
 	ActionAccess = "access"
 	ActionCreate = "create"
 	ActionUpdate = "update"
