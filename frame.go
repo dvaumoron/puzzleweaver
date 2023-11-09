@@ -115,7 +115,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 			}
 		}
 
-		widgetPage, add := makeWidgetPage(app, widgetPageConfig.Name, globalConfig, ctx, logger, widgets[widgetPageConfig.WidgetRef])
+		widgetPage, add := makeWidgetPage(widgetPageConfig.Name, globalConfig, ctx, logger, widgets[widgetPageConfig.WidgetRef])
 		if add {
 			if ok {
 				parentPage.AddSubPage(widgetPage)
@@ -127,7 +127,7 @@ func frameServe(ctx context.Context, app *frameApp) error {
 	return site.Run(globalConfig, app.web)
 }
 
-func makeWidgetPage(app *frameApp, pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, logger *slog.Logger, widgetConfig config.WidgetConfig) (web.Page, bool) {
+func makeWidgetPage(pageName string, globalConfig *config.GlobalServiceConfig, ctx context.Context, logger *slog.Logger, widgetConfig config.WidgetConfig) (web.Page, bool) {
 	switch widgetConfig.Kind {
 	case "forum":
 		return forum.MakeForumPage(pageName, logger, globalConfig.CreateForumConfig(
