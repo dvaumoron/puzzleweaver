@@ -60,7 +60,7 @@ func main() {
 // weaver.Run creates it and passes it to frameServe.
 type frameApp struct {
 	weaver.Implements[weaver.Main]
-	weaver.WithConfig[globalconfig.GlobalConfig]
+	weaver.WithConfig[globalconfig.ParsedConfig]
 	web                     weaver.Listener
 	sessionService          weaver.Ref[sessionimpl.SessionService]
 	templateService         weaver.Ref[templatesimpl.TemplateService]

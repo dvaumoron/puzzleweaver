@@ -23,7 +23,6 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
-	"slices"
 	"strings"
 	"time"
 
@@ -59,6 +58,7 @@ import (
 	profileservice "github.com/dvaumoron/puzzleweb/profile/service"
 	sessionservice "github.com/dvaumoron/puzzleweb/session/service"
 	templateservice "github.com/dvaumoron/puzzleweb/templates/service"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/afero"
 	"go.uber.org/zap/zapcore"
 )
@@ -127,11 +127,10 @@ func (_ settingsServiceWrapper) Generate(_ context.Context) (uint64, error) {
 	return 0, nil
 }
 
-type GlobalConfig struct {
+type ParsedConfig struct {
 	Domain string
 	Port   string
 
-	DefaultLang        string
 	SessionTimeOut     int
 	ServiceTimeOut     time.Duration
 	MaxMultipartMemory int64
@@ -146,11 +145,10 @@ type GlobalConfig struct {
 	FaviconPath string
 	Page404Url  string
 
-	LangPicturePaths map[string]string
-
 	ProfileGroupId            uint64
 	ProfileDefaultPicturePath string
 
+	Locales     []parser.LocaleConfig
 	StaticPages []parser.StaticPagesConfig
 	Widgets     map[string]parser.WidgetConfig
 	WidgetPages []parser.WidgetPageConfig
@@ -158,12 +156,13 @@ type GlobalConfig struct {
 	GinReleaseMode bool
 }
 
-type GlobalServiceConfig struct {
-	*GlobalConfig
+type GlobalConfig struct {
+	*ParsedConfig
 	LoggerGetter            log.LoggerGetter
 	Logger                  log.Logger
 	VersionName             string
 	AllLang                 []string
+	LangPicturePaths        map[string]string
 	StaticFileSystem        http.FileSystem
 	SessionService          sessionservice.SessionService
 	TemplateService         templateservice.TemplateService
@@ -179,12 +178,17 @@ type GlobalServiceConfig struct {
 	WidgetImpl              remotewidgetimpl.RemoteWidgetService
 }
 
-func New(conf *GlobalConfig, loggerGetter servicecommon.LoggerGetter, logger *slog.Logger, version string, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalServiceConfig, error) {
-	allLang := make([]string, 0, len(conf.LangPicturePaths))
-	for lang := range conf.LangPicturePaths {
-		allLang = append(allLang, lang)
+func New(conf *ParsedConfig, loggerGetter servicecommon.LoggerGetter, logger *slog.Logger, version string, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalConfig, error) {
+	if conf.GinReleaseMode {
+		gin.SetMode(gin.ReleaseMode)
 	}
-	slices.Sort(allLang)
+
+	allLang := make([]string, 0, len(conf.Locales))
+	langPicturePaths := map[string]string{}
+	for _, locale := range conf.Locales {
+		allLang = append(allLang, locale.Lang)
+		langPicturePaths[locale.Lang] = locale.PicturePath
+	}
 
 	baseFS, err := fsclient.New(conf.FsConf)
 	if err != nil {
@@ -206,12 +210,13 @@ func New(conf *GlobalConfig, loggerGetter servicecommon.LoggerGetter, logger *sl
 		profileService, loginServiceWrapper, adminService, wrappedLoggerGetter, conf.ProfileGroupId, defaultPicture,
 	)
 
-	return &GlobalServiceConfig{
-		GlobalConfig:            conf,
+	return &GlobalConfig{
+		ParsedConfig:            conf,
 		LoggerGetter:            wrappedLoggerGetter,
 		Logger:                  loggerWrapper{inner: logger},
 		VersionName:             "PuzzleWeaver" + version,
 		AllLang:                 allLang,
+		LangPicturePaths:        langPicturePaths,
 		StaticFileSystem:        afero.NewHttpFs(afero.NewBasePathFs(baseFS, conf.StaticPath)),
 		SessionService:          sessionService,
 		TemplateService:         templateclient.MakeTemplateServiceWrapper(templateService, wrappedLoggerGetter),
@@ -228,58 +233,58 @@ func New(conf *GlobalConfig, loggerGetter servicecommon.LoggerGetter, logger *sl
 	}, nil
 }
 
-func (c *GlobalServiceConfig) GetLogger() log.Logger {
+func (c *GlobalConfig) GetLogger() log.Logger {
 	return c.Logger
 }
 
-func (c *GlobalServiceConfig) GetLoggerGetter() log.LoggerGetter {
+func (c *GlobalConfig) GetLoggerGetter() log.LoggerGetter {
 	return c.LoggerGetter
 }
 
-func (c *GlobalConfig) GetServiceTimeOut() time.Duration {
+func (c *ParsedConfig) GetServiceTimeOut() time.Duration {
 	return c.ServiceTimeOut
 }
 
-func (c *GlobalServiceConfig) ExtractAuthConfig() config.AuthConfig {
+func (c *GlobalConfig) ExtractAuthConfig() config.AuthConfig {
 	return config.MakeServiceConfig[adminservice.AuthService](c, c.AdminService)
 }
 
-func (c *GlobalServiceConfig) ExtractLocalesConfig() config.LocalesConfig {
+func (c *GlobalConfig) ExtractLocalesConfig() config.LocalesConfig {
 	return config.LocalesConfig{Logger: c.GetLogger(), Domain: c.Domain, SessionTimeOut: c.SessionTimeOut, AllLang: c.AllLang}
 }
 
-func (c *GlobalServiceConfig) ExtractSiteConfig() config.SiteConfig {
+func (c *GlobalConfig) ExtractSiteConfig() config.SiteConfig {
 	return config.SiteConfig{
-		ServiceConfig: config.MakeServiceConfig[sessionservice.SessionService](c, c.SessionService), TemplateService: c.TemplateService,
+		ServiceConfig: config.MakeServiceConfig(c, c.SessionService), TemplateService: c.TemplateService,
 		Domain: c.Domain, Port: c.Port, SessionTimeOut: c.SessionTimeOut,
-		MaxMultipartMemory: c.MaxMultipartMemory, StaticPath: c.StaticPath, FaviconPath: c.FaviconPath,
+		MaxMultipartMemory: c.MaxMultipartMemory, StaticFileSystem: c.StaticFileSystem, FaviconPath: c.FaviconPath,
 		LangPicturePaths: c.LangPicturePaths, Page404Url: c.Page404Url,
 	}
 }
 
-func (c *GlobalServiceConfig) ExtractLoginConfig() config.LoginConfig {
+func (c *GlobalConfig) ExtractLoginConfig() config.LoginConfig {
 	return config.MakeServiceConfig[loginservice.LoginService](c, c.LoginService)
 }
 
-func (c *GlobalServiceConfig) ExtractAdminConfig() config.AdminConfig {
+func (c *GlobalConfig) ExtractAdminConfig() config.AdminConfig {
 	return config.AdminConfig{
 		ServiceConfig: config.MakeServiceConfig[adminservice.AdminService](c, c.AdminService),
 		UserService:   c.LoginService, ProfileService: c.ProfileService, PageSize: c.PageSize,
 	}
 }
 
-func (c *GlobalServiceConfig) ExtractProfileConfig() config.ProfileConfig {
+func (c *GlobalConfig) ExtractProfileConfig() config.ProfileConfig {
 	return config.ProfileConfig{
 		ServiceConfig: config.MakeServiceConfig[profileservice.AdvancedProfileService](c, c.ProfileService),
 		AdminService:  c.AdminService, LoginService: c.LoginService,
 	}
 }
 
-func (c *GlobalServiceConfig) ExtractSettingsConfig() config.SettingsConfig {
+func (c *GlobalConfig) ExtractSettingsConfig() config.SettingsConfig {
 	return config.MakeServiceConfig(c, c.SettingsService)
 }
 
-func (c *GlobalServiceConfig) MakeBlogConfig(widgetConfig parser.WidgetConfig) (config.BlogConfig, bool) {
+func (c *GlobalConfig) MakeBlogConfig(widgetConfig parser.WidgetConfig) (config.BlogConfig, bool) {
 	blogService := blogclient.MakeBlogServiceWrapper(
 		c.BlogImpl, c.AdminService, c.ProfileService, widgetConfig.ObjectId, widgetConfig.GroupId, c.DateFormat,
 	)
@@ -293,7 +298,7 @@ func (c *GlobalServiceConfig) MakeBlogConfig(widgetConfig parser.WidgetConfig) (
 	}, true
 }
 
-func (c *GlobalServiceConfig) MakeForumConfig(widgetConfig parser.WidgetConfig) (config.ForumConfig, bool) {
+func (c *GlobalConfig) MakeForumConfig(widgetConfig parser.WidgetConfig) (config.ForumConfig, bool) {
 	forumService := forumclient.MakeForumServiceWrapper(
 		c.ForumImpl, c.AdminService, c.ProfileService, c.LoggerGetter, widgetConfig.ObjectId, widgetConfig.GroupId, c.DateFormat,
 	)
@@ -303,14 +308,14 @@ func (c *GlobalServiceConfig) MakeForumConfig(widgetConfig parser.WidgetConfig) 
 	}, true
 }
 
-func (c *GlobalServiceConfig) MakeWidgetConfig(widgetConfig parser.WidgetConfig) (config.RemoteWidgetConfig, bool) {
-	widgetName, remoteKind := strings.CutPrefix(widgetConfig.Kind, "remote/")
+func (c *GlobalConfig) MakeWidgetConfig(widgetConfig parser.WidgetConfig) (config.RemoteWidgetConfig, bool) {
+	widgetName, customKind := strings.CutPrefix(widgetConfig.Kind, "custom/")
 	return config.MakeServiceConfig(c, remotewidgetclient.MakeWidgetServiceWrapper(
 		c.WidgetImpl, c.LoggerGetter, widgetName, widgetConfig.ObjectId, widgetConfig.GroupId,
-	)), remoteKind
+	)), customKind
 }
 
-func (c *GlobalServiceConfig) MakeWikiConfig(widgetConfig parser.WidgetConfig) (config.WikiConfig, bool) {
+func (c *GlobalConfig) MakeWikiConfig(widgetConfig parser.WidgetConfig) (config.WikiConfig, bool) {
 	wikiService := wikiclient.MakeWikiServiceWrapper(
 		c.WikiImpl, c.AdminService, c.ProfileService, c.LoggerGetter, widgetConfig.ObjectId, widgetConfig.GroupId, c.DateFormat,
 	)
