@@ -167,11 +167,12 @@ func (client wikiServiceWrapper) DeleteContent(ctx context.Context, userId uint6
 	}
 
 	wikiRef := buildRef(lang, title)
+	err = client.wikiService.Delete(ctx, client.wikiId, wikiRef, version)
 	content := client.cache.Load(logger, wikiRef)
 	if content != nil && version == content.Version {
 		client.cache.Delete(logger, wikiRef)
 	}
-	return nil
+	return err
 }
 
 func (impl wikiServiceWrapper) DeleteRight(ctx context.Context, userId uint64) bool {

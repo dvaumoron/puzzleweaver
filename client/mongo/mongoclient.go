@@ -78,11 +78,3 @@ func ExtractStringMap(value any) map[string]string {
 	}
 	return resMap
 }
-
-func ConvertSlice[T any](docs []bson.M, converter func(bson.M) T) []T {
-	resSlice := make([]T, 0, len(docs))
-	for _, doc := range docs {
-		resSlice = append(resSlice, converter(doc))
-	}
-	return resSlice
-}

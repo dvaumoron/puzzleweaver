@@ -24,6 +24,7 @@ import (
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
 	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
+	adminservice "github.com/dvaumoron/puzzleweb/admin/service"
 	"github.com/dvaumoron/puzzleweb/common"
 	"github.com/dvaumoron/puzzleweb/common/log"
 	loginservice "github.com/dvaumoron/puzzleweb/login/service"
@@ -33,13 +34,13 @@ import (
 type profileServiceWrapper struct {
 	profileService profileimpl.RemoteProfileService
 	userService    loginservice.UserService
-	authService    adminimpl.AuthService
+	authService    adminservice.AuthService
 	loggerGetter   log.LoggerGetter
 	groupId        uint64
 	defaultPicture []byte
 }
 
-func MakeProfileServiceWrapper(profileService profileimpl.RemoteProfileService, userService loginservice.UserService, authService adminimpl.AuthService, loggerGetter log.LoggerGetter, groupId uint64, defaultPicture []byte) profileservice.ProfileService {
+func MakeProfileServiceWrapper(profileService profileimpl.RemoteProfileService, userService loginservice.UserService, authService adminimpl.AuthService, loggerGetter log.LoggerGetter, groupId uint64, defaultPicture []byte) profileservice.AdvancedProfileService {
 	return profileServiceWrapper{
 		profileService: profileService, userService: userService, authService: authService,
 		loggerGetter: loggerGetter, groupId: groupId, defaultPicture: defaultPicture,
@@ -47,11 +48,11 @@ func MakeProfileServiceWrapper(profileService profileimpl.RemoteProfileService, 
 }
 
 func (client profileServiceWrapper) UpdateProfile(ctx context.Context, userId uint64, desc string, info map[string]string) error {
-	return client.UpdateProfile(ctx, userId, desc, info)
+	return client.profileService.UpdateProfile(ctx, userId, desc, info)
 }
 
 func (client profileServiceWrapper) UpdatePicture(ctx context.Context, userId uint64, data []byte) error {
-	return client.UpdatePicture(ctx, userId, data)
+	return client.profileService.UpdatePicture(ctx, userId, data)
 }
 
 func (client profileServiceWrapper) GetPicture(ctx context.Context, userId uint64) []byte {

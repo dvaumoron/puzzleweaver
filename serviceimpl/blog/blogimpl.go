@@ -162,7 +162,7 @@ func (impl *remoteBlogImpl) GetPosts(ctx context.Context, blogId uint64, start u
 		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
 		return 0, nil, servicecommon.ErrInternal
 	}
-	return uint64(total), mongoclient.ConvertSlice(results, convertToPost), nil
+	return uint64(total), servicecommon.ConvertSlice(results, convertToPost), nil
 }
 
 func (impl *remoteBlogImpl) Delete(ctx context.Context, blogId uint64, postId uint64) error {

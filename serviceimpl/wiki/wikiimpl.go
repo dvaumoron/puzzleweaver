@@ -147,7 +147,7 @@ func (impl *remoteWikiImpl) GetVersions(ctx context.Context, wikiId uint64, wiki
 		logger.Error(servicecommon.MongoCallMsg, common.ErrorKey, err)
 		return nil, servicecommon.ErrInternal
 	}
-	return mongoclient.ConvertSlice(results, convertToVersion), nil
+	return servicecommon.ConvertSlice(results, convertToVersion), nil
 }
 
 func (impl *remoteWikiImpl) Delete(ctx context.Context, wikiId uint64, wikiRef string, version uint64) error {

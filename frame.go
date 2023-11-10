@@ -23,7 +23,6 @@ import (
 	_ "embed"
 	"errors"
 	"log"
-	"strings"
 
 	"github.com/ServiceWeaver/weaver"
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
@@ -39,14 +38,17 @@ import (
 	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
 	templatesimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/templates"
 	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
-	"github.com/dvaumoron/puzzleweaver/web/config"
+	"github.com/dvaumoron/puzzleweaver/web/globalconfig"
 	"github.com/dvaumoron/puzzleweb/common/build"
-	web "github.com/dvaumoron/puzzleweb/core"
-	"go.uber.org/zap"
 )
 
 //go:embed version.txt
 var version string
+
+var (
+	errSiteCreation   = errors.New("failure during site creation")
+	errStaticCreation = errors.New("failure during static pages creation")
+)
 
 func main() {
 	if err := weaver.Run(context.Background(), frameServe); err != nil {
@@ -58,7 +60,7 @@ func main() {
 // weaver.Run creates it and passes it to frameServe.
 type frameApp struct {
 	weaver.Implements[weaver.Main]
-	weaver.WithConfig[config.GlobalConfig]
+	weaver.WithConfig[globalconfig.GlobalConfig]
 	web                     weaver.Listener
 	sessionService          weaver.Ref[sessionimpl.SessionService]
 	templateService         weaver.Ref[templatesimpl.TemplateService]
@@ -77,10 +79,8 @@ type frameApp struct {
 
 // frameServe is called by weaver.Run and contains the body of the application.
 func frameServe(ctx context.Context, app *frameApp) error {
-	// TODO wrapper
 	logger := app.Logger(ctx)
-
-	globalConfig, err := config.New(
+	globalConfig, err := globalconfig.New(
 		app.Config(), app, logger, version, app.sessionService.Get(), app.templateService.Get(), app.settingsService.Get(),
 		app.passwordStrengthService.Get(), app.saltService.Get(), app.loginService.Get(), app.adminService.Get(),
 		app.profileService.Get(), app.forumService.Get(), app.markdownService.Get(), app.blogService.Get(),
@@ -90,38 +90,24 @@ func frameServe(ctx context.Context, app *frameApp) error {
 		return err
 	}
 
-	site, ok := web.BuildDefaultSite(globalConfig)
+	site, ok := build.BuildDefaultSite(globalConfig)
 	if !ok {
-		return errors.New("TODO")
+		return errSiteCreation
 	}
 
 	for _, pageGroup := range globalConfig.StaticPages {
-		site.AddStaticPages(pageGroup)
-	}
-
-	widgets := globalConfig.Widgets
-	for _, widgetPageConfig := range globalConfig.WidgetPages {
-		name := widgetPageConfig.Path
-		nested := false
-		var parentPage web.Page
-		if index := strings.LastIndex(name, "/"); index != -1 {
-			emplacement := name[:index]
-			name = name[index+1:]
-			parentPage, nested = site.GetPageWithPath(emplacement)
-			if !nested {
-				logger.Error("Failed to retrieve parentPage", zap.String("emplacement", emplacement))
-				continue
-			}
-		}
-
-		widgetPage, add := build.MakeWidgetPage(name, ctx, globalConfig, widgets[widgetPageConfig.WidgetRef])
-		if add {
-			if nested {
-				parentPage.AddSubPage(widgetPage)
-			} else {
-				site.AddPage(widgetPage)
-			}
+		if !site.AddStaticPages(pageGroup) {
+			return errStaticCreation
 		}
 	}
-	return site.RunListener(globalConfig, app.web)
+
+	if !build.AddWidgetPages(site, ctx, globalConfig.WidgetPages, globalConfig, globalConfig.Widgets) {
+		return errSiteCreation
+	}
+
+	siteConfig := globalConfig.ExtractSiteConfig()
+	// emptying data no longer useful for GC cleaning
+	globalConfig = nil
+
+	return site.RunListener(siteConfig, app.web)
 }

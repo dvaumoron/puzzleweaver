@@ -85,7 +85,7 @@ func (impl galleryImpl) GetImages(ctx context.Context, galleryId uint64, start u
 	if err = cursor.All(ctx, &results); err != nil {
 		return 0, nil, err
 	}
-	return uint64(total), mongoclient.ConvertSlice(results, convertToImage), nil
+	return uint64(total), servicecommon.ConvertSlice(results, convertToImage), nil
 }
 
 func (impl galleryImpl) GetImage(ctx context.Context, imageId uint64) (galleryservice.GalleryImage, error) {

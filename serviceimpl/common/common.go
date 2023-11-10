@@ -28,9 +28,9 @@ const (
 	DBAccessMsg  = "Failed to access database"
 	MongoCallMsg = "Failed during MongoDB call"
 	RedisCallMsg = "Failed during Redis call"
-)
 
-const LangPlaceHolder = "{{lang}}"
+	LangPlaceHolder = "{{lang}}"
+)
 
 var (
 	ErrInternal        = errors.New("internal service error")
@@ -40,4 +40,12 @@ var (
 
 type LoggerGetter interface {
 	Logger(context.Context) *slog.Logger
+}
+
+func ConvertSlice[T any, R any](docs []T, converter func(T) R) []R {
+	resSlice := make([]R, 0, len(docs))
+	for _, doc := range docs {
+		resSlice = append(resSlice, converter(doc))
+	}
+	return resSlice
 }
