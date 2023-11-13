@@ -9,7 +9,7 @@ require (
 	github.com/dvaumoron/puzzleloginserver v1.7.0
 	github.com/dvaumoron/puzzlemarkdownextension v1.10.0
 	github.com/dvaumoron/puzzlerightserver v1.8.6
-	github.com/dvaumoron/puzzleweb v1.10.4
+	github.com/dvaumoron/puzzleweb v1.11.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/open-policy-agent/opa v0.56.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.0.5
