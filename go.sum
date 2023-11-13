@@ -402,8 +402,8 @@ github.com/dvaumoron/puzzleforumserver v1.7.0 h1:/dNT9GMzBDozyNqoUWaworCHsXSE+Z7
 github.com/dvaumoron/puzzleforumserver v1.7.0/go.mod h1:QwPHOx25FM8GQUcLFmrEw6sLNqzqQbnjB/msqubLxi8=
 github.com/dvaumoron/puzzleloginserver v1.7.0 h1:n5rWx5ty0jvtPHkpjK6dk1qQPDDvLhJ6+SYWiCeNmNg=
 github.com/dvaumoron/puzzleloginserver v1.7.0/go.mod h1:gTOT3QTkmz7f85CLubf8ECeEGF+HVN1xX2BdtANCy4w=
-github.com/dvaumoron/puzzlemarkdownextension v1.0.0 h1:MnGDILx1JYfn0uqECgyTvSrTI/yzEjE/jIYQogLRcRo=
-github.com/dvaumoron/puzzlemarkdownextension v1.0.0/go.mod h1:6DqrLyRJufVBRuKB84yMLwXF3v8H77VHypZNhJuwIhk=
+github.com/dvaumoron/puzzlemarkdownextension v1.10.0 h1:gpIY3a5lR2hlS1TmQIW7BajBBGAd5GRe0tewSsXS0l8=
+github.com/dvaumoron/puzzlemarkdownextension v1.10.0/go.mod h1:6DqrLyRJufVBRuKB84yMLwXF3v8H77VHypZNhJuwIhk=
 github.com/dvaumoron/puzzlerightserver v1.8.6 h1:BP40cOc69n7tRKO+aTlum0BFihWjgiwOon9ncBJfueQ=
 github.com/dvaumoron/puzzlerightserver v1.8.6/go.mod h1:4BAIQ88EeE/FtS80IuWDHjA7lH1YYCAGD5RjuZ5Wqpo=
 github.com/dvaumoron/puzzleweb v1.10.4 h1:LJ2+6Wmy2Kp3Z608emUPNBKsthNVIKr7HD8cJOIqDTg=

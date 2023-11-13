@@ -7,7 +7,7 @@ require (
 	github.com/dvaumoron/partrenderer v0.3.0
 	github.com/dvaumoron/puzzleforumserver v1.7.0
 	github.com/dvaumoron/puzzleloginserver v1.7.0
-	github.com/dvaumoron/puzzlemarkdownextension v1.0.0
+	github.com/dvaumoron/puzzlemarkdownextension v1.10.0
 	github.com/dvaumoron/puzzlerightserver v1.8.6
 	github.com/dvaumoron/puzzleweb v1.10.4
 	github.com/gin-gonic/gin v1.9.1
