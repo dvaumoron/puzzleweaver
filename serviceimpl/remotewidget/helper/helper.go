@@ -28,8 +28,9 @@ import (
 )
 
 const (
-	urlName = "CurrentUrl"
+	FilesKey = "Files"
 
+	urlName            = "CurrentUrl"
 	pageNumberKey      = "pageNumber"
 	pageSizeKey        = "pageSize"
 	filterKey          = "filter"

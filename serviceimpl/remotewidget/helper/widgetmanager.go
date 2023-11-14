@@ -24,8 +24,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const FilesKey = "Files"
-
 type ActionHandler = func(context.Context, gin.H) (string, string, []byte, error)
 
 type Action struct {

@@ -31,8 +31,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const widgetNotFoundErrorMsg = "No widget found with requested name"
-const widgetNameKey = "widgetName"
+const (
+	widgetNotFoundErrorMsg = "No widget found with requested name"
+	widgetNameKey          = "widgetName"
+)
 
 type RemoteWidgetService remotewidgetservice.RemoteWidgetService
 
