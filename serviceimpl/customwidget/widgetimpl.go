@@ -16,7 +16,7 @@
  *
  */
 
-package remotewidgetimpl
+package customwidgetimpl
 
 import (
 	"context"
@@ -24,8 +24,8 @@ import (
 
 	"github.com/ServiceWeaver/weaver"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
+	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/helper"
+	customwidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/service"
 	"github.com/dvaumoron/puzzleweb/common"
 	widgetservice "github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"
@@ -36,20 +36,20 @@ const (
 	widgetNameKey          = "widgetName"
 )
 
-type RemoteWidgetService remotewidgetservice.RemoteWidgetService
+type CustomWidgetService customwidgetservice.CustomWidgetService
 
 type remoteWidgetImpl struct {
-	weaver.Implements[RemoteWidgetService]
+	weaver.Implements[CustomWidgetService]
 	weaver.WithConfig[widgetConf]
 	initializedConf initializedWidgetConf
 }
 
-func (impl *remoteWidgetImpl) Init(ctx context.Context) error {
-	impl.initializedConf = initWidgetConf(impl, impl.Logger(ctx), impl.Config())
-	return nil
+func (impl *remoteWidgetImpl) Init(ctx context.Context) (err error) {
+	impl.initializedConf, err = initWidgetConf(impl, impl.Logger(ctx), impl.Config())
+	return
 }
 
-func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, widgetName string) ([]remotewidgetservice.RawWidgetAction, error) {
+func (impl *remoteWidgetImpl) GetDesc(ctx context.Context, widgetName string) ([]customwidgetservice.RawWidgetAction, error) {
 	widget, ok := impl.initializedConf.widgets[widgetName]
 	if !ok {
 		impl.Logger(ctx).Error(widgetNotFoundErrorMsg, widgetNameKey, widgetName)
@@ -94,10 +94,10 @@ func (impl *remoteWidgetImpl) Process(ctx context.Context, widgetName string, ac
 
 }
 
-func convertActions(widget widgethelper.Widget) []remotewidgetservice.RawWidgetAction {
-	actions := make([]remotewidgetservice.RawWidgetAction, 0, len(widget))
+func convertActions(widget widgethelper.Widget) []customwidgetservice.RawWidgetAction {
+	actions := make([]customwidgetservice.RawWidgetAction, 0, len(widget))
 	for key, value := range widget {
-		actions = append(actions, remotewidgetservice.RawWidgetAction{
+		actions = append(actions, customwidgetservice.RawWidgetAction{
 			Kind: value.Kind, Name: key, Path: value.Path, QueryNames: value.QueryNames,
 		})
 	}

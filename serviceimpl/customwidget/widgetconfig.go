@@ -16,31 +16,37 @@
  *
  */
 
-package remotewidgetimpl
+package customwidgetimpl
 
 import (
 	"log/slog"
 
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	gallerywidget "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery"
-	galleryimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service/impl"
-	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
+	gallerywidget "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/gallery"
+	galleryimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/gallery/service/impl"
+	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/helper"
 )
 
 type widgetConf struct {
 	GalleryMongoAddress      string
 	GalleryMongoDatabaseName string
 	DefaultPageSize          uint64
+	KeyToValues              map[string]string
 }
 
 type initializedWidgetConf struct {
 	widgets widgethelper.WidgetManager
 }
 
-func initWidgetConf(loggerGetter servicecommon.LoggerGetter, logger *slog.Logger, conf *widgetConf) initializedWidgetConf {
+func initWidgetConf(loggerGetter servicecommon.LoggerGetter, logger *slog.Logger, conf *widgetConf) (initializedWidgetConf, error) {
 	galleryService := galleryimpl.New(conf.GalleryMongoAddress, conf.GalleryMongoDatabaseName, loggerGetter)
 
 	widgets := widgethelper.NewManager()
 	gallerywidget.InitWidget(widgets, logger, galleryService, conf.DefaultPageSize)
-	return initializedWidgetConf{widgets: widgets}
+	for _, registerer := range widgethelper.Registerers {
+		if err := registerer(widgets, conf.KeyToValues, loggerGetter); err != nil {
+			return initializedWidgetConf{}, err
+		}
+	}
+	return initializedWidgetConf{widgets: widgets}, nil
 }

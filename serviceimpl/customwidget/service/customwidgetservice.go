@@ -16,7 +16,7 @@
  *
  */
 
-package remotewidgetservice
+package customwidgetservice
 
 import (
 	"context"
@@ -45,7 +45,7 @@ type RawWidgetAction struct {
 	QueryNames []string
 }
 
-type RemoteWidgetService interface {
+type CustomWidgetService interface {
 	GetDesc(ctx context.Context, widgetName string) ([]RawWidgetAction, error)
 	Process(ctx context.Context, widgetName string, actionName string, files map[string][]byte) (string, string, []byte, error)
 }

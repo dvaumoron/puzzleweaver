@@ -23,9 +23,9 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	galleryservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service"
-	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/helper"
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
+	galleryservice "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/gallery/service"
+	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/helper"
+	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/service"
 	"github.com/dvaumoron/puzzleweb/common"
 	widgetservice "github.com/dvaumoron/puzzleweb/remotewidget/service"
 	"github.com/gin-gonic/gin"

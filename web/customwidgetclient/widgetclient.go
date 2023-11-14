@@ -16,14 +16,14 @@
  *
  */
 
-package remotewidgetclient
+package customwidgetclient
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
 
-	remotewidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/service"
+	customwidgetservice "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/service"
 	"github.com/dvaumoron/puzzleweb/common"
 	"github.com/dvaumoron/puzzleweb/common/log"
 	widgetservice "github.com/dvaumoron/puzzleweb/remotewidget/service"
@@ -32,14 +32,14 @@ import (
 )
 
 type widgetServiceWrapper struct {
-	widgetService remotewidgetservice.RemoteWidgetService
+	widgetService customwidgetservice.CustomWidgetService
 	loggerGetter  log.LoggerGetter
 	widgetName    string
 	objectId      uint64
 	groupId       uint64
 }
 
-func MakeWidgetServiceWrapper(widgetService remotewidgetservice.RemoteWidgetService, loggerGetter log.LoggerGetter, widgetName string, objectId uint64, groupId uint64) widgetservice.WidgetService {
+func MakeWidgetServiceWrapper(widgetService customwidgetservice.CustomWidgetService, loggerGetter log.LoggerGetter, widgetName string, objectId uint64, groupId uint64) widgetservice.WidgetService {
 	return widgetServiceWrapper{
 		widgetService: widgetService, loggerGetter: loggerGetter, widgetName: widgetName, objectId: objectId, groupId: groupId,
 	}
@@ -66,7 +66,7 @@ func (client widgetServiceWrapper) Process(ctx context.Context, actionName strin
 	return client.widgetService.Process(ctx, client.widgetName, actionName, files)
 }
 
-func convertActions(actions []remotewidgetservice.RawWidgetAction) []widgetservice.Action {
+func convertActions(actions []customwidgetservice.RawWidgetAction) []widgetservice.Action {
 	res := make([]widgetservice.Action, 0, len(actions))
 	for _, action := range actions {
 		res = append(res, widgetservice.Action{
@@ -78,23 +78,23 @@ func convertActions(actions []remotewidgetservice.RawWidgetAction) []widgetservi
 
 func converKind(kind uint8) string {
 	switch kind {
-	case remotewidgetservice.KIND_HEAD:
+	case customwidgetservice.KIND_HEAD:
 		return http.MethodHead
-	case remotewidgetservice.KIND_POST:
+	case customwidgetservice.KIND_POST:
 		return http.MethodPost
-	case remotewidgetservice.KIND_PUT:
+	case customwidgetservice.KIND_PUT:
 		return http.MethodPut
-	case remotewidgetservice.KIND_PATCH:
+	case customwidgetservice.KIND_PATCH:
 		return http.MethodPatch
-	case remotewidgetservice.KIND_DELETE:
+	case customwidgetservice.KIND_DELETE:
 		return http.MethodDelete
-	case remotewidgetservice.KIND_CONNECT:
+	case customwidgetservice.KIND_CONNECT:
 		return http.MethodConnect
-	case remotewidgetservice.KIND_OPTIONS:
+	case customwidgetservice.KIND_OPTIONS:
 		return http.MethodOptions
-	case remotewidgetservice.KIND_TRACE:
+	case customwidgetservice.KIND_TRACE:
 		return http.MethodTrace
-	case remotewidgetservice.KIND_RAW:
+	case customwidgetservice.KIND_RAW:
 		return widgetservice.RawResult
 	}
 	return http.MethodGet

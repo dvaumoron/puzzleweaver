@@ -16,23 +16,22 @@
  *
  */
 
-package main
+package frame
 
 import (
 	"context"
 	_ "embed"
 	"errors"
-	"log"
 
 	"github.com/ServiceWeaver/weaver"
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	blogimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/blog"
+	customwidgetimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget"
 	forumimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/forum"
 	loginimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/login"
 	markdownimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/markdown"
 	passwordstrengthimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength"
 	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
-	remotewidgetimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget"
 	saltimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/salt"
 	sessionimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/session"
 	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
@@ -42,23 +41,14 @@ import (
 	"github.com/dvaumoron/puzzleweb/common/build"
 )
 
-//go:embed version.txt
-var version string
-
 var (
 	errSiteCreation   = errors.New("failure during site creation")
 	errStaticCreation = errors.New("failure during static pages creation")
 )
 
-func main() {
-	if err := weaver.Run(context.Background(), frameServe); err != nil {
-		log.Fatal(err)
-	}
-}
-
-// frameApp is the main component of the application.
+// FrameApp is the main component of the application.
 // weaver.Run creates it and passes it to frameServe.
-type frameApp struct {
+type FrameApp struct {
 	weaver.Implements[weaver.Main]
 	weaver.WithConfig[globalconfig.ParsedConfig]
 	web                     weaver.Listener
@@ -74,40 +64,42 @@ type frameApp struct {
 	markdownService         weaver.Ref[markdownimpl.MarkdownService]
 	blogService             weaver.Ref[blogimpl.RemoteBlogService]
 	wikiService             weaver.Ref[wikiimpl.RemoteWikiService]
-	widgetService           weaver.Ref[remotewidgetimpl.RemoteWidgetService]
+	widgetService           weaver.Ref[customwidgetimpl.CustomWidgetService]
 }
 
-// frameServe is called by weaver.Run and contains the body of the application.
-func frameServe(ctx context.Context, app *frameApp) error {
-	logger := app.Logger(ctx)
-	globalConfig, err := globalconfig.New(
-		app.Config(), app, logger, version, app.sessionService.Get(), app.templateService.Get(), app.settingsService.Get(),
-		app.passwordStrengthService.Get(), app.saltService.Get(), app.loginService.Get(), app.adminService.Get(),
-		app.profileService.Get(), app.forumService.Get(), app.markdownService.Get(), app.blogService.Get(),
-		app.wikiService.Get(), app.widgetService.Get(),
-	)
-	if err != nil {
-		return err
-	}
-
-	site, ok := build.BuildDefaultSite(globalConfig)
-	if !ok {
-		return errSiteCreation
-	}
-
-	for _, pageGroup := range globalConfig.StaticPages {
-		if !site.AddStaticPages(pageGroup) {
-			return errStaticCreation
+// FrameServe is called by weaver.Run and contains the body of the application.
+func NewFrameServe(version string) func(ctx context.Context, app *FrameApp) error {
+	return func(ctx context.Context, app *FrameApp) error {
+		logger := app.Logger(ctx)
+		globalConfig, err := globalconfig.New(
+			app.Config(), app, logger, version, app.sessionService.Get(), app.templateService.Get(), app.settingsService.Get(),
+			app.passwordStrengthService.Get(), app.saltService.Get(), app.loginService.Get(), app.adminService.Get(),
+			app.profileService.Get(), app.forumService.Get(), app.markdownService.Get(), app.blogService.Get(),
+			app.wikiService.Get(), app.widgetService.Get(),
+		)
+		if err != nil {
+			return err
 		}
+
+		site, ok := build.BuildDefaultSite(globalConfig)
+		if !ok {
+			return errSiteCreation
+		}
+
+		for _, pageGroup := range globalConfig.StaticPages {
+			if !site.AddStaticPages(pageGroup) {
+				return errStaticCreation
+			}
+		}
+
+		if !build.AddWidgetPages(site, ctx, globalConfig.WidgetPages, globalConfig, globalConfig.Widgets) {
+			return errSiteCreation
+		}
+
+		siteConfig := globalConfig.ExtractSiteConfig()
+		// emptying data no longer useful for GC cleaning
+		globalConfig = nil
+
+		return site.RunListener(siteConfig, app.web)
 	}
-
-	if !build.AddWidgetPages(site, ctx, globalConfig.WidgetPages, globalConfig, globalConfig.Widgets) {
-		return errSiteCreation
-	}
-
-	siteConfig := globalConfig.ExtractSiteConfig()
-	// emptying data no longer useful for GC cleaning
-	globalConfig = nil
-
-	return site.RunListener(siteConfig, app.web)
 }

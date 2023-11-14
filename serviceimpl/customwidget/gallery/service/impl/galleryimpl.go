@@ -22,7 +22,7 @@ import (
 
 	mongoclient "github.com/dvaumoron/puzzleweaver/client/mongo"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
-	galleryservice "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget/gallery/service"
+	galleryservice "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/gallery/service"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

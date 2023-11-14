@@ -30,12 +30,12 @@ import (
 	adminimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/admin"
 	blogimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/blog"
 	servicecommon "github.com/dvaumoron/puzzleweaver/serviceimpl/common"
+	remotewidgetimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget"
 	forumimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/forum"
 	loginimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/login"
 	markdownimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/markdown"
 	passwordstrengthimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/passwordstrength"
 	profileimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/profile"
-	remotewidgetimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/remotewidget"
 	saltimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/salt"
 	sessionimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/session"
 	settingsimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/settings"
@@ -43,10 +43,10 @@ import (
 	wikiimpl "github.com/dvaumoron/puzzleweaver/serviceimpl/wiki"
 	"github.com/dvaumoron/puzzleweaver/web/adminclient"
 	blogclient "github.com/dvaumoron/puzzleweaver/web/blogclient"
+	"github.com/dvaumoron/puzzleweaver/web/customwidgetclient"
 	forumclient "github.com/dvaumoron/puzzleweaver/web/forumclient"
 	"github.com/dvaumoron/puzzleweaver/web/loginclient"
 	"github.com/dvaumoron/puzzleweaver/web/profileclient"
-	remotewidgetclient "github.com/dvaumoron/puzzleweaver/web/remotewidgetclient"
 	"github.com/dvaumoron/puzzleweaver/web/templateclient"
 	wikiclient "github.com/dvaumoron/puzzleweaver/web/wikiclient"
 	adminservice "github.com/dvaumoron/puzzleweb/admin/service"
@@ -175,10 +175,10 @@ type GlobalConfig struct {
 	MarkdownImpl            markdownimpl.MarkdownService
 	BlogImpl                blogimpl.RemoteBlogService
 	WikiImpl                wikiimpl.RemoteWikiService
-	WidgetImpl              remotewidgetimpl.RemoteWidgetService
+	WidgetImpl              remotewidgetimpl.CustomWidgetService
 }
 
-func New(conf *ParsedConfig, loggerGetter servicecommon.LoggerGetter, logger *slog.Logger, version string, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.RemoteWidgetService) (*GlobalConfig, error) {
+func New(conf *ParsedConfig, loggerGetter servicecommon.LoggerGetter, logger *slog.Logger, version string, sessionService sessionimpl.SessionService, templateService templatesimpl.TemplateService, settingsService settingsimpl.SettingsService, passwordStrengthService passwordstrengthimpl.PasswordStrengthService, saltService saltimpl.SaltService, loginService loginimpl.RemoteLoginService, adminService adminimpl.AdminService, profileService profileimpl.RemoteProfileService, forumService forumimpl.RemoteForumService, markdownService markdownimpl.MarkdownService, blogService blogimpl.RemoteBlogService, wikiService wikiimpl.RemoteWikiService, widgetService remotewidgetimpl.CustomWidgetService) (*GlobalConfig, error) {
 	if conf.GinReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -310,7 +310,7 @@ func (c *GlobalConfig) MakeForumConfig(widgetConfig parser.WidgetConfig) (config
 
 func (c *GlobalConfig) MakeWidgetConfig(widgetConfig parser.WidgetConfig) (config.RemoteWidgetConfig, bool) {
 	widgetName, customKind := strings.CutPrefix(widgetConfig.Kind, "custom/")
-	return config.MakeServiceConfig(c, remotewidgetclient.MakeWidgetServiceWrapper(
+	return config.MakeServiceConfig(c, customwidgetclient.MakeWidgetServiceWrapper(
 		c.WidgetImpl, c.LoggerGetter, widgetName, widgetConfig.ObjectId, widgetConfig.GroupId,
 	)), customKind
 }
