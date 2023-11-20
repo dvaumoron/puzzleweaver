@@ -406,8 +406,8 @@ github.com/dvaumoron/puzzlemarkdownextension v1.10.0 h1:gpIY3a5lR2hlS1TmQIW7BajB
 github.com/dvaumoron/puzzlemarkdownextension v1.10.0/go.mod h1:6DqrLyRJufVBRuKB84yMLwXF3v8H77VHypZNhJuwIhk=
 github.com/dvaumoron/puzzlerightserver v1.8.6 h1:BP40cOc69n7tRKO+aTlum0BFihWjgiwOon9ncBJfueQ=
 github.com/dvaumoron/puzzlerightserver v1.8.6/go.mod h1:4BAIQ88EeE/FtS80IuWDHjA7lH1YYCAGD5RjuZ5Wqpo=
-github.com/dvaumoron/puzzleweb v1.11.0 h1:k/vTDOPy7cvpQ0JjGDO9MiMFMG4pqAnlWDHYodfvKM8=
-github.com/dvaumoron/puzzleweb v1.11.0/go.mod h1:+ocppP0wfoex1v+fhym0vaRpj4QoxrxT8oBSzAzpXMI=
+github.com/dvaumoron/puzzleweb v1.11.4 h1:w8zLqEK1bh6yD7vfgRjGsVd7EC0Zqw4gXwJ9USFhcqM=
+github.com/dvaumoron/puzzleweb v1.11.4/go.mod h1:+ocppP0wfoex1v+fhym0vaRpj4QoxrxT8oBSzAzpXMI=
 github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
 github.com/emicklei/go-restful v2.9.5+incompatible/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
