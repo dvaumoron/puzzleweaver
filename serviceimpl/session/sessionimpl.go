@@ -107,7 +107,7 @@ func (impl *sessionImpl) Update(ctx context.Context, id uint64, info map[string]
 	logger := impl.Logger(ctx)
 
 	infoCopy := map[string]any{}
-	keyToDelete := []string{}
+	var keyToDelete []string
 	for k, v := range info {
 		if k == creationTimeName {
 			continue
