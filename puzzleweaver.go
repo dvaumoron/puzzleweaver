@@ -20,7 +20,6 @@ package main
 
 import (
 	"context"
-	_ "embed"
 	"log"
 
 	"github.com/ServiceWeaver/weaver"
@@ -29,8 +28,8 @@ import (
 	widgethelper "github.com/dvaumoron/puzzleweaver/serviceimpl/customwidget/helper"
 )
 
-//go:embed version.txt
-var version string
+// can be overridden with ldflags
+var version = "dev"
 
 func main() {
 	ctx := context.Background()
