@@ -19,7 +19,6 @@ builds:
       - darwin
       - freebsd
       - openbsd
-      - solaris
 
     goarch:
       - amd64
