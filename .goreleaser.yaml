@@ -68,3 +68,6 @@ brews:
     description: A ServiceWeaver (https://serviceweaver.dev) compatible modified version of PuzzleWeb (https://github.com/dvaumoron/puzzleweb), embeds all backing services
     license: "Apache-2.0"
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    dependencies:
+      - name: service-weaver
+        version: "0.23.0"
